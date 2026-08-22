@@ -11,36 +11,40 @@
   <h1>BBBC Roster</h1>
   <ul id="player-list">Loading players...</ul>
 
-  <script>
-    // Supabase Credentials
-    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+  <<script>
+  const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
-    // Initialize Supabase Client
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Safely initialize from global window object
+  const { createClient } = window.supabase;
+  const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Fetch players from your database and display on page
-    async function loadPlayers() {
-      const { data: players, error } = await supabase
-        .from('players')
-        .select('*');
+  async function loadPlayers() {
+    const listElement = document.getElementById('player-list');
 
-      const listElement = document.getElementById('player-list');
-      
-      if (error) {
-        listElement.innerHTML = 'Error loading players: ' + error.message;
-        return;
-      }
+    const { data: players, error } = await _supabase
+      .from('players')
+      .select('*');
 
-      listElement.innerHTML = '';
-      players.forEach(player => {
-        const li = document.createElement('li');
-        li.textContent = `Player: ${player.initials}`;
-        listElement.appendChild(li);
-      });
+    if (error) {
+      listElement.innerHTML = '<li style="color: red;">Error: ' + error.message + '</li>';
+      return;
     }
 
-    loadPlayers();
-  </script>
+    if (!players || players.length === 0) {
+      listElement.innerHTML = '<li>No players found in database.</li>';
+      return;
+    }
+
+    listElement.innerHTML = '';
+    players.forEach(player => {
+      const li = document.createElement('li');
+      li.textContent = `Player: ${player.initials}`;
+      listElement.appendChild(li);
+    });
+  }
+
+  loadPlayers();
+</script>
 </body>
 </html>
