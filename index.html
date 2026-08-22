@@ -19,7 +19,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; max-width: 1000px; margin: 0 auto; }
+    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem 4rem 1rem; max-width: 1000px; margin: 0 auto; position: min-height: 100vh; }
 
     header { text-align: center; margin-bottom: 2.5rem; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
@@ -45,6 +45,11 @@
 
     .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; }
     .player-chip { background-color: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; font-weight: 700; font-size: 1.1rem; }
+
+    /* Subtle Footer Admin Link */
+    footer { position: fixed; bottom: 10px; right: 15px; font-size: 0.75rem; }
+    footer a { color: var(--text-muted); text-decoration: none; opacity: 0.4; transition: opacity 0.2s; }
+    footer a:hover { opacity: 1; }
   </style>
 </head>
 <body>
@@ -84,6 +89,10 @@
       </div>
     </div>
   </div>
+
+  <footer>
+    <a href="admin.html">Admin Portal</a>
+  </footer>
 
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
