@@ -13,30 +13,28 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --warning: #eab308;
+      --success: rgba(34, 197, 94, 0.15);
+      --success-text: #4ade80;
+      --danger: rgba(239, 68, 68, 0.15);
+      --danger-text: #f87171;
+      --warning-text: #eab308;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     
-    /* Centered Layout Fix */
     body { 
       background-color: var(--bg); 
       color: var(--text); 
       padding: 2rem 1rem 4rem 1rem; 
-      max-width: 1000px; 
-      margin: 0 auto; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 900px; }
+    .container { width: 100%; max-width: 800px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 2rem; width: 100%; }
-    /* Updated to match your .PNG extension */
     header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
     header p { color: var(--text-muted); margin-top: 0.3rem; }
@@ -46,36 +44,36 @@
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    .grid-container { display: grid; grid-template-columns: 1fr; gap: 2rem; width: 100%; }
-    
     .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; width: 100%; }
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; text-align: center; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    /* Centered Table Fix */
+    .table-wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; background-color: #0f172a; }
-    tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-align: center; }
+    /* Row Result Highlighting */
+    tr.res-W { background-color: var(--success); }
+    tr.res-W td { color: var(--success-text); }
+    
+    tr.res-L { background-color: var(--danger); }
+    tr.res-L td { color: var(--danger-text); }
+
+    tr.res-D td { color: var(--warning-text); }
+
+    .badge { display: inline-block; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: bold; font-size: 0.7rem; text-align: center; margin-right: 0.3rem; vertical-align: middle; }
     .badge-spread { background-color: #1e3a8a; color: #93c5fd; }
     .badge-ou { background-color: #312e81; color: #c7d2fe; }
-
-    .res-W { color: var(--success); font-weight: bold; }
-    .res-L { color: var(--danger); font-weight: bold; }
-    .res-D { color: var(--warning); font-weight: bold; }
-
-    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; }
-    .player-chip { background-color: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; font-weight: 700; font-size: 1.1rem; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <!-- Updated file reference to logo.PNG -->
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
       <h1>Big Boys Betting Club</h1>
-      <p>Season 2026 • Standings & Weekly Picks</p>
+      <p>Season 2026 • Weekly Picks</p>
     </header>
 
     <nav>
@@ -83,34 +81,20 @@
       <a href="standings.html">Standings</a>
     </nav>
 
-    <div class="grid-container">
-      <!-- Weekly Picks Section -->
-      <div class="card">
-        <h2>Weekly Picks Log</h2>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Type</th>
-                <th>Selection & Game</th>
-                <th>Result</th>
-                <th>Margin</th>
-              </tr>
-            </thead>
-            <tbody id="public-picks-tbody">
-              <tr><td colspan="5" style="color: var(--text-muted);">Loading weekly picks...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Active Roster Section -->
-      <div class="card">
-        <h2>Active Members</h2>
-        <div class="roster-grid" id="roster-grid">
-          Loading roster...
-        </div>
+    <div class="card">
+      <h2>Weekly Picks Log</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 25%;">Member</th>
+              <th style="width: 75%;">Selection & Game</th>
+            </tr>
+          </thead>
+          <tbody id="public-picks-tbody">
+            <tr><td colspan="2" style="text-align: center; color: var(--text-muted);">Loading weekly picks...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -123,32 +107,19 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadPublicData() {
-      // 1. Fetch active players for the roster grid
-      const { data: players } = await _supabase
-        .from('players')
-        .select('*')
-        .eq('active', true)
-        .order('initials', { ascending: true });
-
-      const rosterGrid = document.getElementById('roster-grid');
-      rosterGrid.innerHTML = '';
-      if (players) {
-        players.forEach(p => {
-          const chip = document.createElement('div');
-          chip.className = 'player-chip';
-          chip.textContent = p.initials;
-          rosterGrid.appendChild(chip);
-        });
-      }
-
-      // 2. Fetch open week and load picks
+      // Fetch open week
       const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
-      if (!weeks || weeks.length === 0) return;
+      const tbody = document.getElementById('public-picks-tbody');
+
+      if (!weeks || weeks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-muted);">No open weeks found.</td></tr>';
+        return;
+      }
       const weekId = weeks[0].id;
 
       const { data: picks } = await _supabase
@@ -157,27 +128,30 @@
         .eq('week_id', weekId)
         .order('created_at', { ascending: false });
 
-      const tbody = document.getElementById('public-picks-tbody');
       tbody.innerHTML = '';
 
       if (!picks || picks.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No picks submitted for this week yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-muted);">No picks submitted for this week yet.</td></tr>';
         return;
       }
 
       picks.forEach(p => {
         const tr = document.createElement('tr');
+        
+        if (p.result) {
+          tr.className = `res-${p.result}`;
+        }
+
         const badgeClass = p.pick_type === 'spread' ? 'badge-spread' : 'badge-ou';
         const typeLabel = p.pick_type === 'spread' ? 'SPREAD' : 'O/U';
-        const resClass = p.result ? `res-${p.result}` : '';
-        const resText = p.result ? p.result : 'Pending';
 
         tr.innerHTML = `
           <td><strong>${p.players?.initials || '??'}</strong></td>
-          <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
-          <td>${p.selection} <br><small style="color:var(--text-muted);">${p.game}</small></td>
-          <td><span class="${resClass}">${resText}</span></td>
-          <td>${p.cover_margin !== null ? p.cover_margin : '-'}</td>
+          <td>
+            <span class="badge ${badgeClass}">${typeLabel}</span>
+            <strong>${p.selection}</strong> 
+            <br><small style="opacity: 0.8; font-size: 0.85rem;">${p.game}</small>
+          </td>
         `;
         tbody.appendChild(tr);
       });
