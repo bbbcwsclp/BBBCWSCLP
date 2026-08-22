@@ -3,125 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Big Boys Betting Club — Admin Portal</title>
+  <title>Big Boys Betting Club (BBBC)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0f172a;
       --card-bg: #1e293b;
       --accent: #2563eb;
-      --accent-hover: #1d4ed8;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
       --success: #22c55e;
-      --gold: #f59e0b;
+      --danger: #ef4444;
+      --warning: #eab308;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; max-width: 1100px; margin: 0 auto; }
+    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; max-width: 1000px; margin: 0 auto; }
 
-    header { text-align: center; margin-bottom: 2rem; }
+    header { text-align: center; margin-bottom: 2.5rem; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
     header p { color: var(--text-muted); margin-top: 0.5rem; }
 
     .grid-container { display: grid; grid-template-columns: 1fr; gap: 2rem; }
-    @media (min-width: 850px) { .grid-container { grid-template-columns: 1fr 1.2fr; } }
-
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+    
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
     .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    .form-group { margin-bottom: 1.25rem; }
-    label { display: block; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.35rem; }
-    select, input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); background-color: #0f172a; color: var(--text); font-size: 1rem; }
-    select:focus, input:focus { outline: 2px solid var(--accent); }
-
-    .row { display: flex; gap: 1rem; }
-    .row .form-group { flex: 1; }
-
-    button { width: 100%; padding: 0.85rem; background-color: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
-    button:hover { background-color: var(--accent-hover); }
-
-    /* Picks Table */
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; background-color: #0f172a; }
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem; text-align: center; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-align: center; }
     .badge-spread { background-color: #1e3a8a; color: #93c5fd; }
     .badge-ou { background-color: #312e81; color: #c7d2fe; }
 
-    #status-msg { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.875rem; display: none; text-align: center; }
-    .success { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid var(--success); }
-    .error { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .res-W { color: var(--success); font-weight: bold; }
+    .res-L { color: var(--danger); font-weight: bold; }
+    .res-D { color: var(--warning); font-weight: bold; }
+
+    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; }
+    .player-chip { background-color: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; font-weight: 700; font-size: 1.1rem; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>BBBC Admin Management</h1>
-    <p>Enter Member Picks & Monitor Weekly Selections</p>
+    <h1>Big Boys Betting Club</h1>
+    <p>Season 2026 • Standings & Weekly Picks</p>
   </header>
 
   <div class="grid-container">
-    <!-- Admin Pick Entry Form -->
+    <!-- Weekly Picks Section -->
     <div class="card">
-      <h2>Log Player Pick</h2>
-      <form id="pick-form">
-        <div class="form-group">
-          <label for="player-select">Select Player</label>
-          <select id="player-select" required>
-            <option value="">Loading players...</option>
-          </select>
-        </div>
-
-        <div class="row">
-          <div class="form-group">
-            <label for="pick-type">Type</label>
-            <select id="pick-type" required>
-              <option value="spread">Spread</option>
-              <option value="over_under">Over/Under</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="line-input">Line Number</label>
-            <input type="number" step="0.5" id="line-input" placeholder="-3.5 / 54.5" required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="game-input">Game Matchup</label>
-          <input type="text" id="game-input" placeholder="e.g. BAMA vs UT" required>
-        </div>
-
-        <div class="form-group">
-          <label for="selection-input">Player Selection</label>
-          <input type="text" id="selection-input" placeholder="e.g. BAMA -3.5 or OVER 54.5" required>
-        </div>
-
-        <button type="submit" id="submit-btn">Save Pick</button>
-      </form>
-      <div id="status-msg"></div>
-    </div>
-
-    <!-- Active Picks Dashboard -->
-    <div class="card">
-      <h2>Submitted Picks (Week 1)</h2>
+      <h2>Weekly Picks Log</h2>
       <div style="overflow-x: auto;">
         <table>
           <thead>
             <tr>
               <th>Player</th>
               <th>Type</th>
-              <th>Game</th>
-              <th>Pick</th>
+              <th>Selection & Game</th>
+              <th>Result</th>
+              <th>Margin</th>
             </tr>
           </thead>
-          <tbody id="picks-tbody">
-            <tr><td colspan="4">Loading picks...</td></tr>
+          <tbody id="public-picks-tbody">
+            <tr><td colspan="5" style="color: var(--text-muted);">Loading weekly picks...</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Active Roster Section -->
+    <div class="card">
+      <h2>Active Members</h2>
+      <div class="roster-grid" id="roster-grid">
+        Loading roster...
       </div>
     </div>
   </div>
@@ -133,57 +92,46 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let activeWeekId = null;
-
-    async function initApp() {
-      // 1. Get open week
-      const { data: weeks } = await _supabase
-        .from('weeks')
-        .select('*')
-        .eq('status', 'open')
-        .limit(1);
-
-      if (weeks && weeks.length > 0) {
-        activeWeekId = weeks[0].id;
-      }
-
-      // 2. Populate player select dropdown
+    async function loadPublicData() {
+      // 1. Fetch active players for the roster grid
       const { data: players } = await _supabase
         .from('players')
         .select('*')
         .eq('active', true)
         .order('initials', { ascending: true });
 
-      const select = document.getElementById('player-select');
-      select.innerHTML = '<option value="">Select a player...</option>';
-
+      const rosterGrid = document.getElementById('roster-grid');
+      rosterGrid.innerHTML = '';
       if (players) {
         players.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = p.initials;
-          select.appendChild(opt);
+          const chip = document.createElement('div');
+          chip.className = 'player-chip';
+          chip.textContent = p.initials;
+          rosterGrid.appendChild(chip);
         });
       }
 
-      // 3. Load logged picks
-      loadPicks();
-    }
+      // 2. Fetch open week and load picks
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .eq('status', 'open')
+        .limit(1);
 
-    async function loadPicks() {
-      if (!activeWeekId) return;
+      if (!weeks || weeks.length === 0) return;
+      const weekId = weeks[0].id;
 
-      const { data: picks, error } = await _supabase
+      const { data: picks } = await _supabase
         .from('picks')
         .select('*, players(initials)')
-        .eq('week_id', activeWeekId)
+        .eq('week_id', weekId)
         .order('created_at', { ascending: false });
 
-      const tbody = document.getElementById('picks-tbody');
+      const tbody = document.getElementById('public-picks-tbody');
       tbody.innerHTML = '';
 
-      if (error || !picks || picks.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted);">No picks logged for this week yet.</td></tr>';
+      if (!picks || picks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No picks submitted for this week yet.</td></tr>';
         return;
       }
 
@@ -191,61 +139,21 @@
         const tr = document.createElement('tr');
         const badgeClass = p.pick_type === 'spread' ? 'badge-spread' : 'badge-ou';
         const typeLabel = p.pick_type === 'spread' ? 'SPREAD' : 'O/U';
+        const resClass = p.result ? `res-${p.result}` : '';
+        const resText = p.result ? p.result : 'Pending';
 
         tr.innerHTML = `
           <td><strong>${p.players?.initials || '??'}</strong></td>
           <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
-          <td>${p.game}</td>
-          <td>${p.selection} (${p.line})</td>
+          <td>${p.selection} <br><small style="color:var(--text-muted);">${p.game}</small></td>
+          <td><span class="${resClass}">${resText}</span></td>
+          <td>${p.cover_margin !== null ? p.cover_margin : '-'}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // Submit Form Handler
-    document.getElementById('pick-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-btn');
-
-      if (!activeWeekId) {
-        showStatus('No open week found in database.', false);
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-
-      const payload = {
-        week_id: activeWeekId,
-        player_id: parseInt(document.getElementById('player-select').value),
-        pick_type: document.getElementById('pick-type').value,
-        game: document.getElementById('game-input').value,
-        selection: document.getElementById('selection-input').value,
-        line: parseFloat(document.getElementById('line-input').value)
-      };
-
-      const { error } = await _supabase.from('picks').insert([payload]);
-
-      if (error) {
-        showStatus('Error: ' + error.message, false);
-      } else {
-        showStatus('Pick successfully logged!', true);
-        document.getElementById('pick-form').reset();
-        loadPicks(); // Refresh table
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Save Pick';
-    });
-
-    function showStatus(text, isSuccess) {
-      const msg = document.getElementById('status-msg');
-      msg.textContent = text;
-      msg.className = isSuccess ? 'success' : 'error';
-      msg.style.display = 'block';
-    }
-
-    initApp();
+    loadPublicData();
   </script>
 </body>
 </html>
