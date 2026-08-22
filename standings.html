@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big Boys Betting Club — Season Standings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #2563eb;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 800px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 2rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; width: 100%; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; text-align: center; }
+
+    .table-wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; background-color: #0f172a; }
+    tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+
+    .rank { font-weight: bold; color: var(--gold); text-align: center; }
+    .record { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1>Big Boys Betting Club</h1>
+      <p>Season 2026 • Official Leaderboard</p>
+    </header>
+
+    <nav>
+      <a href="index.html">Weekly Picks</a>
+      <a href="standings.html" class="active">Standings</a>
+    </nav>
+
+    <div class="card">
+      <h2>Season Standings</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center; width: 15%;">Rank</th>
+              <th style="width: 35%;">Member</th>
+              <th style="width: 25%;">Record (W-L-D)</th>
+              <th style="width: 25%;">Win %</th>
+            </tr>
+          </thead>
+          <tbody id="standings-tbody">
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Calculating standings...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadStandings() {
+      // 1. Fetch all active players and all picks
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .eq('active', true);
+
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*');
+
+      const tbody = document.getElementById('standings-tbody');
+      tbody.innerHTML = '';
+
+      if (!players || players.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No active players found.</td></tr>';
+        return;
+      }
+
+      // 2. Aggregate stats for each player
+      const statsMap = {};
+      players.forEach(p => {
+        statsMap[p.id] = {
+          initials: p.initials,
+          wins: 0,
+          losses: 0,
+          pushes: 0
+        };
+      });
+
+      if (picks) {
+        picks.forEach(p => {
+          if (statsMap[p.player_id]) {
+            if (p.result === 'W') statsMap[p.player_id].wins++;
+            if (p.result === 'L') statsMap[p.player_id].losses++;
+            if (p.result === 'D') statsMap[p.player_id].pushes++;
+          }
+        });
+      }
+
+      // 3. Convert to array and sort by Wins (descending), then Win %
+      const standings = Object.values(statsMap).map(s => {
+        const totalDecisions = s.wins + s.losses;
+        const winPct = totalDecisions > 0 ? (s.wins / totalDecisions).toFixed(3) : '.000';
+        return { ...s, winPct, totalDecisions };
+      });
+
+      standings.sort((a, b) => {
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return parseFloat(b.winPct) - parseFloat(a.winPct);
+      });
+
+      // 4. Render into table
+      standings.forEach((s, index) => {
+        const tr = document.createElement('tr');
+        const rankDisplay = index === 0 ? '👑 1' : index + 1;
+
+        tr.innerHTML = `
+          <td class="rank">${rankDisplay}</td>
+          <td><strong>${s.initials}</strong></td>
+          <td class="record">${s.wins} - ${s.losses} - ${s.pushes}</td>
+          <td>${s.winPct}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadStandings();
+  </script>
+</body>
+</html>
