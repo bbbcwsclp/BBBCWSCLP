@@ -19,11 +19,17 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem 4rem 1rem; max-width: 1000px; margin: 0 auto; position: min-height: 100vh; }
+    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem 4rem 1rem; max-width: 1000px; margin: 0 auto; min-height: 100vh; }
 
-    header { text-align: center; margin-bottom: 2.5rem; }
+    header { text-align: center; margin-bottom: 2rem; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
-    header p { color: var(--text-muted); margin-top: 0.5rem; }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
     .grid-container { display: grid; grid-template-columns: 1fr; gap: 2rem; }
     
@@ -45,19 +51,21 @@
 
     .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; }
     .player-chip { background-color: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; font-weight: 700; font-size: 1.1rem; }
-
-    /* Subtle Footer Admin Link */
-    footer { position: fixed; bottom: 10px; right: 15px; font-size: 0.75rem; }
-    footer a { color: var(--text-muted); text-decoration: none; opacity: 0.4; transition: opacity 0.2s; }
-    footer a:hover { opacity: 1; }
   </style>
 </head>
 <body>
 
   <header>
+    <!-- Logo display (looks for logo.png in your repository) -->
+    <img src="logo.png" alt="BBBC Logo" onerror="this.style.display='none'">
     <h1>Big Boys Betting Club</h1>
     <p>Season 2026 • Standings & Weekly Picks</p>
   </header>
+
+  <nav>
+    <a href="index.html" class="active">Weekly Picks</a>
+    <a href="standings.html">Standings</a>
+  </nav>
 
   <div class="grid-container">
     <!-- Weekly Picks Section -->
@@ -89,10 +97,6 @@
       </div>
     </div>
   </div>
-
-  <footer>
-    <a href="admin.html">Admin Portal</a>
-  </footer>
 
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
