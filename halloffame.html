@@ -89,6 +89,56 @@
       text-align: left;
     }
 
+    /* Chronological Champion Blocks Grid */
+    .champs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .champ-block {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+    }
+
+    .champ-year {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--gold);
+      min-width: 60px;
+    }
+
+    .champ-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold);
+      background-color: var(--bg);
+    }
+
+    .champ-info h4 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.15rem;
+    }
+
+    .champ-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
     table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
     th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
@@ -137,6 +187,7 @@
 
     async function loadHallOfFame() {
       const { data: players } = await _supabase.from('players').select('*');
+      const { data: weeks } = await _supabase.from('weeks').select('*').not('season', 'eq', 2026);
       const { data: picks } = await _supabase.from('picks').select('*');
 
       const container = document.getElementById('content-container');
@@ -147,9 +198,17 @@
         return;
       }
 
-      // Calculate Lifetime Player Records
+      // Helper map to look up player avatar urls easily by name/initials if needed
+      const playerAvatarMap = {};
+      players.forEach(p => {
+        playerAvatarMap[p.initials.toLowerCase()] = p.avatar_url;
+      });
+
+      const historicalWeekIds = new Set(weeks ? weeks.map(w => w.id) : []);
+      const historicalPicks = picks ? picks.filter(p => historicalWeekIds.has(p.week_id)) : [];
+
       let playerStats = players.map(player => {
-        const userPicks = picks ? picks.filter(p => p.player_id === player.id && p.result) : [];
+        const userPicks = historicalPicks.filter(p => p.player_id === player.id && p.result);
         let wins = 0;
         let losses = 0;
         let pushes = 0;
@@ -174,7 +233,6 @@
         };
       });
 
-      // Sort by Win Percentage (highest first), then Total Wins as tie-breaker
       playerStats.sort((a, b) => {
         if (b.winPct !== a.winPct) return b.winPct - a.winPct;
         return b.wins - a.wins;
@@ -185,32 +243,32 @@
       // --- RENDER CONTENT ---
       let html = '';
 
-      // Current Belt Leader Banner
+      // Historical Belt Leader Banner
       if (leader) {
         html += `
           <div class="belt-banner">
-            <h3>🏆 Current Belt Leader</h3>
+            <h3>🏆 All-Time Legacy Leader</h3>
         `;
         if (leader.avatarUrl) {
           html += `<img src="${leader.avatarUrl}" alt="${leader.initials}" class="belt-avatar">`;
         }
         html += `
             <div class="belt-holder-name">${leader.initials}</div>
-            <div class="belt-sub">${leader.wins} - ${leader.losses} (${(leader.winPct * 100).toFixed(1)}% Win Rate)</div>
+            <div class="belt-sub">${leader.wins} - ${leader.losses} (${(leader.winPct * 100).toFixed(1)}% Historical Win Rate)</div>
           </div>
         `;
       } else {
         html += `
           <div class="belt-banner">
-            <h3>🏆 Current Belt Leader</h3>
+            <h3>🏆 All-Time Legacy Leader</h3>
             <div class="belt-holder-name">TBD</div>
-            <div class="belt-sub">No graded picks yet</div>
+            <div class="belt-sub">No historical picks recorded yet</div>
           </div>
         `;
       }
 
-      // All-Time Leaderboard Section
-      html += `<div class="section-title">All-Time Individual Leaderboard</div>`;
+      // Historical Leaderboard Section
+      html += `<div class="section-title">All-Time Historical Leaderboard</div>`;
       html += `
         <div class="hof-card">
           <table>
@@ -254,53 +312,44 @@
         </div>
       `;
 
-      // Past Belt Holders Section
+      // Chronological Belt History Blocks
+      const champions = [
+        { year: '2025', name: 'Dylan', role: 'Defending Champion' },
+        { year: '2024', name: 'Caleb', role: 'Belt Champion' },
+        { year: '2023', name: 'Harler', role: 'Belt Champion' },
+        { year: '2022', name: 'Turner', role: 'Belt Champion' },
+        { year: '2021', name: 'Turner', role: 'Belt Champion' }
+      ];
+
       html += `<div class="section-title">Championship Belt History</div>`;
-      html += `
-        <div class="hof-card">
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Belt Champion</th>
-                <th class="text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2026</td>
-                <td><em>In Progress...</em></td>
-                <td class="text-right">—</td>
-              </tr>
-              <tr>
-                <td>2025</td>
-                <td><strong>Dylan</strong></td>
-                <td class="text-right">Defending Champ</td>
-              </tr>
-              <tr>
-                <td>2024</td>
-                <td>Caleb</td>
-                <td class="text-right">Champion</td>
-              </tr>
-              <tr>
-                <td>2023</td>
-                <td>Harler</td>
-                <td class="text-right">Champion</td>
-              </tr>
-              <tr>
-                <td>2022</td>
-                <td>Turner</td>
-                <td class="text-right">Champion</td>
-              </tr>
-              <tr>
-                <td>2021</td>
-                <td>Turner</td>
-                <td class="text-right">Champion</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
+      html += `<div class="champs-grid">`;
+
+      champions.forEach(c => {
+        // Try matching the champion's name against player records to grab their avatar if available
+        const matchedAvatar = playerAvatarMap[c.name.toLowerCase()] || '';
+
+        html += `
+          <div class="champ-block">
+            <div class="champ-year">${c.year}</div>
+        `;
+
+        if (matchedAvatar) {
+          html += `<img src="${matchedAvatar}" alt="${c.name}" class="champ-avatar">`;
+        } else {
+          // Fallback placeholder ring if no picture is linked yet
+          html += `<div class="champ-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${c.name[0]}</div>`;
+        }
+
+        html += `
+            <div class="champ-info">
+              <h4>${c.name}</h4>
+              <p>${c.role}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
 
       container.innerHTML = html;
     }
