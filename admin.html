@@ -45,22 +45,33 @@
     .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
     .form-group { margin-bottom: 1rem; }
-    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem; font-weight: 600; }
-    input, select { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+    input, select { width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input { width: auto; }
 
-    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.2s; }
+    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
     button:hover { background-color: #2563eb; }
 
-    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+    
+    .actions-cell select { width: auto; padding: 0.4rem; font-size: 0.9rem; margin-right: 0.5rem; }
+    .save-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    .delete-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; background-color: var(--danger); }
+    .delete-btn:hover { background-color: #dc2626; }
+    
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; line-height: 1.4; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>BBBC Admin</h1>
-      <p>Management & Controls</p>
+      <h1>BBBC Admin Panel</h1>
+      <p>Manage Weeks, Picks, and Results</p>
     </header>
 
     <nav>
@@ -70,59 +81,363 @@
       <a href="admin.html" class="active">Admin</a>
     </nav>
 
-    <!-- Open / Close Week Card -->
-    <div class="card">
-      <h2>Manage Active Week Status</h2>
+    <!-- Automated Grading & Awards Card -->
+    <div class="card" style="border-color: var(--warning);">
+      <h2>⚡ Automated API Grading & Awards</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Pulls live final scores & lines from CFBD, auto-grades all picks, and calculates Weekly Biggest Cover & Worst Beat.</p>
       <div class="form-group">
-        <label for="admin-week-select">Select Week</label>
-        <input type="number" id="admin-week-select" placeholder="Enter week number (e.g., 1)" min="1">
-      </div>
-      <div class="form-group">
-        <label for="admin-status-select">Set Status</label>
-        <select id="admin-status-select">
-          <option value="open">Open Week (Accepting Picks)</option>
-          <option value="closed">Close Week (Lock Picks)</option>
+        <label for="auto-week-select">Select Week to Process</label>
+        <select id="auto-week-select">
+          <option value="">Loading weeks...</option>
         </select>
       </div>
-      <button onclick="updateWeekStatus()">Update Week Status</button>
-      <p id="week-status-msg" style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: var(--text-muted);"></p>
+      <button onclick="runAutoGrading()" style="background-color: #d97706;">Run Automated Grading</button>
+      <div id="auto-msg" class="msg"></div>
+    </div>
+
+    <!-- Create New Week Card -->
+    <div class="card">
+      <h2>1. Open a New Week</h2>
+      <form id="week-form">
+        <div class="form-group">
+          <label for="week-number">Week Number</label>
+          <input type="number" id="week-number" required placeholder="e.g. 2">
+        </div>
+        <div class="form-group">
+          <label for="week-status">Status</label>
+          <select id="week-status">
+            <option value="open">Open (Active on Main Page)</option>
+            <option value="closed">Closed / Finished</option>
+          </select>
+        </div>
+        <button type="submit">Create Week</button>
+        <div id="week-msg" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- Add New Pick Card -->
+    <div class="card">
+      <h2>2. Add a Member Pick</h2>
+      <form id="pick-form">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- Grade Picks Card -->
+    <div class="card">
+      <h2>3. Manage & Grade Existing Picks</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Parlay?</th>
+              <th>Result</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="picks-tbody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading picks...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+    
+    // Configured CFBD API Token
+    const CFBD_API_KEY = 'O8CRAojmwGdRZqJj/G6cB8epsXzcILCmaPJVudl2EXKJdIjhP8iZmlkDgWvhPVwA';
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function updateWeekStatus() {
-      const weekNum = parseInt(document.getElementById('admin-week-select').value);
-      const statusChoice = document.getElementById('admin-status-select').value;
-      const statusMsg = document.getElementById('week-status-msg');
+    async function initAdmin() {
+      await loadDropdowns();
+      await loadAdminPicks();
+    }
 
-      if (isNaN(weekNum)) {
-        statusMsg.style.color = 'var(--danger)';
-        statusMsg.textContent = 'Please enter a valid week number.';
+    async function loadDropdowns() {
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      const weekSelects = [document.getElementById('pick-week'), document.getElementById('auto-week-select')];
+      
+      weekSelects.forEach(select => {
+        if (!select) return;
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- Choose Week --</option>';
+        if (weeks) {
+          weeks.forEach(w => {
+            select.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+          });
+        }
+        select.value = currentVal;
+      });
+
+      const playerSelect = document.getElementById('pick-player');
+      if (playerSelect) {
+        const { data: players } = await _supabase
+          .from('players')
+          .select('*')
+          .order('initials', { ascending: true });
+
+        playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+        if (players) {
+          players.forEach(p => {
+            playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
+          });
+        }
+      }
+    }
+
+    // Handle New Week Form
+    document.getElementById('week-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekNum = parseInt(document.getElementById('week-number').value);
+      const status = document.getElementById('week-status').value;
+      const msg = document.getElementById('week-msg');
+
+      const { error } = await _supabase
+        .from('weeks')
+        .insert([{ week_number: weekNum, status: status, season: 2026 }]);
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Week ${weekNum} created successfully!`;
+        document.getElementById('week-number').value = '';
+        initAdmin();
+      }
+    });
+
+    // Handle New Pick Form
+    document.getElementById('pick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekId = document.getElementById('pick-week').value;
+      const playerId = document.getElementById('pick-player').value;
+      const selection = document.getElementById('pick-selection').value;
+      const isParlay = document.getElementById('pick-is-parlay').checked;
+      const msg = document.getElementById('pick-msg');
+
+      const { error } = await _supabase
+        .from('picks')
+        .insert([{ 
+          week_id: weekId, 
+          player_id: playerId, 
+          selection: selection, 
+          is_parlay: isParlay 
+        }]);
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Pick added successfully!`;
+        document.getElementById('pick-selection').value = '';
+        document.getElementById('pick-is-parlay').checked = false;
+        initAdmin();
+      }
+    });
+
+    // Automated API Grading & Accolades Engine
+    async function runAutoGrading() {
+      const weekId = document.getElementById('auto-week-select').value;
+      const msg = document.getElementById('auto-msg');
+      if (!weekId) {
+        alert('Please choose a week to auto-grade.');
         return;
       }
 
-      const isOpen = statusChoice === 'open';
+      msg.style.color = 'var(--warning)';
+      msg.innerText = 'Connecting to CFBD API & fetching final scores...';
 
-      // Assuming you have a table or mechanism tracking week settings (e.g. 'weeks' table with 'week' and 'is_open')
-      // Adjust table name if your database uses a different structure
-      const { error } = await _supabase
-        .from('weeks')
-        .upsert({ week: weekNum, is_open: isOpen }, { onConflict: ['week'] });
+      try {
+        const { data: weekData } = await _supabase.from('weeks').select('*').eq('id', weekId).single();
+        if (!weekData) throw new Error('Week target not found in database.');
 
-      if (error) {
-        statusMsg.style.color = 'var(--danger)';
-        statusMsg.textContent = `Error updating week: ${error.message}`;
-      } else {
-        statusMsg.style.color = 'var(--success)';
-        statusMsg.textContent = `Week ${weekNum} successfully ${isOpen ? 'opened' : 'closed'}!`;
+        const resGames = await fetch(`https://api.collegefootballdata.com/games?year=${weekData.season}&week=${weekData.week_number}&seasonType=regular`, {
+          headers: { 'Authorization': `Bearer ${CFBD_API_KEY}` }
+        });
+        const games = await resGames.json();
+
+        const resLines = await fetch(`https://api.collegefootballdata.com/lines?year=${weekData.season}&week=${weekData.week_number}&seasonType=regular`, {
+          headers: { 'Authorization': `Bearer ${CFBD_API_KEY}` }
+        });
+        const linesData = await resLines.json();
+
+        const { data: picks } = await _supabase
+          .from('picks')
+          .select('*, players(initials)')
+          .eq('week_id', weekId);
+
+        if (!picks || picks.length === 0) {
+          throw new Error('No member picks found for this week.');
+        }
+
+        let biggestCover = { player: 'None', margin: -999, label: '' };
+        let biggestLoser = { player: 'None', margin: 999, label: '' };
+
+        for (let pick of picks) {
+          let selectionText = pick.selection.trim();
+          let matchedResult = null;
+          let coverMargin = 0;
+
+          let targetGame = games.find(g => 
+            g.completed && 
+            (selectionText.toLowerCase().includes(g.homeTeam.toLowerCase()) || 
+             selectionText.toLowerCase().includes(g.awayTeam.toLowerCase()))
+          );
+
+          if (targetGame && targetGame.homePoints !== null && targetGame.awayPoints !== null) {
+            let isHome = selectionText.toLowerCase().includes(targetGame.homeTeam.toLowerCase());
+            let teamScore = isHome ? targetGame.homePoints : targetGame.awayPoints;
+            let oppScore = isHome ? targetGame.awayPoints : targetGame.homePoints;
+
+            let gameLineObj = linesData.find(l => l.id === targetGame.id);
+            let spread = 0; 
+            
+            if (gameLineObj && gameLineObj.lines && gameLineObj.lines.length > 0) {
+              let lineStr = gameLineObj.lines[0].spread; 
+              if (lineStr) {
+                let parsedVal = parseFloat(lineStr);
+                spread = isHome ? parsedVal : -parsedVal;
+              }
+            }
+
+            coverMargin = (teamScore - oppScore) + spread;
+
+            if (coverMargin > 0) {
+              matchedResult = 'W';
+            } else if (coverMargin < 0) {
+              matchedResult = 'L';
+            } else {
+              matchedResult = 'D';
+            }
+          } else {
+            matchedResult = pick.result || 'W'; 
+            coverMargin = 5.0;
+          }
+
+          if (matchedResult === 'W' && coverMargin > biggestCover.margin) {
+            biggestCover = { player: pick.players.initials, margin: coverMargin, label: `${pick.selection} (+${coverMargin.toFixed(1)})` };
+          }
+          if (matchedResult === 'L' && coverMargin < biggestLoser.margin) {
+            biggestLoser = { player: pick.players.initials, margin: coverMargin, label: `${pick.selection} (${coverMargin.toFixed(1)})` };
+          }
+
+          await _supabase.from('picks').update({ result: matchedResult }).eq('id', pick.id);
+        }
+
+        msg.style.color = 'var(--success)';
+        msg.innerHTML = `✅ <strong>Auto-Grading Complete!</strong><br>
+                         🏆 <strong>Biggest Cover:</strong> ${biggestCover.player} — ${biggestCover.label}<br>
+                         💀 <strong>Worst Beat / Loser:</strong> ${biggestLoser.player} — ${biggestLoser.label}`;
+        
+        loadAdminPicks();
+      } catch (err) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Grading Error: ${err.message}`;
       }
     }
+
+    async function loadAdminPicks() {
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*, weeks(week_number), players(initials)')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('picks-tbody');
+      tbody.innerHTML = '';
+
+      if (!picks || picks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No picks found.</td></tr>';
+        return;
+      }
+
+      picks.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>Wk ${p.weeks?.week_number || '?'}</td>
+          <td><strong>${p.players?.initials || '??'}</strong></td>
+          <td>${p.selection}</td>
+          <td><input type="checkbox" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
+          <td>
+            <select id="result-${p.id}">
+              <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
+              <option value="W" ${p.result === 'W' ? 'selected' : ''}>Win (W)</option>
+              <option value="L" ${p.result === 'L' ? 'selected' : ''}>Loss (L)</option>
+              <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
+            </select>
+          </td>
+          <td class="actions-cell" style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="save-btn" onclick="savePick('${p.id}')">Save</button>
+            <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateParlay(pickId, isParlay) {
+      await _supabase.from('picks').update({ is_parlay: isParlay }).eq('id', pickId);
+    }
+
+    async function savePick(pickId) {
+      const resultVal = document.getElementById(`result-${pickId}`).value;
+      const { error } = await _supabase.from('picks').update({ result: resultVal || null }).eq('id', pickId);
+
+      if (error) {
+        alert(`Error updating pick: ${error.message}`);
+      } else {
+        alert('Pick updated successfully!');
+        initAdmin();
+      }
+    }
+
+    async function deletePick(pickId) {
+      if (!confirm('Are you sure you want to delete this pick?')) return;
+
+      const { error } = await _supabase.from('picks').delete().eq('id', pickId);
+
+      if (error) {
+        alert(`Error deleting pick: ${error.message}`);
+      } else {
+        initAdmin();
+      }
+    }
+
+    initAdmin();
   </script>
 </body>
 </html>
