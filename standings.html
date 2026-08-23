@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Season Standings</title>
+  <title>BBBCWSCLP — Standings</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0f172a;
       --card-bg: #1e293b;
-      --accent: #2563eb;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #eab308;
-      --gold: #f59e0b;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -33,58 +32,62 @@
 
     .container { width: 100%; max-width: 800px; margin: 0 auto; }
 
-    header { text-align: center; margin-bottom: 2rem; width: 100%; }
-    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    header { text-align: center; margin-bottom: 1.5rem; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
     header p { color: var(--text-muted); margin-top: 0.3rem; }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; width: 100%; }
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; text-align: center; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    .table-wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; }
     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.95rem; }
-    th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); }
-    th { color: var(--text-muted); font-weight: 600; background-color: #0f172a; }
+    th, td { text-align: center; padding: 0.85rem 0.5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+    td:nth-child(2), th:nth-child(2) { text-align: left; }
+    
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+    
+    .rank-1 { color: #facc15; font-weight: bold; }
+    .rank-2 { color: #e2e8f0; font-weight: bold; }
+    .rank-3 { color: #fb923c; font-weight: bold; }
 
-    .rank { font-weight: bold; color: var(--gold); text-align: center; }
-    .record { font-weight: 600; }
+    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1>Big Boys Betting Club</h1>
-      <p>Season 2026 • Official Leaderboard</p>
+      <h1>BBBC Standings</h1>
+      <p>Season Leaderboard & Records</p>
     </header>
 
     <nav>
       <a href="index.html">Weekly Picks</a>
       <a href="standings.html" class="active">Standings</a>
       <a href="season.html">Season History</a>
+      <a href="admin.html">Admin</a>
     </nav>
 
     <div class="card">
-      <h2>Season Standings</h2>
-      <div class="table-wrapper">
+      <h2>Overall Leaderboard</h2>
+      <div style="overflow-x: auto;">
         <table>
           <thead>
             <tr>
-              <th style="text-align: center; width: 15%;">Rank</th>
-              <th style="width: 35%;">Member</th>
-              <th style="width: 25%;">Record (W-L-D)</th>
-              <th style="width: 25%;">Win %</th>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Record (W-L-D)</th>
+              <th>Win %</th>
+              <th>Points</th>
             </tr>
           </thead>
           <tbody id="standings-tbody">
-            <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Calculating standings...</td></tr>
+            <tr><td colspan="5" class="msg">Calculating standings...</td></tr>
           </tbody>
         </table>
       </div>
@@ -93,69 +96,93 @@
 
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iciiAkIixpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadStandings() {
-      const { data: players } = await _supabase
-        .from('players')
-        .select('*')
-        .eq('active', true);
+      const tbody = document.getElementById('standings-tbody');
 
-      const { data: picks } = await _supabase
+      // Fetch all players
+      const { data: players, error: playerErr } = await _supabase
+        .from('players')
+        .select('*');
+
+      // Fetch all picks
+      const { data: picks, error: pickErr } = await _supabase
         .from('picks')
         .select('*');
 
-      const tbody = document.getElementById('standings-tbody');
-      tbody.innerHTML = '';
-
-      if (!players || players.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No active players found.</td></tr>';
+      if (playerErr || pickErr) {
+        tbody.innerHTML = `<tr><td colspan="5" class="msg" style="color: var(--danger);">Error loading standings data.</td></tr>`;
         return;
       }
 
-      const statsMap = {};
+      // Map statistics per player
+      const stats = {};
       players.forEach(p => {
-        statsMap[p.id] = {
+        stats[p.id] = {
+          id: p.id,
           initials: p.initials,
           wins: 0,
           losses: 0,
-          pushes: 0
+          draws: 0
         };
       });
 
-      if (picks) {
-        picks.forEach(p => {
-          if (statsMap[p.player_id]) {
-            if (p.result === 'W') statsMap[p.player_id].wins++;
-            if (p.result === 'L') statsMap[p.player_id].losses++;
-            if (p.result === 'D') statsMap[p.player_id].pushes++;
-          }
-        });
+      // Tally wins, losses, and draws (Treating 'D' as 0.5 win / 0.5 loss)
+      picks.forEach(p => {
+        if (!stats[p.player_id]) return;
+        if (p.result === 'W') {
+          stats[p.player_id].wins += 1;
+        } else if (p.result === 'L') {
+          stats[p.player_id].losses += 1;
+        } else if (p.result === 'D') {
+          stats[p.player_id].draws += 1;
+        }
+      });
+
+      // Calculate final sorted array based on points (Wins + 0.5 * Draws)
+      const leaderboard = Object.values(stats).map(s => {
+        const totalPoints = s.wins + (s.draws * 0.5);
+        const totalDecided = s.wins + s.losses + s.draws;
+        const winPct = totalDecided > 0 ? (totalPoints / totalDecided) : 0;
+        return {
+          ...s,
+          totalPoints,
+          winPct
+        };
+      });
+
+      leaderboard.sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) {
+          return b.totalPoints - a.totalPoints; // Most points first
+        }
+        return b.winPct - a.winPct; // Tiebreaker: Win percentage
+      });
+
+      tbody.innerHTML = '';
+
+      if (leaderboard.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="msg">No players registered yet.</td></tr>`;
+        return;
       }
 
-      const standings = Object.values(statsMap).map(s => {
-        const totalDecisions = s.wins + s.losses;
-        const winPct = totalDecisions > 0 ? (s.wins / totalDecisions).toFixed(3) : '.000';
-        return { ...s, winPct, totalDecisions };
-      });
+      leaderboard.forEach((p, index) => {
+        const rank = index + 1;
+        let rankClass = '';
+        if (rank === 1) rankClass = 'rank-1';
+        else if (rank === 2) rankClass = 'rank-2';
+        else if (rank === 3) rankClass = 'rank-3';
 
-      standings.sort((a, b) => {
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        return parseFloat(b.winPct) - parseFloat(a.winPct);
-      });
-
-      standings.forEach((s, index) => {
         const tr = document.createElement('tr');
-        const rankDisplay = index === 0 ? '👑 1' : index + 1;
-
         tr.innerHTML = `
-          <td class="rank">${rankDisplay}</td>
-          <td><strong>${s.initials}</strong></td>
-          <td class="record">${s.wins} - ${s.losses} - ${s.pushes}</td>
-          <td>${s.winPct}</td>
+          <td class="${rankClass}">#${rank}</td>
+          <td><strong>${p.initials}</strong></td>
+          <td>${p.wins}-${p.losses}-${p.draws}</td>
+          <td>${(p.winPct * 100).toFixed(1)}%</td>
+          <td><strong>${p.totalPoints % 1 === 0 ? p.totalPoints : p.totalPoints.toFixed(1)}</strong></td>
         `;
         tbody.appendChild(tr);
       });
