@@ -59,6 +59,9 @@
     
     .actions-cell select { width: auto; padding: 0.4rem; font-size: 0.9rem; margin-right: 0.5rem; }
     .save-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    .delete-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; background-color: var(--danger); }
+    .delete-btn:hover { background-color: #dc2626; }
+    
     .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; }
   </style>
 </head>
@@ -138,7 +141,7 @@
               <th>Selection</th>
               <th>Parlay?</th>
               <th>Result</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="picks-tbody">
@@ -274,8 +277,9 @@
               <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
             </select>
           </td>
-          <td class="actions-cell">
+          <td class="actions-cell" style="display: flex; gap: 0.5rem; align-items: center;">
             <button class="save-btn" onclick="savePick('${p.id}')">Save</button>
+            <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -300,6 +304,21 @@
         alert(`Error updating pick: ${error.message}`);
       } else {
         alert('Pick updated successfully!');
+        initAdmin();
+      }
+    }
+
+    async function deletePick(pickId) {
+      if (!confirm('Are you sure you want to delete this pick?')) return;
+
+      const { error } = await _supabase
+        .from('picks')
+        .delete()
+        .eq('id', pickId);
+
+      if (error) {
+        alert(`Error deleting pick: ${error.message}`);
+      } else {
         initAdmin();
       }
     }
