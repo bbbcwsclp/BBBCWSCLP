@@ -8,15 +8,7 @@
   
   <!-- Favicon / Browser Tab Icon -->
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
-
-  <!-- Apple Touch Icon (For iPhone Home Screen Bookmarks) -->
   <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
-
-  <!-- Open Graph / Social Sharing Meta Tags -->
-  <meta property="og:title" content="BBBCWSCLP — Season Leaderboard & Picks">
-  <meta property="og:description" content="Official tracking hub for Big Boys Betting Club picks, standings, and season history.">
-  <meta property="og:image" content="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
-  <meta property="og:type" content="website">
 
   <style>
     :root {
@@ -28,6 +20,7 @@
       --success: #22c55e;
       --danger: #ef4444;
       --warning: #eab308;
+      --accent: #3b82f6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -68,6 +61,26 @@
     .res-L { color: var(--danger); }
     .res-D { color: var(--warning); }
     .res-pending { color: var(--text); }
+
+    /* Gambly Link Button Styling */
+    .btn-gambly {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 1.25rem auto 0 auto;
+      background-color: var(--accent);
+      color: white;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+    .btn-gambly:hover {
+      background-color: #2563eb;
+    }
   </style>
 </head>
 <body>
@@ -136,7 +149,18 @@
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
-        html += `</div>`;
+        html += ``</div>`;
+
+        // --- DYNAMIC GAMBLY LINK FROM DATABASE ---
+        if (currentWeek.slip_link) {
+          html += `
+            <div>
+              <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly">
+                📲 Open Slip in Gambly
+              </a>
+            </div>
+          `;
+        }
       } else {
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
