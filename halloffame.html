@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Hall of Fame</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+      --accent: #3b82f6;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; flex-wrap: wrap; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    /* Section & Card Styling */
+    .section-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); text-align: left; }
+    
+    /* Championship Belt Banner */
+    .belt-banner {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 1.75rem 1.25rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .belt-banner h3 { font-size: 0.95rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-weight: 800; }
+    
+    .belt-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--gold);
+      margin-bottom: 0.75rem;
+      background-color: var(--bg);
+    }
+    
+    .belt-holder-name { font-size: 2rem; font-weight: 900; color: var(--text); margin-bottom: 0.25rem; }
+    .belt-sub { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* Card Box */
+    .hof-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+    tr:last-child td { border-bottom: none; }
+    
+    .player-cell { display: flex; align-items: center; gap: 0.75rem; }
+    .table-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background-color: var(--bg);
+    }
+
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP:</h1>
+    </header>
+
+    <nav>
+      <a href="index.html">Weekly Picks</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season History</a>
+      <a href="halloffame.html" class="active">Hall of Fame</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading Hall of Fame...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadHallOfFame() {
+      const { data: players } = await _supabase.from('players').select('*');
+      const { data: picks } = await _supabase.from('picks').select('*');
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+
+      if (!players || players.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted);">No player records found.</div>';
+        return;
+      }
+
+      // Calculate Lifetime Player Records
+      let playerStats = players.map(player => {
+        const userPicks = picks ? picks.filter(p => p.player_id === player.id && p.result) : [];
+        let wins = 0;
+        let losses = 0;
+        let pushes = 0;
+
+        userPicks.forEach(p => {
+          if (p.result === 'W') wins++;
+          else if (p.result === 'L') losses++;
+          else if (p.result === 'D') pushes++;
+        });
+
+        const decided = wins + losses;
+        const winPct = decided > 0 ? wins / decided : 0;
+
+        return {
+          initials: player.initials,
+          avatarUrl: player.avatar_url,
+          wins,
+          losses,
+          pushes,
+          decided,
+          winPct
+        };
+      });
+
+      // Sort by Win Percentage (highest first), then Total Wins as tie-breaker
+      playerStats.sort((a, b) => {
+        if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+        return b.wins - a.wins;
+      });
+
+      const leader = playerStats.length > 0 && playerStats[0].decided > 0 ? playerStats[0] : null;
+
+      // --- RENDER CONTENT ---
+      let html = '';
+
+      // Current Belt Leader Banner
+      if (leader) {
+        html += `
+          <div class="belt-banner">
+            <h3>🏆 Current Belt Leader</h3>
+        `;
+        if (leader.avatarUrl) {
+          html += `<img src="${leader.avatarUrl}" alt="${leader.initials}" class="belt-avatar">`;
+        }
+        html += `
+            <div class="belt-holder-name">${leader.initials}</div>
+            <div class="belt-sub">${leader.wins} - ${leader.losses} (${(leader.winPct * 100).toFixed(1)}% Win Rate)</div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="belt-banner">
+            <h3>🏆 Current Belt Leader</h3>
+            <div class="belt-holder-name">TBD</div>
+            <div class="belt-sub">No graded picks yet</div>
+          </div>
+        `;
+      }
+
+      // All-Time Leaderboard Section
+      html += `<div class="section-title">All-Time Individual Leaderboard</div>`;
+      html += `
+        <div class="hof-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th class="text-center">W - L - D</th>
+                <th class="text-right">Win %</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      playerStats.forEach((p, index) => {
+        const pctFormatted = p.decided > 0 ? (p.winPct * 100).toFixed(1) + '%' : '0.0%';
+        const medal = index === 0 && p.decided > 0 ? '👑 ' : '';
+        
+        html += `
+          <tr>
+            <td>
+              <div class="player-cell">
+        `;
+        
+        if (p.avatarUrl) {
+          html += `<img src="${p.avatarUrl}" alt="${p.initials}" class="table-avatar">`;
+        }
+        
+        html += `
+                <strong>${medal}${p.initials}</strong>
+              </div>
+            </td>
+            <td class="text-center">${p.wins} - ${p.losses} - ${p.pushes}</td>
+            <td class="text-right">${pctFormatted}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Past Belt Holders Section
+      html += `<div class="section-title">Championship Belt History</div>`;
+      html += `
+        <div class="hof-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Season</th>
+                <th>Belt Champion</th>
+                <th class="text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2026</td>
+                <td><em>In Progress...</em></td>
+                <td class="text-right">—</td>
+              </tr>
+              <tr>
+                <td>2025</td>
+                <td><strong>Dylan</strong></td>
+                <td class="text-right">Defending Champ</td>
+              </tr>
+              <tr>
+                <td>2024</td>
+                <td>Caleb</td>
+                <td class="text-right">Champion</td>
+              </tr>
+              <tr>
+                <td>2023</td>
+                <td>Harler</td>
+                <td class="text-right">Champion</td>
+              </tr>
+              <tr>
+                <td>2022</td>
+                <td>Turner</td>
+                <td class="text-right">Champion</td>
+              </tr>
+              <tr>
+                <td>2021</td>
+                <td>Turner</td>
+                <td class="text-right">Champion</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    loadHallOfFame();
+  </script>
+</body>
+</html>
