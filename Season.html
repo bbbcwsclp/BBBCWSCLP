@@ -15,6 +15,7 @@
       --success: #22c55e;
       --danger: #ef4444;
       --warning: #eab308;
+      --accent: #3b82f6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -29,7 +30,7 @@
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 700px; margin: 0 auto; text-align: center; }
 
     header { margin-bottom: 1.5rem; width: 100%; }
     header img { max-height: 100px; margin-bottom: 1rem; object-fit: contain; }
@@ -40,6 +41,46 @@
     nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    /* Highlights Section */
+    .highlights-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 2.5rem;
+      text-align: left;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+    }
+    .highlights-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      text-align: center;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 1.5rem;
+    }
+    @media (max-width: 500px) {
+      .highlights-grid { grid-template-columns: 1fr; }
+    }
+    .highlight-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      font-size: 0.95rem;
+    }
+    .highlight-label { color: var(--text-muted); font-weight: 600; }
+    .highlight-value { font-weight: 700; color: var(--text); }
 
     /* Week Section Styling */
     .week-section { margin-bottom: 2.5rem; text-align: center; }
@@ -73,6 +114,29 @@
       <a href="season.html" class="active">Season History</a>
     </nav>
 
+    <!-- Highlights / Superlatives Box -->
+    <div class="highlights-card">
+      <div class="highlights-title">Season Superlatives</div>
+      <div class="highlights-grid" id="highlights-container">
+        <div class="highlight-item">
+          <span class="highlight-label">Biggest Cover:</span>
+          <span class="highlight-value" id="stat-cover">--</span>
+        </div>
+        <div class="highlight-item">
+          <span class="highlight-label">Biggest Loser:</span>
+          <span class="highlight-value" id="stat-loser">--</span>
+        </div>
+        <div class="highlight-item">
+          <span class="highlight-label">Hot Streak:</span>
+          <span class="highlight-value" id="stat-hot">--</span>
+        </div>
+        <div class="highlight-item">
+          <span class="highlight-label">Cold Streak:</span>
+          <span class="highlight-value" id="stat-cold">--</span>
+        </div>
+      </div>
+    </div>
+
     <div id="content-container">
       <div style="color: var(--text-muted);">Loading season history...</div>
     </div>
@@ -95,6 +159,46 @@
         .from('picks')
         .select('*, players(initials)')
         .order('created_at', { ascending: true });
+
+      // Compute Superlatives logic
+      if (picks && picks.length > 0) {
+        // Example logic placeholders or calculations based on your data structure:
+        // You can customize fields/logic here if you track specific margin metrics, 
+        // otherwise this safely maps active player streaks and records.
+        
+        const playerStreaks = {};
+        const playerWins = {};
+        const playerLosses = {};
+
+        picks.forEach(p => {
+          const initials = p.players?.initials || '??';
+          if (!playerStreaks[initials]) playerStreaks[initials] = { currentStreak: 0, type: null };
+          
+          if (p.result === 'W') {
+            if (playerStreaks[initials].type === 'W') playerStreaks[initials].currentStreak++;
+            else playerStreaks[initials] = { currentStreak: 1, type: 'W' };
+          } else if (p.result === 'L') {
+            if (playerStreaks[initials].type === 'L') playerStreaks[initials].currentStreak++;
+            else playerStreaks[initials] = { currentStreak: 1, type: 'L' };
+          }
+        });
+
+        // Find hottest / coldest based on current active sequence
+        let bestHot = { name: 'None', count: 0 };
+        let worstCold = { name: 'None', count: 0 };
+
+        Object.entries(playerStreaks).forEach(([name, data]) => {
+          if (data.type === 'W' && data.count > bestHot.count) {
+            bestHot = { name, count: data.count };
+          }
+          if (data.type === 'L' && data.count > worstCold.count) {
+            worstCold = { name, count: data.count };
+          }
+        });
+
+        document.getElementById('stat-hot').innerText = bestHot.count > 0 ? `${bestHot.name} (${bestHot.count}W)` : 'None';
+        document.getElementById('stat-cold').innerText = worstCold.count > 0 ? `${worstCold.name} (${worstCold.count}L)` : 'None';
+      }
 
       const container = document.getElementById('content-container');
       container.innerHTML = '';
