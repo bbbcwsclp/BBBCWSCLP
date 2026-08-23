@@ -98,8 +98,8 @@
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP:</h1>
+      <img src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP</h1>
     </header>
 
     <nav>
@@ -114,7 +114,7 @@
       <div>
         <label for="week-select">Select Week: </label>
         <select id="week-select" onchange="loadScores()">
-          <option value="1">Week 1</option>
+          <option value="1" selected>Week 1</option>
           <option value="2">Week 2</option>
           <option value="3">Week 3</option>
           <option value="4">Week 4</option>
@@ -150,20 +150,23 @@
       container.innerHTML = `<div class="msg">Fetching Week ${weekNum} games...</div>`;
 
       try {
-        const response = await fetch(`https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`, {
+        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+        const response = await fetch(proxyUrl, {
           headers: {
             'Authorization': `Bearer ${CFBD_API_KEY}`
           }
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch from CFBD API. Check your API key.');
+          throw new Error('Failed to fetch from CFBD API. Check network or API key.');
         }
 
         const games = await response.json();
 
         if (!games || games.length === 0) {
-          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}.</div>`;
+          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}. (If games haven't been scheduled or uploaded for 2026 yet, try selecting Week 1 of 2025 to test!)</div>`;
           return;
         }
 
@@ -185,7 +188,7 @@
           const homeScore = game.homePoints !== null ? game.homePoints : '-';
           const awayScore = game.awayPoints !== null ? game.awayPoints : '-';
 
-          const timeString = startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' — ' + startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          const timeString = isNaN(startTime.getTime()) ? 'TBD' : startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' — ' + startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
           const card = document.createElement('div');
           card.className = 'game-card';
@@ -212,7 +215,7 @@
         });
 
       } catch (err) {
-        container.innerHTML = `<div class="msg" style="color: var(--danger);">Error loading scores: ${err.message}. Please check your API key.</div>`;
+        container.innerHTML = `<div class="msg" style="color: var(--danger);">Error loading scores: ${err.message}</div>`;
       }
     }
 
@@ -220,4 +223,3 @@
   </script>
 </body>
 </html>
-
