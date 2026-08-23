@@ -12,9 +12,10 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #eab308;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -29,83 +30,55 @@
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 700px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 900px; margin: 0 auto; }
 
-    header { margin-bottom: 1.5rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 1rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.25rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 2rem; color: var(--text); }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    /* Highlights Section */
-    .highlights-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 2.5rem;
-      text-align: left;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-    }
-    .highlights-title {
-      font-size: 1.1rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      text-align: center;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .highlights-grid {
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+    .superlatives-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
-    @media (max-width: 500px) {
-      .highlights-grid { grid-template-columns: 1fr; }
-    }
-    .highlight-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.4);
-      padding: 0.65rem 1rem;
+
+    .sup-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      border: 1px solid rgba(51, 65, 85, 0.5);
-      font-size: 0.95rem;
+      padding: 1rem;
+      text-align: center;
     }
-    .highlight-label { color: var(--text-muted); font-weight: 600; }
-    .highlight-value { font-weight: 700; color: var(--text); }
 
-    /* Week Section Styling */
-    .week-section { margin-bottom: 2.5rem; text-align: center; }
-    .week-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); }
-    .category-title { font-size: 1.1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .sup-box h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .sup-box .val { font-size: 1.15rem; font-weight: bold; color: var(--text); }
+    .sup-box .sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.25rem; margin-bottom: 1rem; font-size: 1.05rem; }
-    .pick-item { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+    
+    .streak-hot { color: var(--success); font-weight: bold; }
+    .streak-cold { color: var(--danger); font-weight: bold; }
 
-    /* Result Color Coding */
-    .res-W { color: var(--success); }
-    .res-L { color: var(--danger); }
-    .res-D { color: var(--warning); }
-    .res-pending { color: var(--text); }
-
-    .divider { border: none; border-top: 2px dashed var(--border); margin: 2rem 0; width: 100%; }
-    .error-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); padding: 1rem; border-radius: 8px; color: var(--danger); text-align: center; margin-top: 1rem; }
+    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP:</h1>
+      <h1>BBBC Season History</h1>
+      <p>Performance Trends & Superlatives</p>
     </header>
 
     <nav>
@@ -114,31 +87,38 @@
       <a href="season.html" class="active">Season History</a>
     </nav>
 
-    <!-- Highlights / Superlatives Box -->
-    <div class="highlights-card">
-      <div class="highlights-title">Season Superlatives</div>
-      <div class="highlights-grid">
-        <div class="highlight-item">
-          <span class="highlight-label">Biggest Cover:</span>
-          <span class="highlight-value" id="stat-cover">--</span>
-        </div>
-        <div class="highlight-item">
-          <span class="highlight-label">Biggest Loser:</span>
-          <span class="highlight-value" id="stat-loser">--</span>
-        </div>
-        <div class="highlight-item">
-          <span class="highlight-label">Hot Streak:</span>
-          <span class="highlight-value" id="stat-hot">--</span>
-        </div>
-        <div class="highlight-item">
-          <span class="highlight-label">Cold Streak:</span>
-          <span class="highlight-value" id="stat-cold">--</span>
-        </div>
+    <!-- Superlatives Section -->
+    <div class="superlatives-grid">
+      <div class="sup-box">
+        <h3>🔥 Biggest Cover</h3>
+        <div class="val" id="biggest-cover">Calculating...</div>
+        <div class="sub" id="biggest-cover-sub">-</div>
+      </div>
+      <div class="sup-box">
+        <h3>💔 Worst Beat</h3>
+        <div class="val" id="worst-beat">Calculating...</div>
+        <div class="sub" id="worst-beat-sub">-</div>
       </div>
     </div>
 
-    <div id="content-container">
-      <div style="color: var(--text-muted);">Loading season history...</div>
+    <div class="card">
+      <h2>Player Streaks & Performance</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Current Streak</th>
+              <th>Total Wins</th>
+              <th>Total Losses</th>
+              <th>Total Draws</th>
+            </tr>
+          </thead>
+          <tbody id="season-tbody">
+            <tr><td colspan="5" class="msg">Loading season history...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -149,118 +129,140 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadHistoryData() {
-      const container = document.getElementById('content-container');
+    async function loadSeasonHistory() {
+      const tbody = document.getElementById('season-tbody');
 
-      try {
-        // 1. Fetch weeks
-        const { data: weeks, error: weeksError } = await _supabase
-          .from('weeks')
-          .select('*')
-          .order('week_number', { ascending: false });
+      const { data: players, error: playerErr } = await _supabase
+        .from('players')
+        .select('*');
 
-        if (weeksError) throw weeksError;
+      const { data: picks, error: pickErr } = await _supabase
+        .from('picks')
+        .select('*');
 
-        // 2. Fetch picks with foreign key join to players
-        const { data: picks, error: picksError } = await _supabase
-          .from('picks')
-          .select('*, players(initials)')
-          .order('created_at', { ascending: true });
+      if (playerErr || pickErr) {
+        tbody.innerHTML = `<tr><td colspan="5" class="msg" style="color: var(--danger);">Error loading season history.</td></tr>`;
+        return;
+      }
 
-        if (picksError) throw picksError;
+      // Map player names for quick lookup
+      const playerMap = {};
+      players.forEach(p => { playerMap[p.id] = p.initials; });
 
-        // Compute Streaks for Superlatives
-        if (picks && picks.length > 0) {
-          const playerStreaks = {};
+      // Group picks by player
+      const playerPicks = {};
+      picks.forEach(p => {
+        if (!playerPicks[p.player_id]) {
+          playerPicks[p.player_id] = [];
+        }
+        playerPicks[p.player_id].push(p);
+      });
 
-          picks.forEach(p => {
-            const initials = p.players?.initials || '??';
-            if (!playerStreaks[initials]) playerStreaks[initials] = { currentStreak: 0, type: null };
-            
-            if (p.result === 'W') {
-              if (playerStreaks[initials].type === 'W') playerStreaks[initials].currentStreak++;
-              else playerStreaks[initials] = { currentStreak: 1, type: 'W' };
-            } else if (p.result === 'L') {
-              if (playerStreaks[initials].type === 'L') playerStreaks[initials].currentStreak++;
-              else playerStreaks[initials] = { currentStreak: 1, type: 'L' };
-            }
-          });
+      // Calculate Streaks & Records
+      const seasonData = players.map(p => {
+        const pPicks = playerPicks[p.id] || [];
+        pPicks.sort((a, b) => (a.week || 0) - (b.week || 0) || (a.id || 0) - (b.id || 0));
 
-          let bestHot = { name: 'None', count: 0 };
-          let worstCold = { name: 'None', count: 0 };
+        let wins = 0, losses = 0, draws = 0;
+        let streakCount = 0;
+        let streakType = null;
 
-          Object.entries(playerStreaks).forEach(([name, data]) => {
-            if (data.type === 'W' && data.count > bestHot.count) {
-              bestHot = { name, count: data.count };
-            }
-            if (data.type === 'L' && data.count > worstCold.count) {
-              worstCold = { name, count: data.count };
-            }
-          });
-
-          document.getElementById('stat-hot').innerText = bestHot.count > 0 ? `${bestHot.name} (${bestHot.count}W)` : 'None';
-          document.getElementById('stat-cold').innerText = worstCold.count > 0 ? `${worstCold.name} (${worstCold.count}L)` : 'None';
+        for (let i = pPicks.length - 1; i >= 0; i--) {
+          const res = pPicks[i].result;
+          if (res === 'W') {
+            if (streakType === null) streakType = 'W';
+            if (streakType === 'W') streakCount++;
+            else if (streakType === 'L') break;
+          } else if (res === 'L') {
+            if (streakType === null) streakType = 'L';
+            if (streakType === 'L') streakCount++;
+            else if (streakType === 'W') break;
+          }
         }
 
-        container.innerHTML = '';
-
-        if (!weeks || weeks.length === 0) {
-          container.innerHTML = '<div style="color: var(--text-muted);">No weeks found in database.</div>';
-          return;
-        }
-
-        weeks.forEach((week, weekIndex) => {
-          const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
-          if (weekPicks.length === 0) return;
-
-          const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
-          const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
-
-          const weekDiv = document.createElement('div');
-          weekDiv.className = 'week-section';
-
-          let html = `<div class="week-title">Week ${week.week_number} Parlay:</div>`;
-
-          if (parlayPicks.length > 0) {
-            html += `<div class="picks-group">`;
-            parlayPicks.forEach(p => {
-              const resClass = p.result ? `res-${p.result}` : 'res-pending';
-              html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
-            });
-            html += `</div>`;
-          } else {
-            html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.9rem;">No parlay picks designated.</div>`;
-          }
-
-          if (otherPicks.length > 0) {
-            html += `
-              <div class="category-title" style="margin-top: 1.5rem;">Others:</div>
-              <div class="picks-group">
-            `;
-            otherPicks.forEach(p => {
-              const resClass = p.result ? `res-${p.result}` : 'res-pending';
-              html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
-            });
-            html += `</div>`;
-          }
-
-          weekDiv.innerHTML = html;
-          container.appendChild(weekDiv);
-
-          if (weekIndex < weeks.length - 1) {
-            const hr = document.createElement('hr');
-            hr.className = 'divider';
-            container.appendChild(hr);
-          }
+        pPicks.forEach(pick => {
+          if (pick.result === 'W') wins++;
+          else if (pick.result === 'L') losses++;
+          else if (pick.result === 'D') draws++;
         });
 
-      } catch (err) {
-        console.error("Supabase Load Error:", err);
-        container.innerHTML = `<div class="error-box"><strong>Error loading data:</strong> ${err.message || JSON.stringify(err)}</div>`;
+        return {
+          initials: p.initials,
+          wins,
+          losses,
+          draws,
+          streakText: streakType ? `${streakType}${streakCount}` : '-'
+        };
+      });
+
+      // Calculate Superlatives (Biggest Cover & Worst Beat) based on available margin/score data
+      let bestCover = null;
+      let worstBeat = null;
+
+      picks.forEach(p => {
+        // Checking for margin data fields (e.g., margin, cover_amount, or difference)
+        const margin = p.margin !== undefined ? Number(p.margin) : (p.cover_amount !== undefined ? Number(p.cover_amount) : null);
+        
+        if (margin !== null && !isNaN(margin)) {
+          if (p.result === 'W') {
+            if (!bestCover || margin > bestCover.margin) {
+              bestCover = { margin, player: playerMap[p.player_id] || 'Unknown', game: p.team || p.game || 'Pick' };
+            }
+          } else if (p.result === 'L') {
+            if (!worstBeat || margin < worstBeat.margin) {
+              worstBeat = { margin, player: playerMap[p.player_id] || 'Unknown', game: p.team || p.game || 'Pick' };
+            }
+          }
+        }
+      });
+
+      // Update Superlative UI elements
+      const coverEl = document.getElementById('biggest-cover');
+      const coverSub = document.getElementById('biggest-cover-sub');
+      const beatEl = document.getElementById('worst-beat');
+      const beatSub = document.getElementById('worst-beat-sub');
+
+      if (bestCover) {
+        coverEl.textContent = `${bestCover.player} (+${bestCover.margin})`;
+        coverSub.textContent = bestCover.game;
+      } else {
+        coverEl.textContent = 'None recorded';
+        coverSub.textContent = 'Awaiting margin data';
       }
+
+      if (worstBeat) {
+        beatEl.textContent = `${worstBeat.player} (${worstBeat.margin})`;
+        beatSub.textContent = worstBeat.game;
+      } else {
+        beatEl.textContent = 'None recorded';
+        beatSub.textContent = 'Awaiting margin data';
+      }
+
+      tbody.innerHTML = '';
+
+      if (seasonData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="msg">No player records found.</td></tr>`;
+        return;
+      }
+
+      seasonData.forEach(p => {
+        let streakClass = '';
+        if (p.streakText.startsWith('W')) streakClass = 'streak-hot';
+        else if (p.streakText.startsWith('L')) streakClass = 'streak-cold';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${p.initials}</strong></td>
+          <td><span class="${streakClass}">${p.streakText}</span></td>
+          <td>${p.wins}</td>
+          <td>${p.losses}</td>
+          <td>${p.draws}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    loadHistoryData();
+    loadSeasonHistory();
   </script>
 </body>
 </html>
