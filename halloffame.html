@@ -51,42 +51,56 @@
     /* Section & Card Styling */
     .section-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); text-align: left; }
     
-    /* Championship Belt Banner */
-    .belt-banner {
+    /* Featured Legacy Blocks (Top Section Stacked) */
+    .featured-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .featured-card {
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       border: 2px solid var(--gold);
       border-radius: 12px;
-      padding: 1.75rem 1.25rem;
-      margin-bottom: 2rem;
-      text-align: center;
-      box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.15);
+      padding: 1.5rem;
       display: flex;
-      flex-direction: column;
       align-items: center;
+      gap: 1.5rem;
+      box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.1);
+      text-align: left;
     }
-    .belt-banner h3 { font-size: 0.95rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-weight: 800; }
-    
-    .belt-avatar {
-      width: 90px;
-      height: 90px;
+
+    .featured-avatar {
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid var(--gold);
-      margin-bottom: 0.75rem;
       background-color: var(--bg);
+      flex-shrink: 0;
     }
-    
-    .belt-holder-name { font-size: 2rem; font-weight: 900; color: var(--text); margin-bottom: 0.25rem; }
-    .belt-sub { font-size: 0.9rem; color: var(--text-muted); }
 
-    /* Card Box */
-    .hof-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 2rem;
-      text-align: left;
+    .featured-info h3 {
+      font-size: 0.85rem;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.25rem;
+      font-weight: 800;
+    }
+
+    .featured-name {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 0.15rem;
+    }
+
+    .featured-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
     }
 
     /* Chronological Champion Blocks Grid */
@@ -106,6 +120,7 @@
       align-items: center;
       gap: 1.25rem;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+      text-align: left;
     }
 
     .champ-year {
@@ -122,6 +137,7 @@
       object-fit: cover;
       border: 2px solid var(--gold);
       background-color: var(--bg);
+      flex-shrink: 0;
     }
 
     .champ-info h4 {
@@ -138,24 +154,6 @@
       letter-spacing: 0.5px;
       font-weight: 600;
     }
-
-    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
-    tr:last-child td { border-bottom: none; }
-    
-    .player-cell { display: flex; align-items: center; gap: 0.75rem; }
-    .table-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1px solid var(--border);
-      background-color: var(--bg);
-    }
-
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
   </style>
 </head>
 <body>
@@ -187,130 +185,62 @@
 
     async function loadHallOfFame() {
       const { data: players } = await _supabase.from('players').select('*');
-      const { data: weeks } = await _supabase.from('weeks').select('*').not('season', 'eq', 2026);
-      const { data: picks } = await _supabase.from('picks').select('*');
 
       const container = document.getElementById('content-container');
       container.innerHTML = '';
 
-      if (!players || players.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted);">No player records found.</div>';
-        return;
+      // Helper map to look up player avatars by name
+      const playerAvatarMap = {};
+      if (players) {
+        players.forEach(p => {
+          playerAvatarMap[p.initials.toLowerCase()] = p.avatar_url;
+        });
       }
 
-      // Helper map to look up player avatar urls easily by name/initials if needed
-      const playerAvatarMap = {};
-      players.forEach(p => {
-        playerAvatarMap[p.initials.toLowerCase()] = p.avatar_url;
-      });
-
-      const historicalWeekIds = new Set(weeks ? weeks.map(w => w.id) : []);
-      const historicalPicks = picks ? picks.filter(p => historicalWeekIds.has(p.week_id)) : [];
-
-      let playerStats = players.map(player => {
-        const userPicks = historicalPicks.filter(p => p.player_id === player.id && p.result);
-        let wins = 0;
-        let losses = 0;
-        let pushes = 0;
-
-        userPicks.forEach(p => {
-          if (p.result === 'W') wins++;
-          else if (p.result === 'L') losses++;
-          else if (p.result === 'D') pushes++;
-        });
-
-        const decided = wins + losses;
-        const winPct = decided > 0 ? wins / decided : 0;
-
-        return {
-          initials: player.initials,
-          avatarUrl: player.avatar_url,
-          wins,
-          losses,
-          pushes,
-          decided,
-          winPct
-        };
-      });
-
-      playerStats.sort((a, b) => {
-        if (b.winPct !== a.winPct) return b.winPct - a.winPct;
-        return b.wins - a.wins;
-      });
-
-      const leader = playerStats.length > 0 && playerStats[0].decided > 0 ? playerStats[0] : null;
-
-      // --- RENDER CONTENT ---
       let html = '';
 
-      // Historical Belt Leader Banner
-      if (leader) {
-        html += `
-          <div class="belt-banner">
-            <h3>🏆 All-Time Legacy Leader</h3>
-        `;
-        if (leader.avatarUrl) {
-          html += `<img src="${leader.avatarUrl}" alt="${leader.initials}" class="belt-avatar">`;
-        }
-        html += `
-            <div class="belt-holder-name">${leader.initials}</div>
-            <div class="belt-sub">${leader.wins} - ${leader.losses} (${(leader.winPct * 100).toFixed(1)}% Historical Win Rate)</div>
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="belt-banner">
-            <h3>🏆 All-Time Legacy Leader</h3>
-            <div class="belt-holder-name">TBD</div>
-            <div class="belt-sub">No historical picks recorded yet</div>
-          </div>
-        `;
-      }
+      // Top Stacked Featured Blocks
+      html += `<div class="featured-stack">`;
 
-      // Historical Leaderboard Section
-      html += `<div class="section-title">All-Time Historical Leaderboard</div>`;
+      // 1. Reigning Defending Champion (Dylan)
+      const dylanAvatar = playerAvatarMap['dylan'] || '';
       html += `
-        <div class="hof-card">
-          <table>
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th class="text-center">W - L - D</th>
-                <th class="text-right">Win %</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div class="featured-card">
       `;
-
-      playerStats.forEach((p, index) => {
-        const pctFormatted = p.decided > 0 ? (p.winPct * 100).toFixed(1) + '%' : '0.0%';
-        const medal = index === 0 && p.decided > 0 ? '👑 ' : '';
-        
-        html += `
-          <tr>
-            <td>
-              <div class="player-cell">
-        `;
-        
-        if (p.avatarUrl) {
-          html += `<img src="${p.avatarUrl}" alt="${p.initials}" class="table-avatar">`;
-        }
-        
-        html += `
-                <strong>${medal}${p.initials}</strong>
-              </div>
-            </td>
-            <td class="text-center">${p.wins} - ${p.losses} - ${p.pushes}</td>
-            <td class="text-right">${pctFormatted}</td>
-          </tr>
-        `;
-      });
-
+      if (dylanAvatar) {
+        html += `<img src="${dylanAvatar}" alt="Dylan" class="featured-avatar">`;
+      } else {
+        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">D</div>`;
+      }
       html += `
-            </tbody>
-          </table>
+          <div class="featured-info">
+            <h3>🏆 Reigning & Defending Champion</h3>
+            <div class="featured-name">Dylan</div>
+            <div class="featured-sub">2025 Season Belt Holder</div>
+          </div>
         </div>
       `;
+
+      // 2. Most Wins / All-Time Great (Austin Turner)
+      const austinAvatar = playerAvatarMap['austin turner'] || playerAvatarMap['turner'] || '';
+      html += `
+        <div class="featured-card">
+      `;
+      if (austinAvatar) {
+        html += `<img src="${austinAvatar}" alt="Austin Turner" class="featured-avatar">`;
+      } else {
+        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">AT</div>`;
+      }
+      html += `
+          <div class="featured-info">
+            <h3>👑 Most Wins / Legacy Crown</h3>
+            <div class="featured-name">Austin Turner</div>
+            <div class="featured-sub">2x Champion (2021 & 2022)</div>
+          </div>
+        </div>
+      `;
+
+      html += `</div>`; // Close featured-stack
 
       // Chronological Belt History Blocks
       const champions = [
@@ -325,7 +255,6 @@
       html += `<div class="champs-grid">`;
 
       champions.forEach(c => {
-        // Try matching the champion's name against player records to grab their avatar if available
         const matchedAvatar = playerAvatarMap[c.name.toLowerCase()] || '';
 
         html += `
@@ -336,7 +265,6 @@
         if (matchedAvatar) {
           html += `<img src="${matchedAvatar}" alt="${c.name}" class="champ-avatar">`;
         } else {
-          // Fallback placeholder ring if no picture is linked yet
           html += `<div class="champ-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${c.name[0]}</div>`;
         }
 
