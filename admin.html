@@ -299,7 +299,7 @@
         tr.innerHTML = `
           <td>Wk ${p.weeks?.week_number || '?'}</td>
           <td><strong>${p.players?.initials || '??'}</strong></td>
-          <td>${p.selection}</td>
+          <td><input type="text" id="selection-${p.id}" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
           <td><input type="checkbox" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
           <td>
             <select id="result-${p.id}">
@@ -330,8 +330,16 @@
     }
 
     async function savePick(pickId) {
+      const selectionVal = document.getElementById(`selection-${pickId}`).value;
       const resultVal = document.getElementById(`result-${pickId}`).value;
-      const { error } = await _supabase.from('picks').update({ result: resultVal || null }).eq('id', pickId);
+      
+      const { error } = await _supabase
+        .from('picks')
+        .update({ 
+          selection: selectionVal, 
+          result: resultVal || null 
+        })
+        .eq('id', pickId);
 
       if (error) {
         alert(`Error updating pick: ${error.message}`);
