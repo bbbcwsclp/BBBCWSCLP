@@ -96,7 +96,7 @@
 
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iciiAkIixpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -131,7 +131,7 @@
         };
       });
 
-      // Tally wins, losses, and draws (Treating 'D' as 0.5 win / 0.5 loss)
+      // Tally wins, losses, and draws
       picks.forEach(p => {
         if (!stats[p.player_id]) return;
         if (p.result === 'W') {
@@ -143,7 +143,7 @@
         }
       });
 
-      // Calculate final sorted array based on points (Wins + 0.5 * Draws)
+      // Calculate sorted array (Draws count as 0.5 points)
       const leaderboard = Object.values(stats).map(s => {
         const totalPoints = s.wins + (s.draws * 0.5);
         const totalDecided = s.wins + s.losses + s.draws;
@@ -157,9 +157,9 @@
 
       leaderboard.sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) {
-          return b.totalPoints - a.totalPoints; // Most points first
+          return b.totalPoints - a.totalPoints; 
         }
-        return b.winPct - a.winPct; // Tiebreaker: Win percentage
+        return b.winPct - a.winPct; 
       });
 
       tbody.innerHTML = '';
