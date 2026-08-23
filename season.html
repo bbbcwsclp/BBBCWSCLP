@@ -79,7 +79,7 @@
       font-size: 0.95rem;
     }
     .highlight-label { color: var(--text-muted); font-weight: 600; }
-    .highlight-value { font-weight: 700; color: var(--text); }
+    .highlight-value { font-weight: 700; color: var(--text); text-align: right; }
 
     /* Week Section Styling */
     .week-section { margin-bottom: 2.5rem; text-align: center; }
@@ -148,7 +148,7 @@
         const { data: weeks, error: weeksError } = await _supabase
           .from('weeks')
           .select('*')
-          .order('week_number', { ascending: false });
+          .order('week_number', { ascending: true });
 
         if (weeksError) throw weeksError;
 
@@ -159,43 +159,65 @@
 
         if (picksError) throw picksError;
 
-        // Auto-calculate hot and cold streaks based on sequence
-        if (picks && picks.length > 0) {
-          const playerStreaks = {};
+        // Auto-calculate hot and cold streaks supporting multiple leaders
+        if (weeks && weeks.length > 0 && picks && picks.length > 0) {
+          const playerHistory = {};
+          const weekOrderMap = {};
+          weeks.forEach(w => { weekOrderMap[w.id] = w.week_number; });
 
-          picks.forEach(p => {
-            const initials = p.players?.initials || '??';
-            if (!playerStreaks[initials]) playerStreaks[initials] = { currentStreak: 0, type: null };
-            
-            if (p.result === 'W') {
-              if (playerStreaks[initials].type === 'W') {
-                playerStreaks[initials].currentStreak++;
+          const sortedPicks = [...picks].sort((a, b) => {
+            const weekA = weekOrderMap[a.week_id] || 0;
+            const weekB = weekOrderMap[b.week_id] || 0;
+            return weekA - weekB;
+          });
+
+          sortedPicks.forEach(p => {
+            const initials = p.players?.initials;
+            if (!initials) return;
+            if (!playerHistory[initials]) playerHistory[initials] = [];
+            if (p.result === 'W' || p.result === 'L') {
+              playerHistory[initials].push(p.result);
+            }
+          });
+
+          let maxHotCount = 0;
+          let maxColdCount = 0;
+          let hotPlayers = [];
+          let coldPlayers = [];
+
+          Object.entries(playerHistory).forEach(([name, results]) => {
+            if (results.length === 0) return;
+
+            const lastResult = results[results.length - 1];
+            let currentStreakCount = 0;
+
+            for (let i = results.length - 1; i >= 0; i--) {
+              if (results[i] === lastResult) {
+                currentStreakCount++;
               } else {
-                playerStreaks[initials] = { currentStreak: 1, type: 'W' };
+                break;
               }
-            } else if (p.result === 'L') {
-              if (playerStreaks[initials].type === 'L') {
-                playerStreaks[initials].currentStreak++;
-              } else {
-                playerStreaks[initials] = { currentStreak: 1, type: 'L' };
+            }
+
+            if (lastResult === 'W') {
+              if (currentStreakCount > maxHotCount) {
+                maxHotCount = currentStreakCount;
+                hotPlayers = [name];
+              } else if (currentStreakCount === maxHotCount && currentStreakCount > 0) {
+                hotPlayers.push(name);
+              }
+            } else if (lastResult === 'L') {
+              if (currentStreakCount > maxColdCount) {
+                maxColdCount = currentStreakCount;
+                coldPlayers = [name];
+              } else if (currentStreakCount === maxColdCount && currentStreakCount > 0) {
+                coldPlayers.push(name);
               }
             }
           });
 
-          let bestHot = { name: 'None', count: 0 };
-          let worstCold = { name: 'None', count: 0 };
-
-          Object.entries(playerStreaks).forEach(([name, data]) => {
-            if (data.type === 'W' && data.count > bestHot.count) {
-              bestHot = { name, count: data.count };
-            }
-            if (data.type === 'L' && data.count > worstCold.count) {
-              worstCold = { name, count: data.count };
-            }
-          });
-
-          document.getElementById('stat-hot').innerText = bestHot.count > 0 ? `${bestHot.name} (${bestHot.count}W)` : 'None';
-          document.getElementById('stat-cold').innerText = worstCold.count > 0 ? `${worstCold.name} (${worstCold.count}L)` : 'None';
+          document.getElementById('stat-hot').innerText = hotPlayers.length > 0 ? `${hotPlayers.join(', ')} (${maxHotCount}W)` : 'None';
+          document.getElementById('stat-cold').innerText = coldPlayers.length > 0 ? `${coldPlayers.join(', ')} (${maxColdCount}L)` : 'None';
         }
 
         container.innerHTML = '';
@@ -205,7 +227,9 @@
           return;
         }
 
-        weeks.forEach((week, weekIndex) => {
+        const descendingWeeks = [...weeks].reverse();
+
+        descendingWeeks.forEach((week, weekIndex) => {
           const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
           if (weekPicks.length === 0) return;
 
@@ -243,7 +267,7 @@
           weekDiv.innerHTML = html;
           container.appendChild(weekDiv);
 
-          if (weekIndex < weeks.length - 1) {
+          if (weekIndex < descendingWeeks.length - 1) {
             const hr = document.createElement('hr');
             hr.className = 'divider';
             container.appendChild(hr);
