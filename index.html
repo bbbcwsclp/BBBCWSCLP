@@ -149,20 +149,20 @@
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
-        html += ``</div>`;
-
-        // --- DYNAMIC GAMBLY LINK FROM DATABASE ---
-        if (currentWeek.slip_link) {
-          html += `
-            <div>
-              <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly">
-                📲 Open Slip in Gambly
-              </a>
-            </div>
-          `;
-        }
+        html += `</div>`;
       } else {
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
+      }
+
+      // --- DYNAMIC GAMBLY LINK BUTTON (SEPARATE BELOW PICKS) ---
+      if (currentWeek.slip_link) {
+        html += `
+          <div>
+            <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly">
+              📲 Open Slip in Gambly
+            </a>
+          </div>
+        `;
       }
 
       if (otherPicks.length > 0) {
