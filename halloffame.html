@@ -189,12 +189,36 @@
       const container = document.getElementById('content-container');
       container.innerHTML = '';
 
-      // Helper map to look up player avatars by name
+      // Helper map to look up player avatars by their database initials key
       const playerAvatarMap = {};
       if (players) {
         players.forEach(p => {
-          playerAvatarMap[p.initials.toLowerCase()] = p.avatar_url;
+          if (p.initials) {
+            playerAvatarMap[p.initials.trim().toLowerCase()] = p.avatar_url;
+          }
         });
+      }
+
+      // Map display names directly to their database initials
+      const nameOverrides = {
+        'dylan turner': 'dt',
+        'austin turner': 'at',
+        'caleb': 'ck',
+        'harler': 'ah'
+      };
+
+      function getAvatarHTML(displayName, cssClass) {
+        const lowerName = displayName.trim().toLowerCase();
+        const dbKey = nameOverrides[lowerName] || lowerName;
+        
+        const avatarUrl = playerAvatarMap[dbKey] || playerAvatarMap[lowerName];
+        const initialsText = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+        
+        if (avatarUrl) {
+          return `<img src="${avatarUrl}" alt="${displayName}" class="${cssClass}">`;
+        } else {
+          return `<div class="${cssClass}" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${initialsText}</div>`;
+        }
       }
 
       let html = '';
@@ -203,16 +227,9 @@
       html += `<div class="featured-stack">`;
 
       // 1. Reigning Defending Champion (Dylan Turner)
-      const dylanAvatar = playerAvatarMap['dylan turner'] || playerAvatarMap['dylan'] || '';
       html += `
         <div class="featured-card">
-      `;
-      if (dylanAvatar) {
-        html += `<img src="${dylanAvatar}" alt="Dylan Turner" class="featured-avatar">`;
-      } else {
-        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">DT</div>`;
-      }
-      html += `
+          ${getAvatarHTML('Dylan Turner', 'featured-avatar')}
           <div class="featured-info">
             <h3>🏆 Reigning & Defending Champion</h3>
             <div class="featured-name">Dylan Turner</div>
@@ -222,16 +239,9 @@
       `;
 
       // 2. Most Wins / All-Time Great (Austin Turner)
-      const austinAvatar = playerAvatarMap['austin turner'] || playerAvatarMap['turner'] || '';
       html += `
         <div class="featured-card">
-      `;
-      if (austinAvatar) {
-        html += `<img src="${austinAvatar}" alt="Austin Turner" class="featured-avatar">`;
-      } else {
-        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">AT</div>`;
-      }
-      html += `
+          ${getAvatarHTML('Austin Turner', 'featured-avatar')}
           <div class="featured-info">
             <h3>👑 Most Wins / Legacy Crown</h3>
             <div class="featured-name">Austin Turner</div>
@@ -255,23 +265,10 @@
       html += `<div class="champs-grid">`;
 
       champions.forEach(c => {
-        // Match avatar by checking full name or first name keys in the map
-        const lookupKey = c.name.toLowerCase();
-        const shortKey = c.name.split(' ')[0].toLowerCase();
-        const matchedAvatar = playerAvatarMap[lookupKey] || playerAvatarMap[shortKey] || '';
-
         html += `
           <div class="champ-block">
             <div class="champ-year">${c.year}</div>
-        `;
-
-        if (matchedAvatar) {
-          html += `<img src="${matchedAvatar}" alt="${c.name}" class="champ-avatar">`;
-        } else {
-          html += `<div class="champ-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${c.name.split(' ').map(n => n[0]).join('')}</div>`;
-        }
-
-        html += `
+            ${getAvatarHTML(c.name, 'champ-avatar')}
             <div class="champ-info">
               <h4>${c.name}</h4>
               <p>${c.role}</p>
