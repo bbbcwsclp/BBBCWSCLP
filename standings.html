@@ -60,7 +60,7 @@
   <div class="container">
     <header>
       <h1>BBBC Standings</h1>
-      <p>Season Leaderboar<a href="admin.html" style="color: inherit; text-decoration: none;" title="">D</a>S</p>
+      <p>Season Leaderboard & Records</p>
     </header>
 
     <nav>
@@ -178,10 +178,20 @@
           rankClass = 'rank-3';
         }
 
+        // Check if player initials contain 'DS' case-insensitively and wrap the D, 
+        // otherwise fallback to normal rendering
+        let formattedInitials = p.initials;
+        const dsMatchIndex = p.initials.toUpperCase().indexOf('DS');
+        if (dsMatchIndex !== -1) {
+          const before = p.initials.substring(0, dsMatchIndex);
+          const after = p.initials.substring(dsMatchIndex + 2);
+          formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">D</a>S${after}`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="${rankClass}">${rankDisplay}</td>
-          <td><strong>${p.initials}</strong></td>
+          <td><strong>${formattedInitials}</strong></td>
           <td>${p.wins}-${p.losses}-${p.draws}</td>
           <td>${(p.winPct * 100).toFixed(1)}%</td>
         `;
