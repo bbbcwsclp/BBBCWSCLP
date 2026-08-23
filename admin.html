@@ -46,6 +46,10 @@
     .form-group { margin-bottom: 1rem; }
     label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
     input, select { width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input { width: auto; }
+
     button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
     button:hover { background-color: #2563eb; }
 
@@ -75,11 +79,11 @@
 
     <!-- Create New Week Card -->
     <div class="card">
-      <h2>Open a New Week</h2>
+      <h2>1. Open a New Week</h2>
       <form id="week-form">
         <div class="form-group">
           <label for="week-number">Week Number</label>
-          <input type="number" id="week-number" required placeholder="e.g. 3">
+          <input type="number" id="week-number" required placeholder="e.g. 2">
         </div>
         <div class="form-group">
           <label for="week-status">Status</label>
@@ -93,9 +97,38 @@
       </form>
     </div>
 
+    <!-- Add New Pick Card -->
+    <div class="card">
+      <h2>2. Add a Member Pick</h2>
+      <form id="pick-form">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+    </div>
+
     <!-- Grade Picks Card -->
     <div class="card">
-      <h2>Manage & Grade Picks</h2>
+      <h2>3. Manage & Grade Existing Picks</h2>
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -123,6 +156,42 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Load Dropdowns & Picks on page load
+    async function initAdmin() {
+      await loadDropdowns();
+      await loadAdminPicks();
+    }
+
+    async function loadDropdowns() {
+      // Load Weeks
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      const weekSelect = document.getElementById('pick-week');
+      weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      if (weeks) {
+        weeks.forEach(w => {
+          weekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+        });
+      }
+
+      // Load Players
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .order('initials', { ascending: true });
+
+      const playerSelect = document.getElementById('pick-player');
+      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+      if (players) {
+        players.forEach(p => {
+          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
+        });
+      }
+    }
+
     // Handle New Week Form
     document.getElementById('week-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -132,7 +201,7 @@
 
       const { error } = await _supabase
         .from('weeks')
-        .insert([{ week_number: weekNum, status: status }]);
+        .insert([{ week_number: weekNum, status: status, season: 2026 }]);
 
       if (error) {
         msg.style.color = 'var(--danger)';
@@ -141,12 +210,42 @@
         msg.style.color = 'var(--success)';
         msg.innerText = `Week ${weekNum} created successfully!`;
         document.getElementById('week-number').value = '';
-        loadAdminData();
+        initAdmin();
       }
     });
 
-    // Load Picks for Grading
-    async function loadAdminData() {
+    // Handle New Pick Form
+    document.getElementById('pick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekId = document.getElementById('pick-week').value;
+      const playerId = document.getElementById('pick-player').value;
+      const selection = document.getElementById('pick-selection').value;
+      const isParlay = document.getElementById('pick-is-parlay').checked;
+      const msg = document.getElementById('pick-msg');
+
+      const { error } = await _supabase
+        .from('picks')
+        .insert([{ 
+          week_id: weekId, 
+          player_id: playerId, 
+          selection: selection, 
+          is_parlay: isParlay 
+        }]);
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Pick added successfully!`;
+        document.getElementById('pick-selection').value = '';
+        document.getElementById('pick-is-parlay').checked = false;
+        initAdmin();
+      }
+    });
+
+    // Load Picks for Grading Table
+    async function loadAdminPicks() {
       const { data: picks } = await _supabase
         .from('picks')
         .select('*, weeks(week_number), players(initials)')
@@ -166,7 +265,7 @@
           <td>Wk ${p.weeks?.week_number || '?'}</td>
           <td><strong>${p.players?.initials || '??'}</strong></td>
           <td>${p.selection}</td>
-          <td><input type="checkbox" id="parlay-${p.id}" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
+          <td><input type="checkbox" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
           <td>
             <select id="result-${p.id}">
               <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
@@ -201,11 +300,11 @@
         alert(`Error updating pick: ${error.message}`);
       } else {
         alert('Pick updated successfully!');
-        loadAdminData();
+        initAdmin();
       }
     }
 
-    loadAdminData();
+    initAdmin();
   </script>
 </body>
 </html>
