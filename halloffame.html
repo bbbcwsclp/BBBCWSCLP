@@ -202,20 +202,20 @@
       // Top Stacked Featured Blocks
       html += `<div class="featured-stack">`;
 
-      // 1. Reigning Defending Champion (Dylan)
-      const dylanAvatar = playerAvatarMap['dylan'] || '';
+      // 1. Reigning Defending Champion (Dylan Turner)
+      const dylanAvatar = playerAvatarMap['dylan turner'] || playerAvatarMap['dylan'] || '';
       html += `
         <div class="featured-card">
       `;
       if (dylanAvatar) {
-        html += `<img src="${dylanAvatar}" alt="Dylan" class="featured-avatar">`;
+        html += `<img src="${dylanAvatar}" alt="Dylan Turner" class="featured-avatar">`;
       } else {
-        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">D</div>`;
+        html += `<div class="featured-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold); font-size: 1.5rem;">DT</div>`;
       }
       html += `
           <div class="featured-info">
             <h3>🏆 Reigning & Defending Champion</h3>
-            <div class="featured-name">Dylan</div>
+            <div class="featured-name">Dylan Turner</div>
             <div class="featured-sub">2025 Season Belt Holder</div>
           </div>
         </div>
@@ -244,18 +244,21 @@
 
       // Chronological Belt History Blocks
       const champions = [
-        { year: '2025', name: 'Dylan', role: 'Defending Champion' },
+        { year: '2025', name: 'Dylan Turner', role: 'Defending Champion' },
         { year: '2024', name: 'Caleb', role: 'Belt Champion' },
         { year: '2023', name: 'Harler', role: 'Belt Champion' },
-        { year: '2022', name: 'Turner', role: 'Belt Champion' },
-        { year: '2021', name: 'Turner', role: 'Belt Champion' }
+        { year: '2022', name: 'Austin Turner', role: 'Belt Champion' },
+        { year: '2021', name: 'Austin Turner', role: 'Belt Champion' }
       ];
 
       html += `<div class="section-title">Championship Belt History</div>`;
       html += `<div class="champs-grid">`;
 
       champions.forEach(c => {
-        const matchedAvatar = playerAvatarMap[c.name.toLowerCase()] || '';
+        // Match avatar by checking full name or first name keys in the map
+        const lookupKey = c.name.toLowerCase();
+        const shortKey = c.name.split(' ')[0].toLowerCase();
+        const matchedAvatar = playerAvatarMap[lookupKey] || playerAvatarMap[shortKey] || '';
 
         html += `
           <div class="champ-block">
@@ -265,7 +268,7 @@
         if (matchedAvatar) {
           html += `<img src="${matchedAvatar}" alt="${c.name}" class="champ-avatar">`;
         } else {
-          html += `<div class="champ-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${c.name[0]}</div>`;
+          html += `<div class="champ-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--gold);">${c.name.split(' ').map(n => n[0]).join('')}</div>`;
         }
 
         html += `
