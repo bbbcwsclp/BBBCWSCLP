@@ -150,10 +150,15 @@
       container.innerHTML = `<div class="msg">Fetching Week ${weekNum} games...</div>`;
 
       try {
-        // Pass API key via query parameter to avoid CORS header restrictions
-        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular&apiKey=${encodeURIComponent(CFBD_API_KEY)}`;
+        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`;
+        // Using corsproxy.io which cleanly passes custom Authorization headers through to the destination API
+        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
 
-        const response = await fetch(targetUrl);
+        const response = await fetch(proxyUrl, {
+          headers: {
+            'Authorization': `Bearer ${CFBD_API_KEY}`
+          }
+        });
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`);
