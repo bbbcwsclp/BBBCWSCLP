@@ -95,7 +95,11 @@
             <option value="closed">Closed / Finished</option>
           </select>
         </div>
-        <button type="submit">Save Week Status</button>
+        <div class="form-group">
+          <label for="week-slip-link">Gambly / Slip Link URL</label>
+          <input type="url" id="week-slip-link" placeholder="https://gambly.com/slip/...">
+        </div>
+        <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
       </form>
     </div>
@@ -181,6 +185,8 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let allWeeksCache = [];
+
     async function initAdmin() {
       await loadDropdowns();
       await loadAdminPicks();
@@ -191,6 +197,8 @@
         .from('weeks')
         .select('*')
         .order('week_number', { ascending: false });
+
+      allWeeksCache = weeks || [];
 
       const weekSelect = document.getElementById('pick-week');
       weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
@@ -214,24 +222,46 @@
       }
     }
 
-    // Handle Week Creation / Closing
+    // Auto-fill slip link if user types a week number that already exists
+    document.getElementById('week-number').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      const found = allWeeksCache.find(w => w.week_number === val);
+      const linkInput = document.getElementById('week-slip-link');
+      const statusSelect = document.getElementById('week-status');
+
+      if (found) {
+        linkInput.value = found.slip_link || '';
+        statusSelect.value = found.status || 'open';
+      } else {
+        linkInput.value = '';
+      }
+    });
+
+    // Handle Week Creation / Closing & Link Saving
     document.getElementById('week-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const weekNum = parseInt(document.getElementById('week-number').value);
       const status = document.getElementById('week-status').value;
+      const slipLink = document.getElementById('week-slip-link').value.trim();
       const msg = document.getElementById('week-msg');
 
       const { error } = await _supabase
         .from('weeks')
-        .upsert([{ season: 2026, week_number: weekNum, status: status }], { onConflict: 'season,week_number' });
+        .upsert([{ 
+          season: 2026, 
+          week_number: weekNum, 
+          status: status, 
+          slip_link: slipLink || null 
+        }], { onConflict: 'season,week_number' });
 
       if (error) {
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
         msg.style.color = 'var(--success)';
-        msg.innerText = `Week ${weekNum} status set to "${status}" successfully!`;
+        msg.innerText = `Week ${weekNum} updated successfully!`;
         document.getElementById('week-number').value = '';
+        document.getElementById('week-slip-link').value = '';
         initAdmin();
       }
     });
