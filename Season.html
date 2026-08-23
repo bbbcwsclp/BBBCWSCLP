@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Season History</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1.5rem; width: 100%; }
+    header img { max-height: 100px; margin-bottom: 1rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.25rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 2rem; color: var(--text); }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    /* Week Section Styling */
+    .week-section { margin-bottom: 2.5rem; text-align: center; }
+    .week-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); }
+    .category-title { font-size: 1.1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.25rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 600; }
+
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+
+    .divider { border: none; border-top: 2px dashed var(--border); margin: 2rem 0; width: 100%; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP:</h1>
+    </header>
+
+    <nav>
+      <a href="index.html">Weekly Picks</a>
+      <a href="standings.html">Standings</a>
+      <a href="history.html" class="active">Season History</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading season history...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadHistoryData() {
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*, players(initials)')
+        .order('created_at', { ascending: true });
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+
+      if (!weeks || weeks.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted);">No weeks found.</div>';
+        return;
+      }
+
+      weeks.forEach((week, weekIndex) => {
+        const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
+        if (weekPicks.length === 0) return;
+
+        const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
+        const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
+
+        const weekDiv = document.createElement('div');
+        weekDiv.className = 'week-section';
+
+        let html = `<div class="week-title">Week ${week.week_number} Parlay:</div>`;
+
+        if (parlayPicks.length > 0) {
+          html += `<div class="picks-group">`;
+          parlayPicks.forEach(p => {
+            const resClass = p.result ? `res-${p.result}` : 'res-pending';
+            html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          });
+          html += `</div>`;
+        } else {
+          html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.9rem;">No parlay picks designated.</div>`;
+        }
+
+        if (otherPicks.length > 0) {
+          html += `
+            <div class="category-title" style="margin-top: 1.5rem;">Others:</div>
+            <div class="picks-group">
+          `;
+          otherPicks.forEach(p => {
+            const resClass = p.result ? `res-${p.result}` : 'res-pending';
+            html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          });
+          html += `</div>`;
+        }
+
+        weekDiv.innerHTML = html;
+        container.appendChild(weekDiv);
+
+        if (weekIndex < weeks.length - 1) {
+          const hr = document.createElement('hr');
+          hr.className = 'divider';
+          container.appendChild(hr);
+        }
+      });
+    }
+
+    loadHistoryData();
+  </script>
+</body>
+</html>
