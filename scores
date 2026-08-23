@@ -1,1 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Scores & Schedule</title>
+  
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #3b82f6;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 750px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; flex-wrap: wrap; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    .controls-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .controls-card label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+    .controls-card select { padding: 0.5rem 1rem; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; }
+
+    .game-card { 
+      background-color: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 1.25rem 1.5rem; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); 
+      margin-bottom: 1rem; 
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .game-info { flex-grow: 1; }
+    .game-teams { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .team-row { display: flex; justify-content: space-between; align-items: center; padding-right: 1.5rem; }
+    
+    .game-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 1rem; margin-top: 0.5rem; }
+    .badge { padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .badge-live { background-color: var(--danger); color: white; animation: pulse 2s infinite; }
+    .badge-final { background-color: var(--border); color: var(--text-muted); }
+    .badge-upcoming { background-color: var(--accent); color: white; }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .msg { text-align: center; color: var(--text-muted); padding: 2rem; font-style: italic; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP:</h1>
+    </header>
+
+    <nav>
+      <a href="index.html">Weekly Picks</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season History</a>
+      <a href="scores.html" class="active">Scores & Schedule</a>
+    </nav>
+
+    <!-- Week Selector Filter -->
+    <div class="controls-card">
+      <div>
+        <label for="week-select">Select Week: </label>
+        <select id="week-select" onchange="loadScores()">
+          <option value="1">Week 1</option>
+          <option value="2">Week 2</option>
+          <option value="3">Week 3</option>
+          <option value="4">Week 4</option>
+          <option value="5">Week 5</option>
+          <option value="6">Week 6</option>
+          <option value="7">Week 7</option>
+          <option value="8">Week 8</option>
+          <option value="9">Week 9</option>
+          <option value="10">Week 10</option>
+          <option value="11">Week 11</option>
+          <option value="12">Week 12</option>
+          <option value="13">Week 13</option>
+          <option value="14">Week 14</option>
+          <option value="15">Week 15</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Scores Container -->
+    <div id="scores-container">
+      <div class="msg">Loading schedule and scores...</div>
+    </div>
+  </div>
+
+  <script>
+    const CFBD_API_KEY = 'O8CRAojmwGdRZqJj/G6cB8epsXzcILCmaPJVudl2EXKJdIjhP8iZmlkDgWvhPVwA';
+    const CURRENT_YEAR = 2026;
+
+    async function loadScores() {
+      const container = document.getElementById('scores-container');
+      const weekNum = document.getElementById('week-select').value;
+      
+      container.innerHTML = `<div class="msg">Fetching Week ${weekNum} games...</div>`;
+
+      try {
+        const response = await fetch(`https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`, {
+          headers: {
+            'Authorization': `Bearer ${CFBD_API_KEY}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch from CFBD API. Check your API key.');
+        }
+
+        const games = await response.json();
+
+        if (!games || games.length === 0) {
+          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}.</div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+
+        games.forEach(game => {
+          const isCompleted = game.completed;
+          const startTime = new Date(game.startDate);
+          const now = new Date();
+          const isLive = !isCompleted && now >= startTime;
+
+          let badgeHtml = `<span class="badge badge-upcoming">Upcoming</span>`;
+          if (isCompleted) {
+            badgeHtml = `<span class="badge badge-final">Final</span>`;
+          } else if (isLive) {
+            badgeHtml = `<span class="badge badge-live">LIVE</span>`;
+          }
+
+          const homeScore = game.homePoints !== null ? game.homePoints : '-';
+          const awayScore = game.awayPoints !== null ? game.awayPoints : '-';
+
+          const timeString = startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' — ' + startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+          const card = document.createElement('div');
+          card.className = 'game-card';
+          card.innerHTML = `
+            <div class="game-info">
+              <div class="game-teams">
+                <div class="team-row">
+                  <span>${game.awayTeam}</span>
+                  <span style="font-weight: ${Number(awayScore) > Number(homeScore) ? '900' : '500'};">${awayScore}</span>
+                </div>
+                <div class="team-row">
+                  <span>${game.homeTeam} (Home)</span>
+                  <span style="font-weight: ${Number(homeScore) > Number(awayScore) ? '900' : '500'};">${homeScore}</span>
+                </div>
+              </div>
+              <div class="game-meta">
+                <span>${timeString}</span>
+                <span>${game.venue || 'Neutral Site'}</span>
+              </div>
+            </div>
+            <div>${badgeHtml}</div>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="msg" style="color: var(--danger);">Error loading scores: ${err.message}. Please check your API key.</div>`;
+      }
+    }
+
+    loadScores();
+  </script>
+</body>
+</html>
 
