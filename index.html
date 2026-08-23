@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP</title>
+  <title>BBBCWSCLP — Weekly Picks</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Logo & Favicon / Apple Touch Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <!-- Open Graph / Social Sharing Meta Tags -->
+  <meta property="og:title" content="BBBCWSCLP — Season Leaderboard & Picks">
+  <meta property="og:description" content="Official tracking hub for Big Boys Betting Club picks, standings, and season history.">
+  <meta property="og:image" content="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+  <meta property="og:type" content="website">
+
   <style>
     :root {
       --bg: #0f172a;
@@ -12,9 +23,10 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #eab308;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -29,40 +41,41 @@
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 800px; margin: 0 auto; }
 
-    header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    /* Week Section Styling */
-    .week-section { margin-bottom: 2.5rem; text-align: center; }
-    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); }
-    .category-title { font-size: 1.15rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.1rem; }
-    .pick-item { font-weight: 700; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem; font-weight: 600; }
+    input, select { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
 
-    /* Result Color Coding */
-    .res-W { color: var(--success); }
-    .res-L { color: var(--danger); }
-    .res-D { color: var(--warning); }
-    .res-pending { color: var(--text); }
+    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.2s; }
+    button:hover { background-color: #2563eb; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+
+    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP:</h1>
+      <h1>BBBC Weekly Picks</h1>
+      <p>Submit & View Weekly Selections</p>
     </header>
 
     <nav>
@@ -71,8 +84,51 @@
       <a href="season.html">Season History</a>
     </nav>
 
-    <div id="content-container">
-      <div style="color: var(--text-muted);">Loading active week picks...</div>
+    <!-- Pick Submission Card -->
+    <div class="card">
+      <h2>Submit Your Pick</h2>
+      <form id="pick-form" onsubmit="submitPick(event)">
+        <div class="form-group">
+          <label for="player-select">Player</label>
+          <select id="player-select" required>
+            <option value="">Select Player...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="week-input">Week Number</label>
+          <input type="number" id="week-input" placeholder="e.g., 1" min="1" required>
+        </div>
+        <div class="form-group">
+          <label for="team-input">Team / Selection & Spread</label>
+          <input type="text" id="team-input" placeholder="e.g., Alabama -7.5" required>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <p id="form-msg" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></p>
+      </form>
+    </div>
+
+    <!-- Weekly Picks Display Card -->
+    <div class="card">
+      <h2>Submitted Picks</h2>
+      <div class="form-group" style="max-width: 200px;">
+        <label for="filter-week">Filter by Week</label>
+        <input type="number" id="filter-week" placeholder="Week #" onchange="loadPicks()">
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="picks-tbody">
+            <tr><td colspan="4" class="msg">Loading picks...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -83,68 +139,86 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadActiveWeek() {
-      const { data: weeks } = await _supabase
-        .from('weeks')
-        .select('*')
-        .eq('status', 'open')
-        .limit(1);
-
-      const container = document.getElementById('content-container');
-      container.innerHTML = '';
-
-      if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
-        return;
-      }
-
-      const currentWeek = weeks[0];
-
-      const { data: picks } = await _supabase
-        .from('picks')
-        .select('*, players(initials)')
-        .eq('week_id', currentWeek.id)
-        .order('created_at', { ascending: true });
-
-      if (!picks || picks.length === 0) {
-        container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
-        return;
-      }
-
-      const parlayPicks = picks.filter(p => p.is_parlay === true);
-      const otherPicks = picks.filter(p => p.is_parlay !== true);
-
-      let html = `<div class="week-section">`;
-      html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
-
-      if (parlayPicks.length > 0) {
-        html += `<div class="picks-group">`;
-        parlayPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
-        });
-        html += `</div>`;
-      } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
-      }
-
-      if (otherPicks.length > 0) {
-        html += `
-          <div class="category-title">Others:</div>
-          <div class="picks-group">
-        `;
-        otherPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
-        });
-        html += `</div>`;
-      }
-
-      html += `</div>`;
-      container.innerHTML = html;
+    async function initPage() {
+      await loadPlayers();
+      await loadPicks();
     }
 
-    loadActiveWeek();
+    async function loadPlayers() {
+      const select = document.getElementById('player-select');
+      const { data: players, error } = await _supabase.from('players').select('*').order('initials');
+
+      if (error) {
+        console.error('Error loading players:', error);
+        return;
+      }
+
+      players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.initials;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadPicks() {
+      const tbody = document.getElementById('picks-tbody');
+      const filterWeek = document.getElementById('filter-week').value;
+
+      let query = _supabase.from('picks').select('*, players(initials)');
+      if (filterWeek) {
+        query = query.eq('week', filterWeek);
+      }
+
+      const { data: picks, error } = await query.order('week', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="4" class="msg" style="color: var(--danger);">Error loading picks.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      if (!picks || picks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="msg">No picks found.</td></tr>`;
+        return;
+      }
+
+      picks.forEach(p => {
+        const tr = document.createElement('tr');
+        const playerName = p.players ? p.players.initials : 'Unknown';
+        tr.innerHTML = `
+          <td>Week ${p.week || '-'}</td>
+          <td><strong>${playerName}</strong></td>
+          <td>${p.team || p.pick || '-'}</td>
+          <td>${p.result ? p.result.toUpperCase() : 'Pending'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function submitPick(event) {
+      event.preventDefault();
+      const playerId = document.getElementById('player-select').value;
+      const week = parseInt(document.getElementById('week-input').value);
+      const team = document.getElementById('team-input').value;
+      const msg = document.getElementById('form-msg');
+
+      const { error } = await _supabase.from('picks').insert([
+        { player_id: playerId, week: week, team: team }
+      ]);
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.textContent = `Error submitting pick: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.textContent = 'Pick submitted successfully!';
+        document.getElementById('team-input').value = '';
+        loadPicks();
+      }
+    }
+
+    initPage();
   </script>
 </body>
 </html>
