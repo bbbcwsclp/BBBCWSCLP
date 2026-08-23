@@ -48,13 +48,6 @@
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; }
     
-    .streak-hot { color: var(--success); font-weight: bold; }
-    .streak-cold { color: var(--danger); font-weight: bold; }
-    
-    .result-w { color: var(--success); font-weight: bold; }
-    .result-l { color: var(--danger); font-weight: bold; }
-    .result-d { color: var(--warning); font-weight: bold; }
-
     .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
   </style>
 </head>
@@ -63,7 +56,7 @@
   <div class="container">
     <header>
       <h1>BBBC Season History</h1>
-      <p>Performance Trends & Past Weeks</p>
+      <p>Past Weeks & Records</p>
     </header>
 
     <nav>
@@ -71,26 +64,6 @@
       <a href="standings.html">Standings</a>
       <a href="season.html" class="active">Season History</a>
     </nav>
-
-    <div class="card">
-      <h2>Player Streaks & Performance</h2>
-      <div style="overflow-x: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Current Streak</th>
-              <th>Total Wins</th>
-              <th>Total Losses</th>
-              <th>Total Draws</th>
-            </tr>
-          </thead>
-          <tbody id="season-tbody">
-            <tr><td colspan="5" class="msg">Loading season history...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
     <div class="card">
       <h2>Previous Weeks Results</h2>
@@ -120,7 +93,6 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadSeasonHistory() {
-      const seasonTbody = document.getElementById('season-tbody');
       const historyTbody = document.getElementById('history-tbody');
 
       const { data: players, error: playerErr } = await _supabase
@@ -132,112 +104,39 @@
         .select('*');
 
       if (playerErr || pickErr) {
-        seasonTbody.innerHTML = `<tr><td colspan="5" class="msg" style="color: var(--danger);">Error loading season history.</td></tr>`;
-        historyTbody.innerHTML = `<tr><td colspan="4" class="msg" style="color: var(--danger);">Error loading past weeks.</td></tr>`;
+        historyTbody.innerHTML = `<tr><td colspan="4" class="msg" style="color: var(--danger);">Error loading history data.</td></tr>`;
         return;
       }
 
-      // Map player IDs to initials
       const playerMap = {};
       players.forEach(p => {
         playerMap[p.id] = p.initials;
       });
 
-      // Group picks by player
-      const playerPicks = {};
-      picks.forEach(p => {
-        if (!playerPicks[p.player_id]) {
-          playerPicks[p.player_id] = [];
-        }
-        playerPicks[p.player_id].push(p);
-      });
-
-      // 1. Render Player Streaks & Performance Table
-      const seasonData = players.map(p => {
-        const pPicks = playerPicks[p.id] || [];
-        pPicks.sort((a, b) => (a.week || 0) - (b.week || 0) || (a.id || 0) - (b.id || 0));
-
-        let wins = 0, losses = 0, draws = 0;
-        let streakCount = 0;
-        let streakType = null;
-
-        for (let i = pPicks.length - 1; i >= 0; i--) {
-          const res = pPicks[i].result;
-          if (res === 'W') {
-            if (streakType === null) streakType = 'W';
-            if (streakType === 'W') streakCount++;
-            else if (streakType === 'L') break;
-          } else if (res === 'L') {
-            if (streakType === null) streakType = 'L';
-            if (streakType === 'L') streakCount++;
-            else if (streakType === 'W') break;
-          }
-        }
-
-        pPicks.forEach(pick => {
-          if (pick.result === 'W') wins++;
-          else if (pick.result === 'L') losses++;
-          else if (pick.result === 'D') draws++;
-        });
-
-        return {
-          initials: p.initials,
-          wins,
-          losses,
-          draws,
-          streakText: streakType ? `${streakType}${streakCount}` : '-'
-        };
-      });
-
-      seasonTbody.innerHTML = '';
-      if (seasonData.length === 0) {
-        seasonTbody.innerHTML = `<tr><td colspan="5" class="msg">No player records found.</td></tr>`;
-      } else {
-        seasonData.forEach(p => {
-          let streakClass = '';
-          if (p.streakText.startsWith('W')) streakClass = 'streak-hot';
-          else if (p.streakText.startsWith('L')) streakClass = 'streak-cold';
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong>${p.initials}</strong></td>
-            <td><span class="${streakClass}">${p.streakText}</span></td>
-            <td>${p.wins}</td>
-            <td>${p.losses}</td>
-            <td>${p.draws}</td>
-          `;
-          seasonTbody.appendChild(tr);
-        });
-      }
-
-      // 2. Render Previous Weeks Table (Sorted by week descending, then player)
       picks.sort((a, b) => (b.week || 0) - (a.week || 0));
 
       historyTbody.innerHTML = '';
+
       if (picks.length === 0) {
         historyTbody.innerHTML = `<tr><td colspan="4" class="msg">No previous picks found.</td></tr>`;
-      } else {
-        picks.forEach(p => {
-          const playerName = playerMap[p.player_id] || 'Unknown';
-          const weekNum = p.week !== undefined ? `Week ${p.week}` : 'N/A';
-          const pickDetails = p.team || p.pick || 'Selection made';
-          
-          let resultDisplay = p.result ? p.result.toUpperCase() : 'Pending';
-          let resultClass = '';
-          if (resultDisplay === 'W') resultClass = 'result-w';
-          else if (resultDisplay === 'L') resultClass = 'result-l';
-          else if (resultDisplay === 'D') resultClass = 'result-d';
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${weekNum}</td>
-            <td><strong>${playerName}</strong></td>
-            <td>${pickDetails}</td>
-            <td><span class="${resultClass}">${resultDisplay}</span></td>
-          `;
-          historyTbody.appendChild(tr);
-        });
+        return;
       }
+
+      picks.forEach(p => {
+        const playerName = playerMap[p.player_id] || 'Unknown';
+        const weekNum = p.week !== undefined ? `Week ${p.week}` : 'N/A';
+        const pickDetails = p.team || p.pick || 'Selection made';
+        const resultDisplay = p.result ? p.result.toUpperCase() : 'Pending';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${weekNum}</td>
+          <td><strong>${playerName}</strong></td>
+          <td>${pickDetails}</td>
+          <td>${resultDisplay}</td>
+        `;
+        historyTbody.appendChild(tr);
+      });
     }
 
     loadSeasonHistory();
