@@ -150,23 +150,19 @@
       container.innerHTML = `<div class="msg">Fetching Week ${weekNum} games...</div>`;
 
       try {
-        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        // Pass API key via query parameter to avoid CORS header restrictions
+        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular&apiKey=${encodeURIComponent(CFBD_API_KEY)}`;
 
-        const response = await fetch(proxyUrl, {
-          headers: {
-            'Authorization': `Bearer ${CFBD_API_KEY}`
-          }
-        });
+        const response = await fetch(targetUrl);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch from CFBD API. Check network or API key.');
+          throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
 
         const games = await response.json();
 
         if (!games || games.length === 0) {
-          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}. (If games haven't been scheduled or uploaded for 2026 yet, try selecting Week 1 of 2025 to test!)</div>`;
+          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}.</div>`;
           return;
         }
 
