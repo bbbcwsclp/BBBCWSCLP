@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Big Boys Betting Club — Season Standings</title>
+  <title>BBBCWSCLP — Season Standings</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -68,6 +68,7 @@
     <nav>
       <a href="index.html">Weekly Picks</a>
       <a href="standings.html" class="active">Standings</a>
+      <a href="season.html">Season History</a>
     </nav>
 
     <div class="card">
@@ -98,7 +99,6 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadStandings() {
-      // 1. Fetch all active players and all picks
       const { data: players } = await _supabase
         .from('players')
         .select('*')
@@ -116,7 +116,6 @@
         return;
       }
 
-      // 2. Aggregate stats for each player
       const statsMap = {};
       players.forEach(p => {
         statsMap[p.id] = {
@@ -137,7 +136,6 @@
         });
       }
 
-      // 3. Convert to array and sort by Wins (descending), then Win %
       const standings = Object.values(statsMap).map(s => {
         const totalDecisions = s.wins + s.losses;
         const winPct = totalDecisions > 0 ? (s.wins / totalDecisions).toFixed(3) : '.000';
@@ -149,7 +147,6 @@
         return parseFloat(b.winPct) - parseFloat(a.winPct);
       });
 
-      // 4. Render into table
       standings.forEach((s, index) => {
         const tr = document.createElement('tr');
         const rankDisplay = index === 0 ? '👑 1' : index + 1;
