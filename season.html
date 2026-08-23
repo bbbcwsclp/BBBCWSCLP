@@ -59,7 +59,7 @@
       text-align: center;
     }
     .stat-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
-    .stat-card .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+    .stat-card .stat-value { font-size: 1.35rem; font-weight: 800; color: var(--text); }
 
     /* Overall Performance Box */
     .overall-card {
@@ -124,13 +124,11 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadSeasonHistory() {
-      // Fetch weeks ordered descending (most recent first)
       const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .order('week_number', { ascending: false });
 
-      // Fetch all picks with player info
       const { data: picks } = await _supabase
         .from('picks')
         .select('*, players(initials)');
@@ -159,9 +157,12 @@
       const totalDecided = totalW + totalL;
       const groupWinPct = totalDecided > 0 ? ((totalW / totalDecided) * 100).toFixed(1) + '%' : '0.0%';
 
-      // Compute Hot/Cold Streaks from all graded picks chronologically
-      let hottestPlayer = { name: 'None', streak: 0, type: 'W' };
-      let coldestPlayer = { name: 'None', streak: 0, type: 'L' };
+      // Compute Hot/Cold Streaks (Supporting Multiple Players)
+      let hottestPlayers = [];
+      let maxHotStreak = 0;
+
+      let coldestPlayers = [];
+      let maxColdStreak = 0;
 
       const { data: allPicksChronological } = await _supabase
         .from('picks')
@@ -177,13 +178,12 @@
           const playerPicks = allPicksChronological.filter(p => p.player_id === player.id && p.result);
           if (playerPicks.length === 0) return;
 
-          // Find current active streak
           let currentStreakType = null;
           let currentStreakCount = 0;
 
           for (let i = playerPicks.length - 1; i >= 0; i--) {
             const res = playerPicks[i].result;
-            if (res === 'D') continue; // ignore pushes for streak counting
+            if (res === 'D') continue;
 
             if (currentStreakType === null) {
               currentStreakType = res;
@@ -195,14 +195,33 @@
             }
           }
 
-          if (currentStreakType === 'W' && currentStreakCount > hottestPlayer.streak) {
-            hottestPlayer = { name: player.initials, streak: currentStreakCount, type: 'W' };
+          if (currentStreakType === 'W' && currentStreakCount > 0) {
+            if (currentStreakCount > maxHotStreak) {
+              maxHotStreak = currentStreakCount;
+              hottestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxHotStreak) {
+              hottestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
           }
-          if (currentStreakType === 'L' && currentStreakCount > coldestPlayer.streak) {
-            coldestPlayer = { name: player.initials, streak: currentStreakCount, type: 'L' };
+
+          if (currentStreakType === 'L' && currentStreakCount > 0) {
+            if (currentStreakCount > maxColdStreak) {
+              maxColdStreak = currentStreakCount;
+              coldestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxColdStreak) {
+              coldestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
           }
         });
       }
+
+      const hotDisplay = hottestPlayers.length > 0 
+        ? `${hottestPlayers.map(p => p.name).join(', ')} (${maxHotStreak} W)` 
+        : 'None';
+
+      const coldDisplay = coldestPlayers.length > 0 
+        ? `${coldestPlayers.map(p => p.name).join(', ')} (${maxColdStreak} L)` 
+        : 'None';
 
       // --- RENDER SELECTION ---
       let html = `<div class="section-title">Team Metrics</div>`;
@@ -212,16 +231,16 @@
         <div class="stats-grid">
           <div class="stat-card">
             <h3>🔥 Hot Streak</h3>
-            <div class="stat-value">${hottestPlayer.name !== 'None' ? `${hottestPlayer.name} (${hottestPlayer.streak} W)` : 'None'}</div>
+            <div class="stat-value">${hotDisplay}</div>
           </div>
           <div class="stat-card">
             <h3>❄️ Cold Streak</h3>
-            <div class="stat-value">${coldestPlayer.name !== 'None' ? `${coldestPlayer.name} (${coldestPlayer.streak} L)` : 'None'}</div>
+            <div class="stat-value">${coldDisplay}</div>
           </div>
         </div>
       `;
 
-      // Overall Performance Box (Added Separately Below Streaks)
+      // Overall Performance Box
       html += `
         <div class="overall-card">
           <h3>Overall Group Performance</h3>
@@ -253,7 +272,6 @@
         if (weekPicks.length === 0) {
           html += `<div style="color: var(--text-muted); font-size: 0.95rem;">No picks recorded for this week.</div>`;
         } else {
-          // Parlay row
           if (parlayPicks.length > 0) {
             html += `<div class="history-category">Parlay:</div><div class="history-picks-list">`;
             parlayPicks.forEach(p => {
@@ -263,7 +281,6 @@
             html += `</div>`;
           }
 
-          // Other picks row
           if (otherPicks.length > 0) {
             html += `<div class="history-category">Others:</div><div class="history-picks-list">`;
             otherPicks.forEach(p => {
