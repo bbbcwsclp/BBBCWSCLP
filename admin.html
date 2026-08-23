@@ -15,7 +15,6 @@
       --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -63,7 +62,7 @@
     .delete-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; background-color: var(--danger); }
     .delete-btn:hover { background-color: #dc2626; }
     
-    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; line-height: 1.4; }
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; }
   </style>
 </head>
 <body>
@@ -81,36 +80,22 @@
       <a href="admin.html" class="active">Admin</a>
     </nav>
 
-    <!-- Automated Grading & Awards Card -->
-    <div class="card" style="border-color: var(--warning);">
-      <h2>⚡ Automated API Grading & Awards</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Pulls live final scores & lines from CFBD, auto-grades all picks, and calculates Weekly Biggest Cover & Worst Beat.</p>
-      <div class="form-group">
-        <label for="auto-week-select">Select Week to Process</label>
-        <select id="auto-week-select">
-          <option value="">Loading weeks...</option>
-        </select>
-      </div>
-      <button onclick="runAutoGrading()" style="background-color: #d97706;">Run Automated Grading</button>
-      <div id="auto-msg" class="msg"></div>
-    </div>
-
-    <!-- Create New Week Card -->
+    <!-- Create / Manage Week Card -->
     <div class="card">
-      <h2>1. Open a New Week</h2>
+      <h2>1. Open or Close a Week</h2>
       <form id="week-form">
         <div class="form-group">
-          <label for="week-number">Week Number</label>
-          <input type="number" id="week-number" required placeholder="e.g. 2">
+          <label for="week-number">Week Number to Create/Update</label>
+          <input type="number" id="week-number" required placeholder="e.g. 1">
         </div>
         <div class="form-group">
-          <label for="week-status">Status</label>
+          <label for="week-status">Week Status</label>
           <select id="week-status">
             <option value="open">Open (Active on Main Page)</option>
             <option value="closed">Closed / Finished</option>
           </select>
         </div>
-        <button type="submit">Create Week</button>
+        <button type="submit">Save Week Status</button>
         <div id="week-msg" class="msg"></div>
       </form>
     </div>
@@ -144,9 +129,9 @@
       </form>
     </div>
 
-    <!-- Grade Picks Card -->
+    <!-- Active Week Picks Card -->
     <div class="card">
-      <h2>3. Manage & Grade Existing Picks</h2>
+      <h2>3. Manage & Grade Active Week Picks</h2>
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -159,8 +144,30 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="picks-tbody">
-            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading picks...</td></tr>
+          <tbody id="active-picks-tbody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading active picks...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Finalized / Closed Weeks Card -->
+    <div class="card">
+      <h2>4. Finalized & Closed Week Picks</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Parlay?</th>
+              <th>Result</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="finalized-picks-tbody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>
           </tbody>
         </table>
       </div>
@@ -170,9 +177,6 @@
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
-    
-    // Configured CFBD API Token
-    const CFBD_API_KEY = 'O8CRAojmwGdRZqJj/G6cB8epsXzcILCmaPJVudl2EXKJdIjhP8iZmlkDgWvhPVwA';
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -188,37 +192,29 @@
         .select('*')
         .order('week_number', { ascending: false });
 
-      const weekSelects = [document.getElementById('pick-week'), document.getElementById('auto-week-select')];
-      
-      weekSelects.forEach(select => {
-        if (!select) return;
-        const currentVal = select.value;
-        select.innerHTML = '<option value="">-- Choose Week --</option>';
-        if (weeks) {
-          weeks.forEach(w => {
-            select.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
-          });
-        }
-        select.value = currentVal;
-      });
+      const weekSelect = document.getElementById('pick-week');
+      weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      if (weeks) {
+        weeks.forEach(w => {
+          weekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+        });
+      }
 
       const playerSelect = document.getElementById('pick-player');
-      if (playerSelect) {
-        const { data: players } = await _supabase
-          .from('players')
-          .select('*')
-          .order('initials', { ascending: true });
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .order('initials', { ascending: true });
 
-        playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
-        if (players) {
-          players.forEach(p => {
-            playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
-          });
-        }
+      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+      if (players) {
+        players.forEach(p => {
+          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
+        });
       }
     }
 
-    // Handle New Week Form
+    // Handle Week Creation / Closing
     document.getElementById('week-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const weekNum = parseInt(document.getElementById('week-number').value);
@@ -227,14 +223,14 @@
 
       const { error } = await _supabase
         .from('weeks')
-        .insert([{ week_number: weekNum, status: status, season: 2026 }]);
+        .upsert([{ season: 2026, week_number: weekNum, status: status }], { onConflict: 'season,week_number' });
 
       if (error) {
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
         msg.style.color = 'var(--success)';
-        msg.innerText = `Week ${weekNum} created successfully!`;
+        msg.innerText = `Week ${weekNum} status set to "${status}" successfully!`;
         document.getElementById('week-number').value = '';
         initAdmin();
       }
@@ -270,122 +266,35 @@
       }
     });
 
-    // Automated API Grading & Accolades Engine
-    async function runAutoGrading() {
-      const weekId = document.getElementById('auto-week-select').value;
-      const msg = document.getElementById('auto-msg');
-      if (!weekId) {
-        alert('Please choose a week to auto-grade.');
-        return;
-      }
-
-      msg.style.color = 'var(--warning)';
-      msg.innerText = 'Connecting to CFBD API & fetching final scores...';
-
-      try {
-        const { data: weekData } = await _supabase.from('weeks').select('*').eq('id', weekId).single();
-        if (!weekData) throw new Error('Week target not found in database.');
-
-        const resGames = await fetch(`https://api.collegefootballdata.com/games?year=${weekData.season}&week=${weekData.week_number}&seasonType=regular`, {
-          headers: { 'Authorization': `Bearer ${CFBD_API_KEY}` }
-        });
-        const games = await resGames.json();
-
-        const resLines = await fetch(`https://api.collegefootballdata.com/lines?year=${weekData.season}&week=${weekData.week_number}&seasonType=regular`, {
-          headers: { 'Authorization': `Bearer ${CFBD_API_KEY}` }
-        });
-        const linesData = await resLines.json();
-
-        const { data: picks } = await _supabase
-          .from('picks')
-          .select('*, players(initials)')
-          .eq('week_id', weekId);
-
-        if (!picks || picks.length === 0) {
-          throw new Error('No member picks found for this week.');
-        }
-
-        let biggestCover = { player: 'None', margin: -999, label: '' };
-        let biggestLoser = { player: 'None', margin: 999, label: '' };
-
-        for (let pick of picks) {
-          let selectionText = pick.selection.trim();
-          let matchedResult = null;
-          let coverMargin = 0;
-
-          let targetGame = games.find(g => 
-            g.completed && 
-            (selectionText.toLowerCase().includes(g.homeTeam.toLowerCase()) || 
-             selectionText.toLowerCase().includes(g.awayTeam.toLowerCase()))
-          );
-
-          if (targetGame && targetGame.homePoints !== null && targetGame.awayPoints !== null) {
-            let isHome = selectionText.toLowerCase().includes(targetGame.homeTeam.toLowerCase());
-            let teamScore = isHome ? targetGame.homePoints : targetGame.awayPoints;
-            let oppScore = isHome ? targetGame.awayPoints : targetGame.homePoints;
-
-            let gameLineObj = linesData.find(l => l.id === targetGame.id);
-            let spread = 0; 
-            
-            if (gameLineObj && gameLineObj.lines && gameLineObj.lines.length > 0) {
-              let lineStr = gameLineObj.lines[0].spread; 
-              if (lineStr) {
-                let parsedVal = parseFloat(lineStr);
-                spread = isHome ? parsedVal : -parsedVal;
-              }
-            }
-
-            coverMargin = (teamScore - oppScore) + spread;
-
-            if (coverMargin > 0) {
-              matchedResult = 'W';
-            } else if (coverMargin < 0) {
-              matchedResult = 'L';
-            } else {
-              matchedResult = 'D';
-            }
-          } else {
-            matchedResult = pick.result || 'W'; 
-            coverMargin = 5.0;
-          }
-
-          if (matchedResult === 'W' && coverMargin > biggestCover.margin) {
-            biggestCover = { player: pick.players.initials, margin: coverMargin, label: `${pick.selection} (+${coverMargin.toFixed(1)})` };
-          }
-          if (matchedResult === 'L' && coverMargin < biggestLoser.margin) {
-            biggestLoser = { player: pick.players.initials, margin: coverMargin, label: `${pick.selection} (${coverMargin.toFixed(1)})` };
-          }
-
-          await _supabase.from('picks').update({ result: matchedResult }).eq('id', pick.id);
-        }
-
-        msg.style.color = 'var(--success)';
-        msg.innerHTML = `✅ <strong>Auto-Grading Complete!</strong><br>
-                         🏆 <strong>Biggest Cover:</strong> ${biggestCover.player} — ${biggestCover.label}<br>
-                         💀 <strong>Worst Beat / Loser:</strong> ${biggestLoser.player} — ${biggestLoser.label}`;
-        
-        loadAdminPicks();
-      } catch (err) {
-        msg.style.color = 'var(--danger)';
-        msg.innerText = `Grading Error: ${err.message}`;
-      }
-    }
-
+    // Load and Split Picks into Active vs. Finalized Sections
     async function loadAdminPicks() {
       const { data: picks } = await _supabase
         .from('picks')
-        .select('*, weeks(week_number), players(initials)')
+        .select('*, weeks(week_number, status), players(initials)')
         .order('created_at', { ascending: false });
 
-      const tbody = document.getElementById('picks-tbody');
-      tbody.innerHTML = '';
+      const activeTbody = document.getElementById('active-picks-tbody');
+      const finalizedTbody = document.getElementById('finalized-picks-tbody');
+      
+      activeTbody.innerHTML = '';
+      finalizedTbody.innerHTML = '';
 
       if (!picks || picks.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No picks found.</td></tr>';
+        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No picks found.</td></tr>';
+        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
         return;
       }
 
+      let activeCount = 0;
+      let finalizedCount = 0;
+
       picks.forEach(p => {
+        const isClosed = p.weeks?.status === 'closed';
+        const targetTbody = isClosed ? finalizedTbody : activeTbody;
+
+        if (isClosed) finalizedCount++;
+        else activeCount++;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>Wk ${p.weeks?.week_number || '?'}</td>
@@ -405,8 +314,15 @@
             <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
           </td>
         `;
-        tbody.appendChild(tr);
+        targetTbody.appendChild(tr);
       });
+
+      if (activeCount === 0) {
+        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No active picks for open weeks.</td></tr>';
+      }
+      if (finalizedCount === 0) {
+        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
+      }
     }
 
     async function updateParlay(pickId, isParlay) {
