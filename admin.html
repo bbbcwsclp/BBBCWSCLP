@@ -3,12 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Admin Dashboard</title>
+  <title>BBBCWSCLP — Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- Favicon -->
-  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
-
   <style>
     :root {
       --bg: #0f172a;
@@ -16,11 +12,9 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #eab308;
-      --accent: #3b82f6;
-      --gold: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -35,119 +29,157 @@
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 800px; margin: 0 auto; }
 
-    header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; flex-wrap: wrap; }
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    /* Card Panels */
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-      text-align: left;
-    }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--gold); }
-    
     .form-group { margin-bottom: 1rem; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+    input, select { width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
     
-    input, select, textarea {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 0.95rem;
-    }
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input { width: auto; }
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    button {
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.75rem 1.25rem;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      width: 100%;
-      transition: background-color 0.2s;
-    }
-
+    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
     button:hover { background-color: #2563eb; }
-    
-    .btn-secondary { background-color: #334155; margin-top: 0.5rem; }
-    .btn-secondary:hover { background-color: #475569; }
 
-    .status-msg { margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+    
+    .actions-cell select { width: auto; padding: 0.4rem; font-size: 0.9rem; margin-right: 0.5rem; }
+    .save-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    .delete-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; background-color: var(--danger); }
+    .delete-btn:hover { background-color: #dc2626; }
+    
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">Admin Dashboard</h1>
+      <h1>BBBC Admin Panel</h1>
+      <p>Manage Weeks, Picks, and Results</p>
     </header>
 
     <nav>
       <a href="index.html">Weekly Picks</a>
       <a href="standings.html">Standings</a>
       <a href="season.html">Season History</a>
-      <a href="halloffame.html">Hall of Fame</a>
       <a href="admin.html" class="active">Admin</a>
+      <a href="halloffame.html">Hall of Fame</a>
     </nav>
 
-    <!-- Active Week Link Manager -->
+    <!-- Create / Manage Week Card -->
     <div class="card">
-      <h2>Manage Active Week Links</h2>
-      <div class="form-group">
-        <label for="active-week-select">Select Active Week:</label>
-        <select id="active-week-select" onchange="loadWeekDetails()">
-          <option value="">Loading weeks...</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="slip-link-input">Courtside Slip Link:</label>
-        <input type="text" id="slip-link-input" placeholder="https://courtside.app/...">
-      </div>
-
-      <div class="form-group">
-        <label for="gambly-link-input">Gambly Link (Alternative):</label>
-        <input type="text" id="gambly-link-input" placeholder="https://...">
-      </div>
-
-      <button onclick="saveWeekLinks()">Save Links to Week</button>
-      <div id="link-status" class="status-msg"></div>
+      <h2>1. Open or Close a Week</h2>
+      <form id="week-form">
+        <div class="form-group">
+          <label for="week-number">Week Number to Create/Update</label>
+          <input type="number" id="week-number" required placeholder="e.g. 1">
+        </div>
+        <div class="form-group">
+          <label for="week-status">Week Status</label>
+          <select id="week-status">
+            <option value="open">Open (Active on Main Page)</option>
+            <option value="closed">Closed / Finished</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="week-slip-link">Courtside Slip Link URL</label>
+          <input type="url" id="week-slip-link" placeholder="https://courtside.app/...">
+        </div>
+        <div class="form-group">
+          <label for="week-gambly-link">Gambly Link URL</label>
+          <input type="url" id="week-gambly-link" placeholder="https://...">
+        </div>
+        <button type="submit">Save Week Details</button>
+        <div id="week-msg" class="msg"></div>
+      </form>
     </div>
 
-    <!-- Quick Add Week Panel -->
+    <!-- Add New Pick Card -->
     <div class="card">
-      <h2>Open a New Week</h2>
-      <div class="form-group">
-        <label for="new-week-num">Week Number:</label>
-        <input type="number" id="new-week-num" placeholder="e.g. 1">
+      <h2>2. Add a Member Pick</h2>
+      <form id="pick-form">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- Active Week Picks Card -->
+    <div class="card">
+      <h2>3. Manage & Grade Active Week Picks</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Parlay?</th>
+              <th>Result</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="active-picks-tbody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading active picks...</td></tr>
+          </tbody>
+        </table>
       </div>
-      <button onclick="createNewWeek()" class="btn-secondary">Initialize New Open Week</button>
-      <div id="week-status" class="status-msg"></div>
+    </div>
+
+    <!-- Finalized / Closed Weeks Card -->
+    <div class="card">
+      <h2>4. Finalized & Closed Week Picks</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Parlay?</th>
+              <th>Result</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="finalized-picks-tbody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -158,110 +190,219 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let weeksData = [];
+    let allWeeksCache = [];
 
-    async function fetchWeeks() {
-      const { data, error } = await _supabase
+    async function initAdmin() {
+      await loadDropdowns();
+      await loadAdminPicks();
+    }
+
+    async function loadDropdowns() {
+      const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .order('week_number', { ascending: false });
 
-      const select = document.getElementById('active-week-select');
+      allWeeksCache = weeks || [];
+
+      const weekSelect = document.getElementById('pick-week');
+      weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      if (weeks) {
+        weeks.forEach(w => {
+          weekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+        });
+      }
+
+      const playerSelect = document.getElementById('pick-player');
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .order('initials', { ascending: true });
+
+      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+      if (players) {
+        players.forEach(p => {
+          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
+        });
+      }
+    }
+
+    // Auto-fill slip and gambly links if user types a week number that already exists
+    document.getElementById('week-number').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      const found = allWeeksCache.find(w => w.week_number === val);
+      const slipLinkInput = document.getElementById('week-slip-link');
+      const gamblyLinkInput = document.getElementById('week-gambly-link');
+      const statusSelect = document.getElementById('week-status');
+
+      if (found) {
+        slipLinkInput.value = found.slip_link || '';
+        gamblyLinkInput.value = found.gambly_link || '';
+        statusSelect.value = found.status || 'open';
+      } else {
+        slipLinkInput.value = '';
+        gamblyLinkInput.value = '';
+      }
+    });
+
+    // Handle Week Creation / Closing & Link Saving
+    document.getElementById('week-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekNum = parseInt(document.getElementById('week-number').value);
+      const status = document.getElementById('week-status').value;
+      const slipLink = document.getElementById('week-slip-link').value.trim();
+      const gamblyLink = document.getElementById('week-gambly-link').value.trim();
+      const msg = document.getElementById('week-msg');
+
+      const { error } = await _supabase
+        .from('weeks')
+        .upsert([{ 
+          season: 2026, 
+          week_number: weekNum, 
+          status: status, 
+          slip_link: slipLink || null,
+          gambly_link: gamblyLink || null 
+        }], { onConflict: 'season,week_number' });
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Week ${weekNum} updated successfully!`;
+        document.getElementById('week-number').value = '';
+        document.getElementById('week-slip-link').value = '';
+        document.getElementById('week-gambly-link').value = '';
+        initAdmin();
+      }
+    });
+
+    // Handle New Pick Form
+    document.getElementById('pick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekId = document.getElementById('pick-week').value;
+      const playerId = document.getElementById('pick-player').value;
+      const selection = document.getElementById('pick-selection').value;
+      const isParlay = document.getElementById('pick-is-parlay').checked;
+      const msg = document.getElementById('pick-msg');
+
+      const { error } = await _supabase
+        .from('picks')
+        .insert([{ 
+          week_id: weekId, 
+          player_id: playerId, 
+          selection: selection, 
+          is_parlay: isParlay 
+        }]);
+
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Pick added successfully!`;
+        document.getElementById('pick-selection').value = '';
+        document.getElementById('pick-is-parlay').checked = false;
+        initAdmin();
+      }
+    });
+
+    // Load and Split Picks into Active vs. Finalized Sections
+    async function loadAdminPicks() {
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*, weeks(week_number, status), players(initials)')
+        .order('created_at', { ascending: false });
+
+      const activeTbody = document.getElementById('active-picks-tbody');
+      const finalizedTbody = document.getElementById('finalized-picks-tbody');
       
-      if (error || !data) {
-        select.innerHTML = '<option value="">Error loading weeks</option>';
+      activeTbody.innerHTML = '';
+      finalizedTbody.innerHTML = '';
+
+      if (!picks || picks.length === 0) {
+        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No picks found.</td></tr>';
+        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
         return;
       }
 
-      weeksData = data;
-      select.innerHTML = '';
+      let activeCount = 0;
+      let finalizedCount = 0;
 
-      if (data.length === 0) {
-        select.innerHTML = '<option value="">No weeks found. Create one below.</option>';
-        return;
-      }
+      picks.forEach(p => {
+        const isClosed = p.weeks?.status === 'closed';
+        const targetTbody = isClosed ? finalizedTbody : activeTbody;
 
-      data.forEach(w => {
-        const opt = document.createElement('option');
-        opt.value = w.id;
-        opt.textContent = `Week ${w.week_number} (${w.status})`;
-        select.appendChild(opt);
+        if (isClosed) finalizedCount++;
+        else activeCount++;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>Wk ${p.weeks?.week_number || '?'}</td>
+          <td><strong>${p.players?.initials || '??'}</strong></td>
+          <td><input type="text" id="selection-${p.id}" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+          <td><input type="checkbox" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
+          <td>
+            <select id="result-${p.id}">
+              <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
+              <option value="W" ${p.result === 'W' ? 'selected' : ''}>Win (W)</option>
+              <option value="L" ${p.result === 'L' ? 'selected' : ''}>Loss (L)</option>
+              <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
+            </select>
+          </td>
+          <td class="actions-cell" style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="save-btn" onclick="savePick('${p.id}')">Save</button>
+            <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
+          </td>
+        `;
+        targetTbody.appendChild(tr);
       });
 
-      loadWeekDetails();
-    }
-
-    function loadWeekDetails() {
-      const selectedId = document.getElementById('active-week-select').value;
-      const week = weeksData.find(w => w.id == selectedId);
-
-      if (week) {
-        document.getElementById('slip-link-input').value = week.slip_link || '';
-        document.getElementById('gambly-link-input').value = week.gambly_link || '';
+      if (activeCount === 0) {
+        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No active picks for open weeks.</td></tr>';
+      }
+      if (finalizedCount === 0) {
+        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
       }
     }
 
-    async function saveWeekLinks() {
-      const selectedId = document.getElementById('active-week-select').value;
-      const slipLink = document.getElementById('slip-link-input').value.trim();
-      const gamblyLink = document.getElementById('gambly-link-input').value.trim();
-      const statusDiv = document.getElementById('link-status');
+    async function updateParlay(pickId, isParlay) {
+      await _supabase.from('picks').update({ is_parlay: isParlay }).eq('id', pickId);
+    }
 
-      if (!selectedId) {
-        statusDiv.style.color = 'var(--danger)';
-        statusDiv.textContent = 'Please select a week first.';
-        return;
-      }
-
+    async function savePick(pickId) {
+      const selectionVal = document.getElementById(`selection-${pickId}`).value;
+      const resultVal = document.getElementById(`result-${pickId}`).value;
+      
       const { error } = await _supabase
-        .from('weeks')
-        .update({ slip_link: slipLink, gambly_link: gamblyLink })
-        .eq('id', selectedId);
+        .from('picks')
+        .update({ 
+          selection: selectionVal, 
+          result: resultVal || null 
+        })
+        .eq('id', pickId);
 
       if (error) {
-        statusDiv.style.color = 'var(--danger)';
-        statusDiv.textContent = 'Error saving links: ' + error.message;
+        alert(`Error updating pick: ${error.message}`);
       } else {
-        statusDiv.style.color = 'var(--success)';
-        statusDiv.textContent = 'Links successfully updated!';
-        // Update local cache
-        const week = weeksData.find(w => w.id == selectedId);
-        if (week) {
-          week.slip_link = slipLink;
-          week.gambly_link = gamblyLink;
-        }
+        alert('Pick updated successfully!');
+        initAdmin();
       }
     }
 
-    async function createNewWeek() {
-      const weekNum = document.getElementById('new-week-num').value;
-      const statusDiv = document.getElementById('week-status');
+    async function deletePick(pickId) {
+      if (!confirm('Are you sure you want to delete this pick?')) return;
 
-      if (!weekNum) {
-        statusDiv.style.color = 'var(--danger)';
-        statusDiv.textContent = 'Please enter a week number.';
-        return;
-      }
-
-      // Optional: Close out prior open weeks if you only want one active at a time
-      await _supabase.from('weeks').update({ status: 'closed' }).eq('status', 'open');
-
-      const { error } = await _supabase
-        .from('weeks')
-        .insert([{ week_number: parseInt(weekNum), status: 'open' }]);
+      const { error } = await _supabase.from('picks').delete().eq('id', pickId);
 
       if (error) {
-        statusDiv.style.color = 'var(--danger)';
-        statusDiv.textContent = 'Error creating week: ' + error.message;
+        alert(`Error deleting pick: ${error.message}`);
       } else {
-        statusDiv.style.color = 'var(--success)';
-        statusDiv.textContent = `Week ${weekNum} successfully opened!`;
-        document.getElementById('new-week-num').value = '';
-        fetchWeeks();
+        initAdmin();
       }
     }
 
-    fetchWeeks();
+    initAdmin();
   </script>
 </body>
 </html>
