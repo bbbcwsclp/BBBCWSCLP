@@ -58,11 +58,15 @@
     th { color: var(--text-muted); font-weight: 600; }
     
     .actions-cell select { width: auto; padding: 0.4rem; font-size: 0.9rem; margin-right: 0.5rem; }
-    .save-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; }
     .delete-btn { width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; background-color: var(--danger); }
     .delete-btn:hover { background-color: #dc2626; }
     
     .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; }
+    
+    .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+    .btn-batch { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; background-color: var(--success); }
+    .btn-batch:hover { background-color: #16a34a; }
   </style>
 </head>
 <body>
@@ -102,7 +106,7 @@
         </div>
         <div class="form-group">
           <label for="week-gambly-link">Gambly Link URL</label>
-          <input type="url" id="week-gambly-link" placeholder="https://gambly.com/...">
+          <input type="url" id="week-gambly-link" placeholder="https://...">
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
@@ -140,7 +144,10 @@
 
     <!-- Active Week Picks Card -->
     <div class="card">
-      <h2>3. Manage & Grade Active Week Picks</h2>
+      <div class="table-header-action">
+        <h2>3. Manage & Grade Active Week Picks</h2>
+        <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active Changes</button>
+      </div>
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -150,7 +157,7 @@
               <th>Selection</th>
               <th>Parlay?</th>
               <th>Result</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="active-picks-tbody">
@@ -158,11 +165,15 @@
           </tbody>
         </table>
       </div>
+      <div id="active-msg" class="msg"></div>
     </div>
 
     <!-- Finalized / Closed Weeks Card -->
     <div class="card">
-      <h2>4. Finalized & Closed Week Picks</h2>
+      <div class="table-header-action">
+        <h2>4. Finalized & Closed Week Picks</h2>
+        <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save All Closed Changes</button>
+      </div>
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -172,7 +183,7 @@
               <th>Selection</th>
               <th>Parlay?</th>
               <th>Result</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="finalized-picks-tbody">
@@ -180,6 +191,7 @@
           </tbody>
         </table>
       </div>
+      <div id="finalized-msg" class="msg"></div>
     </div>
   </div>
 
@@ -227,7 +239,6 @@
       }
     }
 
-    // Auto-fill slip and gambly links if user types a week number that already exists
     document.getElementById('week-number').addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
       const found = allWeeksCache.find(w => w.week_number === val);
@@ -245,13 +256,12 @@
       }
     });
 
-    // Handle Week Creation / Closing & Link Saving
     document.getElementById('week-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const weekNum = parseInt(document.getElementById('week-number').value);
       const status = document.getElementById('week-status').value;
       const slipLink = document.getElementById('week-slip-link').value.trim();
-      const gamblyLink = document.getElementById('week-gambly-link').value.trim();
+      const gamblyLink = document.getElementById('gambly-link-input')?.value.trim() || document.getElementById('week-gambly-link').value.trim();
       const msg = document.getElementById('week-msg');
 
       const { error } = await _supabase
@@ -277,7 +287,6 @@
       }
     });
 
-    // Handle New Pick Form
     document.getElementById('pick-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const weekId = document.getElementById('pick-week').value;
@@ -307,7 +316,6 @@
       }
     });
 
-    // Load and Split Picks into Active vs. Finalized Sections
     async function loadAdminPicks() {
       const { data: picks } = await _supabase
         .from('picks')
@@ -337,21 +345,21 @@
         else activeCount++;
 
         const tr = document.createElement('tr');
+        tr.dataset.pickId = p.id;
         tr.innerHTML = `
           <td>Wk ${p.weeks?.week_number || '?'}</td>
           <td><strong>${p.players?.initials || '??'}</strong></td>
-          <td><input type="text" id="selection-${p.id}" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
-          <td><input type="checkbox" ${p.is_parlay ? 'checked' : ''} onchange="updateParlay('${p.id}', this.checked)"></td>
+          <td><input type="text" class="row-selection" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+          <td><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
           <td>
-            <select id="result-${p.id}">
+            <select class="row-result" style="padding: 0.4rem; font-size: 0.9rem;">
               <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
               <option value="W" ${p.result === 'W' ? 'selected' : ''}>Win (W)</option>
               <option value="L" ${p.result === 'L' ? 'selected' : ''}>Loss (L)</option>
               <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
             </select>
           </td>
-          <td class="actions-cell" style="display: flex; gap: 0.5rem; align-items: center;">
-            <button class="save-btn" onclick="savePick('${p.id}')">Save</button>
+          <td class="actions-cell">
             <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
           </td>
         `;
@@ -366,27 +374,52 @@
       }
     }
 
-    async function updateParlay(pickId, isParlay) {
-      await _supabase.from('picks').update({ is_parlay: isParlay }).eq('id', pickId);
-    }
+    async function saveAllPicks(sectionType) {
+      const tbodyId = sectionType === 'active' ? 'active-picks-tbody' : 'finalized-picks-tbody';
+      const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
+      const tbody = document.getElementById(tbodyId);
+      const msgDiv = document.getElementById(msgId);
+      const rows = tbody.querySelectorAll('tr');
 
-    async function savePick(pickId) {
-      const selectionVal = document.getElementById(`selection-${pickId}`).value;
-      const resultVal = document.getElementById(`result-${pickId}`).value;
-      
-      const { error } = await _supabase
-        .from('picks')
-        .update({ 
-          selection: selectionVal, 
-          result: resultVal || null 
-        })
-        .eq('id', pickId);
+      if (rows.length === 0 || rows[0].querySelector('td').colSpan > 1) {
+        return; // Nothing to save
+      }
 
-      if (error) {
-        alert(`Error updating pick: ${error.message}`);
+      msgDiv.style.color = 'var(--text-muted)';
+      msgDiv.innerText = 'Saving changes...';
+
+      let hasError = false;
+
+      for (const row of rows) {
+        const pickId = row.dataset.pickId;
+        if (!pickId) continue;
+
+        const selection = row.querySelector('.row-selection').value;
+        const isParlay = row.querySelector('.row-parlay').checked;
+        const result = row.querySelector('.row-result').value;
+
+        const { error } = await _supabase
+          .from('picks')
+          .update({ 
+            selection: selection, 
+            is_parlay: isParlay, 
+            result: result || null 
+          })
+          .eq('id', pickId);
+
+        if (error) {
+          hasError = true;
+          console.error(`Error updating pick ${pickId}:`, error.message);
+        }
+      }
+
+      if (hasError) {
+        msgDiv.style.color = 'var(--danger)';
+        msgDiv.innerText = 'Some picks failed to save. Check console for details.';
       } else {
-        alert('Pick updated successfully!');
-        initAdmin();
+        msgDiv.style.color = 'var(--success)';
+        msgDiv.innerText = 'All changes saved successfully!';
+        setTimeout(() => { msgDiv.innerText = ''; }, 3000);
       }
     }
 
