@@ -149,6 +149,7 @@
       let spreadW = 0, spreadL = 0, spreadD = 0;
       let ouW = 0, ouL = 0, ouD = 0;
       const teamCorrectCounts = {};
+      const teamLossCounts = {};
 
       if (picks) {
         picks.forEach(p => {
@@ -156,15 +157,14 @@
           const selection = (p.selection || '').trim();
           const lowerSel = selection.toLowerCase();
           
-          // Robust O/U check: detects "over" or "under" anywhere in the selection text
-          const isOU = /\bover\b/.test(lowerSel) || /\bunder\b/.test(lowerSel);
+          // Enhanced O/U check: handles words or abbreviations like "o51.5", "u48"
+          const isOU = /\bover\b/.test(lowerSel) || /\bunder\b/.test(lowerSel) || /\b[ou]\d+(\.\d+)?\b/.test(lowerSel);
 
           if (res === 'W') {
             totalW++;
             if (isOU) ouW++;
             else spreadW++;
 
-            // Track team correct outcomes (Winning bets excluding O/U)
             if (!isOU) {
               const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
               if (cleanTeam) {
@@ -175,6 +175,13 @@
             totalL++;
             if (isOU) ouL++;
             else spreadL++;
+
+            if (!isOU) {
+              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
+              if (cleanTeam) {
+                teamLossCounts[cleanTeam] = (teamLossCounts[cleanTeam] || 0) + 1;
+              }
+            }
           } else if (res === 'D') {
             totalD++;
             if (isOU) ouD++;
@@ -193,6 +200,16 @@
         if (count > maxTeamCount) {
           maxTeamCount = count;
           topTeam = team;
+        }
+      }
+
+      // Find most losing team (most L's on spread)
+      let worstTeam = 'None';
+      let maxLossCount = 0;
+      for (const [team, count] of Object.entries(teamLossCounts)) {
+        if (count > maxLossCount) {
+          maxLossCount = count;
+          worstTeam = team;
         }
       }
 
@@ -279,7 +296,7 @@
         </div>
       `;
 
-      // Team Metrics Cards Grid (Top Team, Spread W-L-D, O/U W-L-D)
+      // Team Metrics Cards Grid (Top Team, Most Losing Team, Spread, O/U)
       html += `
         <div class="stats-grid">
           <div class="stat-card">
@@ -287,12 +304,16 @@
             <div class="stat-value" style="font-size: 1.15rem;">${topTeam} ${maxTeamCount > 0 ? '(' + maxTeamCount + 'W)' : ''}</div>
           </div>
           <div class="stat-card">
+            <h3>Most Losing Team</h3>
+            <div class="stat-value" style="font-size: 1.15rem; color: var(--danger);">${worstTeam} ${maxLossCount > 0 ? '(' + maxLossCount + 'L)' : ''}</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
             <h3>Spread W-L-D</h3>
             <div class="stat-value">${spreadW}-${spreadL}-${spreadD}</div>
           </div>
-        </div>
-        <div class="stats-grid" style="margin-bottom: 1.5rem;">
-          <div class="stat-card" style="grid-column: span 2;">
+          <div class="stat-card">
             <h3>O/U W-L-D</h3>
             <div class="stat-value">${ouW}-${ouL}-${ouD}</div>
           </div>
@@ -301,7 +322,7 @@
 
       // Overall Performance Box
       html += `
-        <div class="overall-card">
+        <div class="overall-card" style="margin-top: 0.5rem;">
           <h3>Overall Group Performance</h3>
           <div class="overall-value">${totalW} - ${totalL} - ${totalD}</div>
           <div class="overall-sub">Win Rate: ${groupWinPct}</div>
