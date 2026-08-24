@@ -155,15 +155,27 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- DYNAMIC GAMBLY LINK BUTTON (SEPARATE BELOW PICKS) ---
-      if (currentWeek.slip_link) {
-        html += `
-          <div>
-            <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly">
+    // --- DYNAMIC STACKED BUTTONS ---
+      if (currentWeek.slip_link || currentWeek.gambly_link) {
+        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
+        
+        if (currentWeek.slip_link) {
+          html += `
+            <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">
               📲 Open Slip in Courtside
             </a>
-          </div>
-        `;
+          `;
+        }
+        
+        if (currentWeek.gambly_link) {
+          html += `
+            <a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">
+              🎲 Open Gambly Link
+            </a>
+          `;
+        }
+        
+        html += `</div>`;
       }
 
       if (otherPicks.length > 0) {
