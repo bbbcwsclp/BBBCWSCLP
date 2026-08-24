@@ -219,10 +219,20 @@
 
       const weekSelect = document.getElementById('pick-week');
       weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      
+      let openWeekId = '';
+
       if (weeks) {
         weeks.forEach(w => {
+          if (w.status === 'open') {
+            openWeekId = w.id;
+          }
           weekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
         });
+      }
+
+      if (openWeekId) {
+        weekSelect.value = openWeekId;
       }
 
       const playerSelect = document.getElementById('pick-player');
@@ -334,7 +344,6 @@
         return;
       }
 
-      // Separate into active and closed sets
       const activePicks = [];
       const finalizedPicks = [];
 
@@ -354,7 +363,6 @@
         return;
       }
 
-      // Group by week number
       const grouped = {};
       picksArray.forEach(p => {
         const wkNum = p.weeks?.week_number ?? '??';
@@ -362,7 +370,6 @@
         grouped[wkNum].push(p);
       });
 
-      // Sort weeks numerically descending (e.g. Week 3, Week 2, Week 1)
       const sortedWeeks = Object.keys(grouped).sort((a, b) => b - a);
 
       sortedWeeks.forEach(wkNum => {
