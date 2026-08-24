@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Scores & Schedule</title>
+  <title>BBBCWSCLP — Live Scores</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Favicon / Browser Tab Icon -->
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
-  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
 
   <style>
     :root {
@@ -17,9 +16,8 @@
       --text-muted: #94a3b8;
       --border: #334155;
       --accent: #3b82f6;
+      --gold: #f59e0b;
       --success: #22c55e;
-      --danger: #ef4444;
-      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -34,193 +32,170 @@
       align-items: center;
     }
 
-    .container { width: 100%; max-width: 750px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
     header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    header img { max-height: 80px; margin-bottom: 0.75rem; object-fit: contain; }
     
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+    h1.main-title { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
     /* Navigation Bar */
     nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; flex-wrap: wrap; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    .controls-card {
+    /* Score Card Styling */
+    .game-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 2rem;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .controls-card label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
-    .controls-card select { padding: 0.5rem 1rem; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; }
-
-    .game-card { 
-      background-color: var(--card-bg); 
-      border: 1px solid var(--border); 
-      border-radius: 12px; 
-      padding: 1.25rem 1.5rem; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); 
-      margin-bottom: 1rem; 
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
       text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
-    .game-info { flex-grow: 1; }
-    .game-teams { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; display: flex; flex-direction: column; gap: 0.3rem; }
-    .team-row { display: flex; justify-content: space-between; align-items: center; padding-right: 1.5rem; }
-    
-    .game-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 1rem; margin-top: 0.5rem; }
-    .badge { padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-    .badge-live { background-color: var(--danger); color: white; animation: pulse 2s infinite; }
-    .badge-final { background-color: var(--border); color: var(--text-muted); }
-    .badge-upcoming { background-color: var(--accent); color: white; }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+    .game-header-info { 
+      display: flex; 
+      justify-content: space-between; 
+      font-size: 0.8rem; 
+      color: var(--text-muted); 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      margin-bottom: 0.75rem; 
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
     }
 
-    .msg { text-align: center; color: var(--text-muted); padding: 2rem; font-style: italic; }
+    .team-line { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      font-weight: 700; 
+      font-size: 1.05rem; 
+      margin: 0.5rem 0; 
+    }
+
+    .team-details { display: flex; align-items: center; gap: 0.75rem; }
+    .team-logo { width: 24px; height: 24px; object-fit: contain; }
+    .team-score { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+    .winner { color: var(--gold); }
+
+    .status-badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .status-live { background-color: rgba(34, 197, 94, 0.2); color: var(--success); }
+    .status-final { background-color: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .status-sched { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+    .loading-msg, .error-msg { color: var(--text-muted); padding: 2rem; font-size: 0.95rem; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP</h1>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">Live Scores</h1>
     </header>
 
     <nav>
       <a href="index.html">Weekly Picks</a>
       <a href="standings.html">Standings</a>
       <a href="season.html">Season History</a>
-      <a href="scores.html" class="active">Scores & Schedule</a>
+      <a href="halloffame.html">Hall of Fame</a>
+      <a href="scores.html" class="active">Scores</a>
+      <a href="admin.html">Admin</a>
     </nav>
 
-    <!-- Week Selector Filter -->
-    <div class="controls-card">
-      <div>
-        <label for="week-select">Select Week: </label>
-        <select id="week-select" onchange="loadScores()">
-          <option value="1" selected>Week 1</option>
-          <option value="2">Week 2</option>
-          <option value="3">Week 3</option>
-          <option value="4">Week 4</option>
-          <option value="5">Week 5</option>
-          <option value="6">Week 6</option>
-          <option value="7">Week 7</option>
-          <option value="8">Week 8</option>
-          <option value="9">Week 9</option>
-          <option value="10">Week 10</option>
-          <option value="11">Week 11</option>
-          <option value="12">Week 12</option>
-          <option value="13">Week 13</option>
-          <option value="14">Week 14</option>
-          <option value="15">Week 15</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Scores Container -->
     <div id="scores-container">
-      <div class="msg">Loading schedule and scores...</div>
+      <div class="loading-msg">Fetching latest matchup data...</div>
     </div>
   </div>
 
   <script>
-    const CFBD_API_KEY = 'O8CRAojmwGdRZqJj/G6cB8epsXzcILCmaPJVudl2EXKJdIjhP8iZmlkDgWvhPVwA';
-    const CURRENT_YEAR = 2026;
-
-    async function loadScores() {
+    async function fetchScores() {
       const container = document.getElementById('scores-container');
-      const weekNum = document.getElementById('week-select').value;
       
-      container.innerHTML = `<div class="msg">Fetching Week ${weekNum} games...</div>`;
+      // ESPN API endpoint for college football 
+      // (You can swap 'college-football' to 'nfl' easily if needed)
+      const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard';
 
       try {
-        const targetUrl = `https://api.collegefootballdata.com/games?year=${CURRENT_YEAR}&week=${weekNum}&seasonType=regular`;
-        // Using corsproxy.io which cleanly passes custom Authorization headers through to the destination API
-        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
+        const response = await fetch(apiURL);
+        const data = await response.json();
 
-        const response = await fetch(proxyUrl, {
-          headers: {
-            'Authorization': `Bearer ${CFBD_API_KEY}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
-        }
-
-        const games = await response.json();
-
-        if (!games || games.length === 0) {
-          container.innerHTML = `<div class="msg">No games found for Week ${weekNum}.</div>`;
+        if (!data.events || data.events.length === 0) {
+          container.innerHTML = '<div class="loading-msg">No games scheduled for today/this week.</div>';
           return;
         }
 
         container.innerHTML = '';
 
-        games.forEach(game => {
-          const isCompleted = game.completed;
-          const startTime = new Date(game.startDate);
-          const now = new Date();
-          const isLive = !isCompleted && now >= startTime;
+        data.events.forEach(event => {
+          const competition = event.competitions[0];
+          const statusType = competition.status.type.state; // 'pre', 'in', 'post'
+          const statusDetail = competition.status.type.detail; // e.g. "Final", "3rd Quarter", "Sat, 7:00 PM"
+          
+          const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+          const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-          let badgeHtml = `<span class="badge badge-upcoming">Upcoming</span>`;
-          if (isCompleted) {
-            badgeHtml = `<span class="badge badge-final">Final</span>`;
-          } else if (isLive) {
-            badgeHtml = `<span class="badge badge-live">LIVE</span>`;
+          const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
+          const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+          
+          const homeLogo = homeTeam.team.logo || '';
+          const awayLogo = awayTeam.team.logo || '';
+          
+          const homeScore = homeTeam.score || '0';
+          const awayScore = awayTeam.score || '0';
+
+          // Determine status label styling
+          let badgeClass = 'status-sched';
+          let statusLabel = statusDetail;
+          if (statusType === 'in') {
+            badgeClass = 'status-live';
+            statusLabel = `LIVE • ${statusDetail}`;
+          } else if (statusType === 'post') {
+            badgeClass = 'status-final';
+            statusLabel = 'FINAL';
           }
 
-          const homeScore = game.homePoints !== null ? game.homePoints : '-';
-          const awayScore = game.awayPoints !== null ? game.awayPoints : '-';
-
-          const timeString = isNaN(startTime.getTime()) ? 'TBD' : startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' — ' + startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
+          // Build card markup
           const card = document.createElement('div');
           card.className = 'game-card';
           card.innerHTML = `
-            <div class="game-info">
-              <div class="game-teams">
-                <div class="team-row">
-                  <span>${game.awayTeam}</span>
-                  <span style="font-weight: ${Number(awayScore) > Number(homeScore) ? '900' : '500'};">${awayScore}</span>
-                </div>
-                <div class="team-row">
-                  <span>${game.homeTeam} (Home)</span>
-                  <span style="font-weight: ${Number(homeScore) > Number(awayScore) ? '900' : '500'};">${homeScore}</span>
-                </div>
-              </div>
-              <div class="game-meta">
-                <span>${timeString}</span>
-                <span>${game.venue || 'Neutral Site'}</span>
-              </div>
+            <div class="game-header-info">
+              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              <span>${competition.venue ? competition.venue.fullName : ''}</span>
             </div>
-            <div>${badgeHtml}</div>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${statusType === 'post' && parseInt(awayScore) > parseInt(homeScore) ? 'winner' : ''}">${awayName}</span>
+              </div>
+              <span class="team-score ${statusType === 'post' && parseInt(awayScore) > parseInt(homeScore) ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
+            </div>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${statusType === 'post' && parseInt(homeScore) > parseInt(awayScore) ? 'winner' : ''}">${homeName}</span>
+              </div>
+              <span class="team-score ${statusType === 'post' && parseInt(homeScore) > parseInt(awayScore) ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
+            </div>
           `;
           container.appendChild(card);
         });
 
       } catch (err) {
-        container.innerHTML = `<div class="msg" style="color: var(--danger);">Error loading scores: ${err.message}</div>`;
+        console.error('Error loading scores:', err);
+        container.innerHTML = '<div class="error-msg">Could not load live scores at the moment. Please check back later.</div>';
       }
     }
 
-    loadScores();
+    fetchScores();
   </script>
 </body>
 </html>
