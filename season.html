@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Season Stats</title>
+  <title>BBBCWSCLP — Season History</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
   <style>
     :root {
       --bg: #0f172a;
@@ -12,10 +17,10 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
-      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --gold: #f59e0b;
+      --warning: #eab308;
+      --accent: #3b82f6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -28,111 +33,86 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; }
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
-    header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
-    header p { color: var(--text-muted); margin-top: 0.3rem; }
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; flex-wrap: wrap; }
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-
-    /* Metrics Grid Layout */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .metric-box {
-      background: #0f172a;
+    /* Section & Card Styling */
+    .section-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); text-align: left; }
+    
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .stat-card {
+      background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
+      border-radius: 12px;
+      padding: 1.25rem;
       text-align: center;
     }
+    .stat-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+    .stat-card .stat-value { font-size: 1.35rem; font-weight: 800; color: var(--text); }
 
-    .metric-box h3 {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
+    /* Overall Performance Box */
+    .overall-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      margin-bottom: 2.5rem;
     }
+    .overall-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+    .overall-card .overall-value { font-size: 1.75rem; font-weight: 900; letter-spacing: 0.5px; color: var(--text); }
+    .overall-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
 
-    .metric-box .metric-value {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--text);
+    /* History Feed */
+    .week-history-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
     }
+    .history-week-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
 
-    .metric-box .metric-sub {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-    }
+    .history-category { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 0.75rem; margin-bottom: 0.4rem; }
+    .history-picks-list { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 1rem; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
-    th { color: var(--text-muted); font-weight: 600; }
-    
-    .loading-text { text-align: center; color: var(--text-muted); padding: 1rem; }
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>BBBC Season Stats</h1>
-      <p>Overall Team Metrics & Deep Dives</p>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP:</h1>
     </header>
 
     <nav>
       <a href="index.html">Weekly</a>
       <a href="standings.html">Standings</a>
       <a href="season.html" class="active">Season</a>
-      <a href="scores.html">Scores</a>
-      <a href="admin.html">Admin</a>
       <a href="halloffame.html">HOF</a>
+      <a href="scores.html" class="active">Scores</a>
     </nav>
 
-    <!-- Team Metrics Card -->
-    <div class="card">
-      <h2>Team Betting Metrics</h2>
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <h3>Top Picked Team</h3>
-          <div class="metric-value" id="top-team-val">-</div>
-          <div class="metric-sub" id="top-team-sub">Most correct outcomes</div>
-        </div>
-        <div class="metric-box">
-          <h3>Spread Record</h3>
-          <div class="metric-value" id="spread-record-val">0-0-0</div>
-          <div class="metric-sub">Overall ATS</div>
-        </div>
-        <div class="metric-box">
-          <h3>O/U Record</h3>
-          <div class="metric-value" id="ou-record-val">0-0-0</div>
-          <div class="metric-sub">Overall Totals</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Season Summary Card (No Courtside Links) -->
-    <div class="card">
-      <h2>Season Overview</h2>
-      <div id="season-overview-container">
-        <div class="loading-text">Loading season data...</div>
-      </div>
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading season history...</div>
     </div>
   </div>
 
@@ -143,99 +123,233 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadSeasonData() {
-      const overviewContainer = document.getElementById('season-overview-container');
+    async function loadSeasonHistory() {
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
 
-      // Fetch picks with related week info
-      const { data: picks, error: picksError } = await _supabase
+      const { data: picks } = await _supabase
         .from('picks')
-        .select('*, weeks(week_number, status), players(initials)');
+        .select('*, players(initials)');
 
-      if (picksError) {
-        overviewContainer.innerHTML = `<div class="loading-text" style="color: var(--danger);">Error loading season stats.</div>`;
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+
+      if (!weeks || weeks.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted);">No season history recorded yet.</div>';
         return;
       }
 
-      if (!picks || picks.length === 0) {
-        overviewContainer.innerHTML = `<div class="loading-text">No picks recorded for this season yet.</div>`;
-        return;
-      }
+      // Compute Overall Group Stats & Breakdown Metrics
+      let totalW = 0;
+      let totalL = 0;
+      let totalD = 0;
 
-      let spreadWins = 0, spreadLosses = 0, spreadPushes = 0;
-      let ouWins = 0, ouLosses = 0, ouPushes = 0;
+      let spreadW = 0, spreadL = 0, spreadD = 0;
+      let ouW = 0, ouL = 0, ouD = 0;
       const teamCorrectCounts = {};
 
-      picks.forEach(p => {
-        const selection = (p.selection || '').trim();
-        const result = p.result; // 'W', 'L', 'D'
+      if (picks) {
+        picks.forEach(p => {
+          const res = p.result;
+          const selection = (p.selection || '').trim();
+          const lowerSel = selection.toLowerCase();
+          const isOU = lowerSel.startsWith('over') || lowerSel.startsWith('under');
 
-        if (!result) return;
+          if (res === 'W') {
+            totalW++;
+            if (isOU) ouW++;
+            else spreadW++;
 
-        // Detect if selection is Over/Under vs Spread
-        const lowerSel = selection.toLowerCase();
-        const isOU = lowerSel.startsWith('over') || lowerSel.startsWith('under');
-
-        if (isOU) {
-          if (result === 'W') ouWins++;
-          else if (result === 'L') ouLosses++;
-          else if (result === 'D') ouPushes++;
-        } else {
-          if (result === 'W') spreadWins++;
-          else if (result === 'L') spreadLosses++;
-          else if (result === 'D') spreadPushes++;
-        }
-
-        // Extract team name for correct predictions tracking (Winning outcomes only)
-        if (result === 'W') {
-          // Simple heuristic: strip numbers, points, spreads to get team identifier
-          const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
-          if (cleanTeam && !lowerSel.startsWith('over') && !lowerSel.startsWith('under')) {
-            teamCorrectCounts[cleanTeam] = (teamCorrectCounts[cleanTeam] || 0) + 1;
+            // Track team correct outcomes (Winning bets excluding O/U)
+            if (!isOU) {
+              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
+              if (cleanTeam) {
+                teamCorrectCounts[cleanTeam] = (teamCorrectCounts[cleanTeam] || 0) + 1;
+              }
+            }
+          } else if (res === 'L') {
+            totalL++;
+            if (isOU) ouL++;
+            else spreadL++;
+          } else if (res === 'D') {
+            totalD++;
+            if (isOU) ouD++;
+            else spreadD++;
           }
-        }
-      });
+        });
+      }
 
-      // Update Metrics Blocks
-      document.getElementById('spread-record-val').innerText = `${spreadWins}-${spreadLosses}-${spreadPushes}`;
-      document.getElementById('ou-record-val').innerText = `${ouWins}-${ouLosses}-${ouPushes}`;
+      const totalDecided = totalW + totalL;
+      const groupWinPct = totalDecided > 0 ? ((totalW / totalDecided) * 100).toFixed(1) + '%' : '0.0%';
 
       // Find top predicted team
-      let topTeam = 'None yet';
-      let maxCount = 0;
+      let topTeam = 'None';
+      let maxTeamCount = 0;
       for (const [team, count] of Object.entries(teamCorrectCounts)) {
-        if (count > maxCount) {
-          maxCount = count;
+        if (count > maxTeamCount) {
+          maxTeamCount = count;
           topTeam = team;
         }
       }
 
-      document.getElementById('top-team-val').innerText = maxCount > 0 ? topTeam : 'None';
-      document.getElementById('top-team-sub').innerText = maxCount > 0 ? `${maxCount} correct picks` : 'No winning bets logged';
+      // Compute Hot/Cold Streaks (Supporting Multiple Players)
+      let hottestPlayers = [];
+      let maxHotStreak = 0;
 
-      // Render Season Overview table (Grouped by Week, excluding Courtside links)
-      const weekGroups = {};
-      picks.forEach(p => {
-        const wkNum = p.weeks?.week_number ?? '??';
-        if (!weekGroups[wkNum]) weekGroups[wkNum] = [];
-        weekGroups[wkNum].push(p);
-      });
+      let coldestPlayers = [];
+      let maxColdStreak = 0;
 
-      const sortedWeeks = Object.keys(weekGroups).sort((a, b) => b - a);
+      const { data: allPicksChronological } = await _supabase
+        .from('picks')
+        .select('*, players(initials)')
+        .order('created_at', { ascending: true });
 
-      let html = '';
-      sortedWeeks.forEach(wkNum => {
-        const wkPicks = weekGroups[wkNum];
-        html += `
-          <div style="margin-top: 1rem; font-weight: 700; color: var(--gold); font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem;">
-            Week ${wkNum} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(${wkPicks.length} total picks)</span>
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*');
+
+      if (players && allPicksChronological) {
+        players.forEach(player => {
+          const playerPicks = allPicksChronological.filter(p => p.player_id === player.id && p.result);
+          if (playerPicks.length === 0) return;
+
+          let currentStreakType = null;
+          let currentStreakCount = 0;
+
+          for (let i = playerPicks.length - 1; i >= 0; i--) {
+            const res = playerPicks[i].result;
+            if (res === 'D') continue;
+
+            if (currentStreakType === null) {
+              currentStreakType = res;
+              currentStreakCount = 1;
+            } else if (res === currentStreakType) {
+              currentStreakCount++;
+            } else {
+              break;
+            }
+          }
+
+          if (currentStreakType === 'W' && currentStreakCount > 0) {
+            if (currentStreakCount > maxHotStreak) {
+              maxHotStreak = currentStreakCount;
+              hottestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxHotStreak) {
+              hottestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
+          }
+
+          if (currentStreakType === 'L' && currentStreakCount > 0) {
+            if (currentStreakCount > maxColdStreak) {
+              maxColdStreak = currentStreakCount;
+              coldestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxColdStreak) {
+              coldestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
+          }
+        });
+      }
+
+      const hotDisplay = hottestPlayers.length > 0 
+        ? `${hottestPlayers.map(p => p.name).join(', ')} (${maxHotStreak} W)` 
+        : 'None';
+
+      const coldDisplay = coldestPlayers.length > 0 
+        ? `${coldestPlayers.map(p => p.name).join(', ')} (${maxColdStreak} L)` 
+        : 'None';
+
+      // --- RENDER SELECTION ---
+      let html = `<div class="section-title">Team Metrics</div>`;
+      
+      // Streak Cards Grid
+      html += `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>🔥 Hot Streak</h3>
+            <div class="stat-value">${hotDisplay}</div>
           </div>
+          <div class="stat-card">
+            <h3>❄️ Cold Streak</h3>
+            <div class="stat-value">${coldDisplay}</div>
+          </div>
+        </div>
+      `;
+
+      // New Team Metrics Cards Grid (Top Team, Spread W-L-D, O/U W-L-D)
+      html += `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Top Predicted Team</h3>
+            <div class="stat-value" style="font-size: 1.15rem;">${topTeam} ${maxTeamCount > 0 ? '(' + maxTeamCount + 'W)' : ''}</div>
+          </div>
+          <div class="stat-card">
+            <h3>Spread W-L-D</h3>
+            <div class="stat-value">${spreadW}-${spreadL}-${spreadD}</div>
+          </div>
+        </div>
+        <div class="stats-grid" style="margin-bottom: 1.5rem;">
+          <div class="stat-card" style="grid-column: span 2;">
+            <h3>O/U W-L-D</h3>
+            <div class="stat-value">${ouW}-${ouL}-${ouD}</div>
+          </div>
+        </div>
+      `;
+
+      // Overall Performance Box
+      html += `
+        <div class="overall-card">
+          <h3>Overall Group Performance</h3>
+          <div class="overall-value">${totalW} - ${totalL} - ${totalD}</div>
+          <div class="overall-sub">Win Rate: ${groupWinPct}</div>
+        </div>
+      `;
+
+      html += `<div class="section-title" style="margin-top: 1.5rem;">Week-by-Week Breakdown</div>`;
+
+      // Render Past Weeks (Courtside links omitted)
+      weeks.forEach(week => {
+        const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
+        const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
+        const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
+
+        html += `
+          <div class="week-history-card">
+            <div class="history-week-header">
+              <span>Week ${week.week_number} (${week.status.toUpperCase()})</span>
+            </div>
         `;
+
+        if (weekPicks.length === 0) {
+          html += `<div style="color: var(--text-muted); font-size: 0.95rem;">No picks recorded for this week.</div>`;
+        } else {
+          if (parlayPicks.length > 0) {
+            html += `<div class="history-category">Parlay:</div><div class="history-picks-list">`;
+            parlayPicks.forEach(p => {
+              const resClass = p.result ? `res-${p.result}` : 'res-pending';
+              html += `<div class="${resClass}"><strong>${p.players?.initials || '??'}:</strong> ${p.selection}</div>`;
+            });
+            html += `</div>`;
+          }
+
+          if (otherPicks.length > 0) {
+            html += `<div class="history-category">Others:</div><div class="history-picks-list">`;
+            otherPicks.forEach(p => {
+              const resClass = p.result ? `res-${p.result}` : 'res-pending';
+              html += `<div class="${resClass}"><strong>${p.players?.initials || '??'}:</strong> ${p.selection}</div>`;
+            });
+            html += `</div>`;
+          }
+        }
+
+        html += `</div>`;
       });
 
-      overviewContainer.innerHTML = html;
+      container.innerHTML = html;
     }
 
-    loadSeasonData();
+    loadSeasonHistory();
   </script>
 </body>
 </html>
