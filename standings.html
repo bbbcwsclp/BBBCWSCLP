@@ -82,7 +82,7 @@
       <a href="standings.html" class="active">Standings</a>
       <a href="season.html">Season</a>
       <a href="halloffame.html">HOF</a>
-      <a href="scores.html" class="active">Scores</a>
+      <a href="scores.html">Scores</a>
     </nav>
 
     <div class="card">
@@ -132,7 +132,7 @@
       players.forEach(p => {
         stats[p.id] = {
           id: p.id,
-          initials: p.initials,
+          name: p.name || p.full_name || p.initials, // Fallback to initials if name column is empty
           wins: 0,
           losses: 0,
           draws: 0
@@ -194,18 +194,19 @@
           rankClass = 'rank-3';
         }
 
-        let formattedInitials = p.initials;
-        const dsMatchIndex = p.initials.toUpperCase().indexOf('DS');
+        // Optional: preserves the admin link helper if part of the name matches "DS"
+        let formattedName = p.name;
+        const dsMatchIndex = p.name.toUpperCase().indexOf('DS');
         if (dsMatchIndex !== -1) {
-          const before = p.initials.substring(0, dsMatchIndex);
-          const after = p.initials.substring(dsMatchIndex + 2);
-          formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">D</a>S${after}`;
+          const before = p.name.substring(0, dsMatchIndex);
+          const after = p.name.substring(dsMatchIndex + 2);
+          formattedName = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">D</a>S${after}`;
         }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="${rankClass}">${rankDisplay}</td>
-          <td><strong>${formattedInitials}</strong></td>
+          <td><strong>${formattedName}</strong></td>
           <td>${p.wins}-${p.losses}-${p.draws}</td>
           <td>${(p.winPct * 100).toFixed(1)}%</td>
         `;
