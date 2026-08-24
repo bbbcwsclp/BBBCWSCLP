@@ -108,7 +108,7 @@
       <a href="standings.html">Standings</a>
       <a href="season.html" class="active">Season</a>
       <a href="halloffame.html">HOF</a>
-      <a href="scores.html" class="active">Scores</a>
+      <a href="scores.html">Scores</a>
     </nav>
 
     <div id="content-container">
@@ -155,7 +155,9 @@
           const res = p.result;
           const selection = (p.selection || '').trim();
           const lowerSel = selection.toLowerCase();
-          const isOU = lowerSel.startsWith('over') || lowerSel.startsWith('under');
+          
+          // Robust O/U check: detects "over" or "under" anywhere in the selection text
+          const isOU = /\bover\b/.test(lowerSel) || /\bunder\b/.test(lowerSel);
 
           if (res === 'W') {
             totalW++;
@@ -277,7 +279,7 @@
         </div>
       `;
 
-      // New Team Metrics Cards Grid (Top Team, Spread W-L-D, O/U W-L-D)
+      // Team Metrics Cards Grid (Top Team, Spread W-L-D, O/U W-L-D)
       html += `
         <div class="stats-grid">
           <div class="stat-card">
