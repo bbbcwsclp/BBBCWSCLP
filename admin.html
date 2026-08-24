@@ -28,6 +28,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow-y: scroll; /* Keeps layout width consistent */
     }
 
     .container { width: 100%; max-width: 650px; margin: 0 auto; }
@@ -54,7 +55,7 @@
     button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
     button:hover { background-color: #2563eb; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; }
     
@@ -72,6 +73,21 @@
     .btn-batch:hover { background-color: #16a34a; }
     .btn-autograde { width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #d97706; }
     .btn-autograde:hover { background-color: #b45309; }
+
+    /* Week Section Styling */
+    .week-section-banner {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      margin: 1.25rem 0 0.5rem 0;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -112,7 +128,7 @@
         </div>
         <div class="form-group">
           <label for="week-gambly-link">Gambly Link URL</label>
-          <input type="url" id="week-gambly-link" placeholder="https://...">
+          <input type="url" id="week-gambly-link" placeholder="https://gambly.com...">
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
@@ -157,22 +173,8 @@
           <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
-      <div style="overflow-x: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Week</th>
-              <th>Player</th>
-              <th>Selection</th>
-              <th>Parlay?</th>
-              <th>Result</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="active-picks-tbody">
-            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading active picks...</td></tr>
-          </tbody>
-        </table>
+      <div id="active-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
       </div>
       <div id="active-msg" class="msg"></div>
     </div>
@@ -186,22 +188,8 @@
           <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
         </div>
       </div>
-      <div style="overflow-x: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Week</th>
-              <th>Player</th>
-              <th>Selection</th>
-              <th>Parlay?</th>
-              <th>Result</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="finalized-picks-tbody">
-            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>
-          </tbody>
-        </table>
+      <div id="finalized-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">No finalized picks found.</div>
       </div>
       <div id="finalized-msg" class="msg"></div>
     </div>
@@ -334,66 +322,111 @@
         .select('*, weeks(week_number, status), players(initials)')
         .order('created_at', { ascending: false });
 
-      const activeTbody = document.getElementById('active-picks-tbody');
-      const finalizedTbody = document.getElementById('finalized-picks-tbody');
+      const activeContainer = document.getElementById('active-container');
+      const finalizedContainer = document.getElementById('finalized-container');
       
-      activeTbody.innerHTML = '';
-      finalizedTbody.innerHTML = '';
+      activeContainer.innerHTML = '';
+      finalizedContainer.innerHTML = '';
 
       if (!picks || picks.length === 0) {
-        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No picks found.</td></tr>';
-        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
+        activeContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No picks found.</div>';
+        finalizedContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No finalized picks found.</div>';
         return;
       }
 
-      let activeCount = 0;
-      let finalizedCount = 0;
+      // Separate into active and closed sets
+      const activePicks = [];
+      const finalizedPicks = [];
 
       picks.forEach(p => {
         const isClosed = p.weeks?.status === 'closed';
-        const targetTbody = isClosed ? finalizedTbody : activeTbody;
-
-        if (isClosed) finalizedCount++;
-        else activeCount++;
-
-        const tr = document.createElement('tr');
-        tr.dataset.pickId = p.id;
-        tr.innerHTML = `
-          <td>Wk ${p.weeks?.week_number || '?'}</td>
-          <td><strong>${p.players?.initials || '??'}</strong></td>
-          <td><input type="text" class="row-selection" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
-          <td><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
-          <td>
-            <select class="row-result" style="padding: 0.4rem; font-size: 0.9rem;">
-              <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
-              <option value="W" ${p.result === 'W' ? 'selected' : ''}>Win (W)</option>
-              <option value="L" ${p.result === 'L' ? 'selected' : ''}>Loss (L)</option>
-              <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
-            </select>
-          </td>
-          <td class="actions-cell">
-            <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
-          </td>
-        `;
-        targetTbody.appendChild(tr);
+        if (isClosed) finalizedPicks.push(p);
+        else activePicks.push(p);
       });
 
-      if (activeCount === 0) {
-        activeTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No active picks for open weeks.</td></tr>';
+      renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.');
+      renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.');
+    }
+
+    function renderPicksByWeek(picksArray, containerElement, emptyMessage) {
+      if (picksArray.length === 0) {
+        containerElement.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1rem;">${emptyMessage}</div>`;
+        return;
       }
-      if (finalizedCount === 0) {
-        finalizedTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No finalized picks found.</td></tr>';
-      }
+
+      // Group by week number
+      const grouped = {};
+      picksArray.forEach(p => {
+        const wkNum = p.weeks?.week_number ?? '??';
+        if (!grouped[wkNum]) grouped[wkNum] = [];
+        grouped[wkNum].push(p);
+      });
+
+      // Sort weeks numerically descending (e.g. Week 3, Week 2, Week 1)
+      const sortedWeeks = Object.keys(grouped).sort((a, b) => b - a);
+
+      sortedWeeks.forEach(wkNum => {
+        const weekPicks = grouped[wkNum];
+
+        const banner = document.createElement('div');
+        banner.className = 'week-section-banner';
+        banner.innerHTML = `<span>Week ${wkNum}</span><span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${weekPicks.length} Picks</span>`;
+        containerElement.appendChild(banner);
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.style.overflowX = 'auto';
+
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Selection</th>
+              <th>Parlay?</th>
+              <th>Result</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+
+        weekPicks.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.dataset.pickId = p.id;
+          tr.innerHTML = `
+            <td><strong>${p.players?.initials || '??'}</strong></td>
+            <td><input type="text" class="row-selection" value="${p.selection || ''}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+            <td><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
+            <td>
+              <select class="row-result" style="padding: 0.4rem; font-size: 0.9rem;">
+                <option value="" ${!p.result ? 'selected' : ''}>Pending</option>
+                <option value="W" ${p.result === 'W' ? 'selected' : ''}>Win (W)</option>
+                <option value="L" ${p.result === 'L' ? 'selected' : ''}>Loss (L)</option>
+                <option value="D" ${p.result === 'D' ? 'selected' : ''}>Push (D)</option>
+              </select>
+            </td>
+            <td class="actions-cell">
+              <button class="delete-btn" onclick="deletePick('${p.id}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        tableWrapper.appendChild(table);
+        containerElement.appendChild(tableWrapper);
+      });
     }
 
     async function autoGradePicks(sectionType) {
-      const tbodyId = sectionType === 'active' ? 'active-picks-tbody' : 'finalized-picks-tbody';
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
       const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
-      const tbody = document.getElementById(tbodyId);
+      const container = document.getElementById(containerId);
       const msgDiv = document.getElementById(msgId);
-      const rows = tbody.querySelectorAll('tr');
+      const rows = container.querySelectorAll('tr[data-pick-id]');
 
-      if (rows.length === 0 || rows[0].querySelector('td').colSpan > 1) return;
+      if (rows.length === 0) return;
 
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
@@ -415,10 +448,9 @@
           const resultSelect = row.querySelector('.row-result');
           const selText = selectionInput.value.trim().toLowerCase();
 
-          // Search through completed games for matching team names
           for (const event of data.events) {
             const comp = event.competitions[0];
-            if (comp.status.type.state !== 'post') continue; // Only grade final games
+            if (comp.status.type.state !== 'post') continue;
 
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const away = comp.competitors.find(c => c.homeAway === 'away');
@@ -443,7 +475,6 @@
             }
 
             if (matchedTeam) {
-              // Parse spread if present (e.g., "-7.5" or "+3.5")
               let spread = 0;
               const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
               if (spreadMatch) {
@@ -478,13 +509,13 @@
     }
 
     async function saveAllPicks(sectionType) {
-      const tbodyId = sectionType === 'active' ? 'active-picks-tbody' : 'finalized-picks-tbody';
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
       const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
-      const tbody = document.getElementById(tbodyId);
+      const container = document.getElementById(containerId);
       const msgDiv = document.getElementById(msgId);
-      const rows = tbody.querySelectorAll('tr');
+      const rows = container.querySelectorAll('tr[data-pick-id]');
 
-      if (rows.length === 0 || rows[0].querySelector('td').colSpan > 1) return;
+      if (rows.length === 0) return;
 
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Saving changes...';
