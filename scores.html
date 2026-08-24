@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Week 0</title>
+  <title>BBBCWSCLP — FBS Scores</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
@@ -35,7 +35,7 @@
     .container { width: 100%; max-width: 700px; margin: 0 auto; text-align: center; }
 
     header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    header img { max-height: 110px; margin-bottom: 0.75rem; object-fit: contain; }
     
     h1.main-title { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
@@ -71,7 +71,7 @@
       border-color: var(--accent);
     }
 
-    /* Game Card Styling */
+    /* Game Card Styling (Static & Non-clickable) */
     .game-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
@@ -93,6 +93,8 @@
       margin-bottom: 0.75rem; 
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .status-badge {
@@ -104,6 +106,12 @@
     .status-live { background-color: rgba(34, 197, 94, 0.2); color: var(--success); }
     .status-final { background-color: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
     .status-sched { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+    .situation-text {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
 
     .team-line { 
       display: flex; 
@@ -143,20 +151,20 @@
     </header>
 
     <nav>
-      <a href="index.html">Weekly</a>
+      <a href="index.html">Weekly Picks</a>
       <a href="standings.html">Standings</a>
-      <a href="season.html">Season</a>
-      <a href="halloffame.html">HOF</a>
+      <a href="season.html">Season History</a>
+      <a href="halloffame.html">Hall of Fame</a>
       <a href="scores.html" class="active">Scores</a>
     </nav>
 
     <!-- Optional Quick Filter for Major FBS Conferences -->
     <div class="filter-bar">
-      <button class="filter-btn active" onclick="filterGames('all')">All FBS</button>
-      <button class="filter-btn" onclick="filterGames('sec')">SEC</button>
-      <button class="filter-btn" onclick="filterGames('big10')">Big Ten</button>
-      <button class="filter-btn" onclick="filterGames('acc')">ACC</button>
-      <button class="filter-btn" onclick="filterGames('big12')">Big 12</button>
+      <button class="filter-btn active" onclick="filterGames('all', event)">All FBS</button>
+      <button class="filter-btn" onclick="filterGames('sec', event)">SEC</button>
+      <button class="filter-btn" onclick="filterGames('big10', event)">Big Ten</button>
+      <button class="filter-btn" onclick="filterGames('acc', event)">ACC</button>
+      <button class="filter-btn" onclick="filterGames('big12', event)">Big 12</button>
     </div>
 
     <div id="scores-container">
@@ -181,7 +189,7 @@
           return;
         }
 
-        // Define the August 30 cutoff date (midnight of Aug 31)
+        // Define the August 30 cutoff date
         const cutoffDate = new Date('2026-08-30T23:59:59');
 
         // Filter events to only include games on or before August 30
@@ -203,10 +211,12 @@
       }
     }
 
-    function filterGames(conf) {
+    function filterGames(conf, clickEvent) {
       currentFilter = conf;
       document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      if (clickEvent && clickEvent.target) {
+        clickEvent.target.classList.add('active');
+      }
       renderGames();
     }
 
@@ -223,7 +233,6 @@
           const homeConf = comp.competitors[0]?.team?.conferenceId;
           const awayConf = comp.competitors[1]?.team?.conferenceId;
 
-          // ESPN Conference IDs: SEC=8, Big Ten=5, ACC=1, Big 12=4
           if (currentFilter === 'sec') return homeConf === '8' || awayConf === '8';
           if (currentFilter === 'big10') return homeConf === '5' || awayConf === '5';
           if (currentFilter === 'acc') return homeConf === '1' || awayConf === '1';
@@ -237,10 +246,25 @@
         return;
       }
 
+      // Sort criteria: Live ('in') games first, then upcoming ('pre'), then finalized ('post') at the bottom
+      filteredEvents.sort((a, b) => {
+        const stateA = a.competitions[0].status.type.state;
+        const stateB = b.competitions[0].status.type.state;
+
+        const getPriority = (state) => {
+          if (state === 'in') return 1;
+          if (state === 'pre') return 2;
+          if (state === 'post') return 3;
+          return 4;
+        };
+
+        return getPriority(stateA) - getPriority(stateB);
+      });
+
       filteredEvents.forEach(event => {
         const competition = event.competitions[0];
         const statusType = competition.status.type.state; // 'pre', 'in', 'post'
-        const statusDetail = competition.status.type.detail; // e.g. "Final", "3rd 4:12", "Sat, 7:00 PM"
+        const statusDetail = competition.status.type.detail; // e.g. "Final", "3rd 4:12"
         
         const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
         const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
@@ -257,7 +281,16 @@
         const homeScore = homeTeam.score || '0';
         const awayScore = awayTeam.score || '0';
 
-        // Broadcast info (e.g., ESPN, SEC Network)
+        // Live Situational Data (Down & Distance, Ball on yard line)
+        let situationHTML = '';
+        if (statusType === 'in' && competition.situation) {
+          const sit = competition.situation;
+          if (sit.downText && sit.shortDisplayName) {
+            situationHTML = `<span class="situation-text">🏈 ${sit.downText} &bull; ${sit.shortDisplayName}</span>`;
+          }
+        }
+
+        // Broadcast info
         const broadcast = competition.broadcasts && competition.broadcasts.length > 0 
           ? competition.broadcasts[0].names.join(', ') 
           : '';
@@ -281,11 +314,14 @@
         const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
         const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
+        // Create card element
         const card = document.createElement('div');
         card.className = 'game-card';
+
         card.innerHTML = `
           <div class="game-header-info">
             <span class="status-badge ${badgeClass}">${statusLabel}</span>
+            ${situationHTML}
             <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
           </div>
           <div class="team-line">
