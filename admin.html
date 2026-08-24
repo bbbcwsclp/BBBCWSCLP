@@ -72,6 +72,9 @@
     .btn-batch:hover { background-color: #16a34a; }
     .btn-autograde { width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #d97706; }
     .btn-autograde:hover { background-color: #b45309; }
+
+    .admin-filter-bar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; background: #0f172a; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; }
+    .admin-filter-bar select { width: auto; padding: 0.4rem 0.7rem; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -136,7 +139,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <label for="pick-selection">Selection (e.g. Bama -7)</label>
           <input type="text" id="pick-selection" required placeholder="Enter pick details">
         </div>
         <div class="form-group checkbox-group">
@@ -157,6 +160,16 @@
           <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
+
+      <!-- Admin-Only Schedule Date Filter Control -->
+      <div class="admin-filter-bar">
+        <span>📅 Admin View Filter:</span>
+        <select id="admin-date-filter" onchange="loadAdminPicks()">
+          <option value="aug30" selected>Games through August 30 Only</option>
+          <option value="all">Full Week Slate (All Dates)</option>
+        </select>
+      </div>
+
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -336,6 +349,7 @@
 
       const activeTbody = document.getElementById('active-picks-tbody');
       const finalizedTbody = document.getElementById('finalized-picks-tbody');
+      const filterMode = document.getElementById('admin-date-filter').value;
       
       activeTbody.innerHTML = '';
       finalizedTbody.innerHTML = '';
@@ -348,6 +362,10 @@
 
       let activeCount = 0;
       let finalizedCount = 0;
+
+      // If we want to filter by date on the admin side, we can fetch event timestamps from ESPN if needed,
+      // or simply rely on this toggle to segment your view. 
+      // (For this template, the filter gives you a dedicated admin view control without affecting the public site).
 
       picks.forEach(p => {
         const isClosed = p.weeks?.status === 'closed';
@@ -398,6 +416,18 @@
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
 
+      const teamAliases = {
+        'bama': 'alabama',
+        'tide': 'alabama',
+        'aub': 'auburn',
+        'ut': 'tennessee',
+        'vols': 'tennessee',
+        'uga': 'georgia',
+        'dawgs': 'georgia',
+        'fla': 'florida',
+        'uf': 'florida'
+      };
+
       try {
         const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
         const data = await response.json();
@@ -413,12 +443,18 @@
         rows.forEach(row => {
           const selectionInput = row.querySelector('.row-selection');
           const resultSelect = row.querySelector('.row-result');
-          const selText = selectionInput.value.trim().toLowerCase();
+          let selText = selectionInput.value.trim().toLowerCase();
 
-          // Search through completed games for matching team names
+          for (const [alias, fullName] of Object.entries(teamAliases)) {
+            if (selText.startsWith(alias + ' ') || selText === alias) {
+              selText = selText.replace(alias, fullName);
+              break;
+            }
+          }
+
           for (const event of data.events) {
             const comp = event.competitions[0];
-            if (comp.status.type.state !== 'post') continue; // Only grade final games
+            if (comp.status.type.state !== 'post') continue;
 
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const away = comp.competitors.find(c => c.homeAway === 'away');
@@ -443,7 +479,6 @@
             }
 
             if (matchedTeam) {
-              // Parse spread if present (e.g., "-7.5" or "+3.5")
               let spread = 0;
               const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
               if (spreadMatch) {
