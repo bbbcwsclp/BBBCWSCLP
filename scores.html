@@ -161,7 +161,7 @@
     </div>
 
     <div id="scores-container">
-      <div class="loading-msg">Fetching live FBS matchups...</div>
+      <div class="loading-msg">Fetching matchups through August 30...</div>
     </div>
   </div>
 
@@ -171,8 +171,6 @@
 
     async function fetchScores() {
       const container = document.getElementById('scores-container');
-      
-      // ESPN API endpoint with groups=80 (FBS) and limit=300 to capture the full slate
       const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300';
 
       try {
@@ -180,11 +178,24 @@
         const data = await response.json();
 
         if (!data.events || data.events.length === 0) {
-          container.innerHTML = '<div class="loading-msg">No FBS games scheduled for today.</div>';
+          container.innerHTML = '<div class="loading-msg">No games scheduled.</div>';
           return;
         }
 
-        rawEvents = data.events;
+        // Define the August 30 cutoff date (midnight of Aug 31)
+        const cutoffDate = new Date('2026-08-30T23:59:59');
+
+        // Filter events to only include games on or before August 30
+        rawEvents = data.events.filter(event => {
+          const gameDate = new Date(event.date);
+          return gameDate <= cutoffDate;
+        });
+
+        if (rawEvents.length === 0) {
+          container.innerHTML = '<div class="loading-msg">No games scheduled through August 30.</div>';
+          return;
+        }
+
         renderGames();
 
       } catch (err) {
@@ -213,7 +224,7 @@
           const homeConf = comp.competitors[0]?.team?.conferenceId;
           const awayConf = comp.competitors[1]?.team?.conferenceId;
 
-          // ESPN Conference IDs: SEC=8, Big Ten=1, ACC=1, Big 12=4
+          // ESPN Conference IDs: SEC=8, Big Ten=5, ACC=1, Big 12=4
           if (currentFilter === 'sec') return homeConf === '8' || awayConf === '8';
           if (currentFilter === 'big10') return homeConf === '5' || awayConf === '5';
           if (currentFilter === 'acc') return homeConf === '1' || awayConf === '1';
@@ -223,7 +234,7 @@
       }
 
       if (filteredEvents.length === 0) {
-        container.innerHTML = '<div class="loading-msg">No games found for this filter.</div>';
+        container.innerHTML = '<div class="loading-msg">No games found for this filter through August 30.</div>';
         return;
       }
 
