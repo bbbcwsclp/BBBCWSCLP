@@ -43,9 +43,39 @@
     h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
     /* Navigation Bar */
-    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
-    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+    nav { 
+      display: flex; 
+      justify-content: center; 
+      gap: 0.75rem; 
+      margin-bottom: 2.5rem; 
+      width: 100%; 
+      flex-wrap: wrap;
+    }
+    
+    nav a { 
+      color: var(--text-muted); 
+      text-decoration: none; 
+      transition: all 0.2s ease;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600; 
+      font-size: 0.9rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    nav a:hover { 
+      color: var(--text); 
+      border-color: var(--accent);
+      background-color: #273548;
+    }
+
+    nav a.active { 
+      color: white; 
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
 
     /* Current Week Card Container */
     .current-week-card {
@@ -360,7 +390,8 @@
         previewContainer.innerHTML = `
           <div class="upcoming-preview-card">
             <div class="upcoming-preview-header">
-              <span>Next Week's Parlay Pickers</span>
+              <span>🚀 Upcoming Week Top 5 Parlay</span>
+              <span style="font-size: 0.75rem; color: var(--gold); background: rgba(245,158,11,0.15); padding: 0.2rem 0.5rem; border-radius: 4px;">Week ${currentWeek.week_number}</span>
             </div>
             <div class="upcoming-pending">Results pending until the winners are decided.</div>
           </div>
@@ -536,7 +567,8 @@
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
-            <span>Next Week's Parlay Pickers</span>
+            <span>🚀 Upcoming Week Top 5 Parlay</span>
+            <span style="font-size: 0.75rem; color: var(--gold); background: rgba(245,158,11,0.15); padding: 0.2rem 0.5rem; border-radius: 4px;">Week ${currentWeek.week_number}</span>
           </div>
       `;
 
