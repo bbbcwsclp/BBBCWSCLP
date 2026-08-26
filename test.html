@@ -468,11 +468,11 @@
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
-        const gameMap = {};
-
-        parlayPicks.forEach(p => {
+        // Map each individual pick separately so they never bundle together
+        const pickCards = parlayPicks.map(p => {
           const searchTerms = getTeamSearchTerms(p.selection);
           const initials = p.players?.initials || '??';
+          const selection = p.selection;
 
           const matchedEvent = espnEvents.find(ev => {
             const comp = ev.competitions[0];
@@ -487,31 +487,20 @@
             });
           });
 
-          if (matchedEvent) {
-            const eventId = matchedEvent.id;
-            if (!gameMap[eventId]) {
-              gameMap[eventId] = {
-                event: matchedEvent,
-                dateObj: new Date(matchedEvent.date),
-                pickEntries: []
-              };
-            }
-            gameMap[eventId].pickEntries.push({ initials, selection: p.selection });
-          } else {
-            const unmatchedKey = `unmatched_${p.id}`;
-            gameMap[unmatchedKey] = {
-              event: null,
-              dateObj: new Date('9999-12-31'),
-              pickEntries: [{ initials, selection: p.selection }]
-            };
-          }
+          return {
+            initials,
+            selection,
+            event: matchedEvent || null,
+            dateObj: matchedEvent ? new Date(matchedEvent.date) : new Date('9999-12-31')
+          };
         });
 
-        const sortedGames = Object.values(gameMap).sort((a, b) => a.dateObj - b.dateObj);
+        // Sort individual pick rows chronologically by game time
+        pickCards.sort((a, b) => a.dateObj - b.dateObj);
 
-        sortedGames.forEach(item => {
-          const initialsList = item.pickEntries.map(pe => pe.initials).join(', ');
-          const displaySelection = item.pickEntries[0].selection;
+        pickCards.forEach(item => {
+          const initials = item.initials;
+          const displaySelection = item.selection;
 
           if (item.event) {
             const competition = item.event.competitions[0];
@@ -545,7 +534,7 @@
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
+                  <div class="compact-pick-info">${initials}: ${displaySelection}</div>
                   <div class="compact-status ${statusClass}">${statusText}</div>
                 </div>
                 <div class="compact-teams">
@@ -566,7 +555,7 @@
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
+                  <div class="compact-pick-info">${initials}: ${displaySelection}</div>
                   <div class="compact-status">Matchup pending</div>
                 </div>
                 <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
