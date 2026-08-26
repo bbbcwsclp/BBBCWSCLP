@@ -85,11 +85,35 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1.25rem;
+      padding: 1.25rem 0.75rem;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 110px;
     }
-    .stat-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
-    .stat-card .stat-value { font-size: 1.35rem; font-weight: 800; color: var(--text); }
+    .stat-card h3 { 
+      font-size: 0.8rem; 
+      color: var(--text-muted); 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+      margin-bottom: 0.4rem; 
+      white-space: nowrap;
+    }
+    .stat-card .stat-value { 
+      font-size: 1.15rem; 
+      font-weight: 800; 
+      color: var(--text); 
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .stat-card .stat-sub {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
 
     /* Overall Performance Box */
     .overall-card {
@@ -187,7 +211,6 @@
           const selection = (p.selection || '').trim();
           const lowerSel = selection.toLowerCase();
           
-          // Enhanced O/U check: handles words or abbreviations like "o51.5", "u48"
           const isOU = /\bover\b/.test(lowerSel) || /\bunder\b/.test(lowerSel) || /\b[ou]\d+(\.\d+)?\b/.test(lowerSel);
 
           if (res === 'W') {
@@ -233,7 +256,7 @@
         }
       }
 
-      // Find most losing team (most L's on spread)
+      // Find most losing team
       let worstTeam = 'None';
       let maxLossCount = 0;
       for (const [team, count] of Object.entries(teamLossCounts)) {
@@ -243,7 +266,7 @@
         }
       }
 
-      // Compute Hot/Cold Streaks (Supporting Multiple Players)
+      // Compute Hot/Cold Streaks
       let hottestPlayers = [];
       let maxHotStreak = 0;
 
@@ -301,13 +324,17 @@
         });
       }
 
-      const hotDisplay = hottestPlayers.length > 0 
-        ? `${hottestPlayers.map(p => p.name).join(', ')} (${maxHotStreak} W)` 
-        : 'None';
+      const hotNames = hottestPlayers.length > 0 ? hottestPlayers.map(p => p.name).join(', ') : 'None';
+      const hotSub = hottestPlayers.length > 0 ? `(${maxHotStreak} W)` : '';
 
-      const coldDisplay = coldestPlayers.length > 0 
-        ? `${coldestPlayers.map(p => p.name).join(', ')} (${maxColdStreak} L)` 
-        : 'None';
+      const coldNames = coldestPlayers.length > 0 ? coldestPlayers.map(p => p.name).join(', ') : 'None';
+      const coldSub = coldestPlayers.length > 0 ? `(${maxColdStreak} L)` : '';
+
+      const topTeamName = topTeam;
+      const topTeamSub = maxTeamCount > 0 ? `(${maxTeamCount}W)` : '';
+
+      const worstTeamName = worstTeam;
+      const worstTeamSub = maxLossCount > 0 ? `(${maxLossCount}L)` : '';
 
       // --- RENDER SELECTION ---
       let html = `<div class="section-title">Team Metrics</div>`;
@@ -317,25 +344,29 @@
         <div class="stats-grid">
           <div class="stat-card">
             <h3>🔥 Hot Streak</h3>
-            <div class="stat-value">${hotDisplay}</div>
+            <div class="stat-value">${hotNames}</div>
+            ${hotSub ? `<div class="stat-sub">${hotSub}</div>` : ''}
           </div>
           <div class="stat-card">
             <h3>❄️ Cold Streak</h3>
-            <div class="stat-value">${coldDisplay}</div>
+            <div class="stat-value">${coldNames}</div>
+            ${coldSub ? `<div class="stat-sub">${coldSub}</div>` : ''}
           </div>
         </div>
       `;
 
-      // Team Metrics Cards Grid (Top Team, Most Losing Team, Spread, O/U)
+      // Team Metrics Cards Grid
       html += `
         <div class="stats-grid">
           <div class="stat-card">
             <h3>Best Bet Team</h3>
-            <div class="stat-value" style="font-size: 1.35rem;">${topTeam} ${maxTeamCount > 0 ? '(' + maxTeamCount + 'W)' : ''}</div>
+            <div class="stat-value">${topTeamName}</div>
+            ${topTeamSub ? `<div class="stat-sub">${topTeamSub}</div>` : ''}
           </div>
           <div class="stat-card">
             <h3>Worst Bet Team</h3>
-            <div class="stat-value" style="font-size: 1.35rem; color: var(--danger);">${worstTeam} ${maxLossCount > 0 ? '(' + maxLossCount + 'L)' : ''}</div>
+            <div class="stat-value" style="color: var(--danger);">${worstTeamName}</div>
+            ${worstTeamSub ? `<div class="stat-sub" style="color: var(--danger);">${worstTeamSub}</div>` : ''}
           </div>
         </div>
         <div class="stats-grid">
@@ -386,7 +417,7 @@
             html += `</div>`;
           }
 
-          if (otherPicks.length > 0) {
+          if (otherPicks.length >0) {
             html += `<div class="history-category">Others:</div><div class="history-picks-list">`;
             otherPicks.forEach(p => {
               const resClass = p.result ? `res-${p.result}` : 'res-pending';
