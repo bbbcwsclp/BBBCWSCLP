@@ -112,7 +112,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadActiveWeek() {
-      const { data: weeks } = await _supabase
+      const { data: weeks, error: weekError } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
@@ -121,34 +121,32 @@
       const container = document.getElementById('content-container');
       container.innerHTML = '';
 
-      if (!weeks || weeks.length === 0) {
+      if (weekError || !weeks || weeks.length === 0) {
         container.innerHTML = '<div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
         return;
       }
 
       const currentWeek = weeks[0];
 
-      const { data: picks } = await _supabase
+      // Fetch picks and explicitly join player records
+      const { data: picks, error: picksError } = await _supabase
         .from('picks')
-        .select('*, players(initials)')
+        .select('*, players(*)')
         .eq('week_id', currentWeek.id)
         .order('created_at', { ascending: true });
 
-      if (!picks || picks.length === 0) {
+      if (picksError || !picks || picks.length === 0) {
         container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
         return;
       }
 
-      // Check if there is a previous week to derive top 5 parlay qualification
       let parlayPicks = [];
       let otherPicks = [];
 
       if (currentWeek.week_number === 1) {
-        // Week 1: Everyone starts in the parlay group by default
         parlayPicks = picks;
         otherPicks = [];
       } else {
-        // Find the previous week number
         const prevWeekNum = currentWeek.week_number - 1;
         const { data: prevWeekData } = await _supabase
           .from('weeks')
@@ -163,7 +161,6 @@
             .select('*')
             .eq('week_id', prevWeekId);
 
-          // Map current picks with their previous week's performance data for sorting
           const mappedPicks = picks.map(p => {
             const prevPick = prevPicks ? prevPicks.find(pp => pp.player_id === p.player_id) : null;
             return {
@@ -173,24 +170,16 @@
             };
           });
 
-          // Sort rules:
-          // 1. Winners (W) first
-          // 2. Tiebreaker 1 (Overflow > 5 winners): Sorted by highest cover margin (prevMargin desc)
-          // 3. Tiebreaker 2 (Under 5 winners): Sorted by closest losses (smallest negative margin or closest L)
           mappedPicks.sort((a, b) => {
             const aWin = a.prevResult === 'W' ? 1 : 0;
             const bWin = b.prevResult === 'W' ? 1 : 0;
             if (aWin !== bWin) return bWin - aWin;
-
-            // If both are winners or both non-winners, sort by margin/closeness
             return b.prevMargin - a.prevMargin;
           });
 
-          // Top 5 picks go into the parlay group, remainder go to others
           parlayPicks = mappedPicks.slice(0, 5);
           otherPicks = mappedPicks.slice(5);
         } else {
-          // Fallback if previous week record isn't found
           parlayPicks = picks;
           otherPicks = [];
         }
@@ -203,14 +192,15 @@
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          const initials = p.players?.initials || p.player_initials || '??';
+          html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-    // --- DYNAMIC STACKED BUTTONS ---
+      // --- DYNAMIC STACKED BUTTONS ---
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         
@@ -240,7 +230,8 @@
         `;
         otherPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          const initials = p.players?.initials || p.player_initials || '??';
+          html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
