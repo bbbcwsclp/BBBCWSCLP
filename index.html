@@ -128,23 +128,36 @@
 
       const currentWeek = weeks[0];
 
-      // Fetch picks and explicitly join player records
-      const { data: picks, error: picksError } = await _supabase
-        .from('picks')
-        .select('*, players(*)')
-        .eq('week_id', currentWeek.id)
-        .order('created_at', { ascending: true });
+      // Fetch picks, players, and weeks separately to guarantee data mapping reliability
+      const [picksRes, playersRes] = await Promise.all([
+        _supabase.from('picks').select('*').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
+        _supabase.from('players').select('*')
+      ]);
 
-      if (picksError || !picks || picks.length === 0) {
+      const picks = picksRes.data;
+      const players = playersRes.data;
+
+      if (!picks || picks.length === 0) {
         container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
         return;
       }
+
+      // Map player records into each pick object safely in code
+      const playerMap = {};
+      if (players) {
+        players.forEach(pl => { playerMap[pl.id] = pl; });
+      }
+
+      const enrichedPicks = picks.map(p => ({
+        ...p,
+        playerObj: playerMap[p.player_id] || {}
+      }));
 
       let parlayPicks = [];
       let otherPicks = [];
 
       if (currentWeek.week_number === 1) {
-        parlayPicks = picks;
+        parlayPicks = enrichedPicks;
         otherPicks = [];
       } else {
         const prevWeekNum = currentWeek.week_number - 1;
@@ -161,7 +174,7 @@
             .select('*')
             .eq('week_id', prevWeekId);
 
-          const mappedPicks = picks.map(p => {
+          const mappedPicks = enrichedPicks.map(p => {
             const prevPick = prevPicks ? prevPicks.find(pp => pp.player_id === p.player_id) : null;
             return {
               ...p,
@@ -180,7 +193,7 @@
           parlayPicks = mappedPicks.slice(0, 5);
           otherPicks = mappedPicks.slice(5);
         } else {
-          parlayPicks = picks;
+          parlayPicks = enrichedPicks;
           otherPicks = [];
         }
       }
@@ -192,7 +205,7 @@
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          const initials = p.players?.initials || p.player_initials || '??';
+          const initials = p.playerObj.initials || p.player_initials || '??';
           html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -230,7 +243,7 @@
         `;
         otherPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          const initials = p.players?.initials || p.player_initials || '??';
+          const initials = p.playerObj.initials || p.player_initials || '??';
           html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
         });
         html += `</div>`;
