@@ -117,7 +117,7 @@
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: background-color: 0.2s;
+      transition: background-color 0.2s;
     }
     .btn-gambly:hover {
       background-color: #2563eb;
@@ -285,6 +285,8 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let hasLoadedOnce = false;
+
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
@@ -383,9 +385,13 @@
       });
     }
 
-    async function loadActiveWeek() {
+    async function loadActiveWeek(isBackgroundRefresh = false) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
+
+      if (!isBackgroundRefresh && !hasLoadedOnce) {
+        container.innerHTML = '<div style="color: var(--text-muted);">Loading active week picks...</div>';
+      }
 
       const { data: weeks } = await _supabase
         .from('weeks')
@@ -393,11 +399,10 @@
         .eq('status', 'open')
         .limit(1);
 
-      container.innerHTML = '';
-
       if (!weeks || weeks.length === 0) {
         container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
         previewContainer.innerHTML = '';
+        hasLoadedOnce = true;
         return;
       }
 
@@ -432,6 +437,7 @@
             <div class="upcoming-pending">Results pending until the winners are decided.</div>
           </div>
         `;
+        hasLoadedOnce = true;
         return;
       }
 
@@ -497,11 +503,10 @@
               gameEventMap[eventId] = {
                 event: matchedEvent,
                 dateObj: new Date(matchedEvent.date),
-                entries: [] // store unique selections and who picked them
+                entries: []
               };
             }
             
-            // Check if this exact selection string already exists for this game
             let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
             if (existingEntry) {
               existingEntry.initialsList.push(initials);
@@ -553,7 +558,6 @@
             const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
             const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
-            // Build stacked pick info lines inside the card
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
               const combinedInitials = entry.initialsList.join(', ');
@@ -673,9 +677,16 @@
 
       previewHtml += `</div>`;
       previewContainer.innerHTML = previewHtml;
+      hasLoadedOnce = true;
     }
 
-    loadActiveWeek();
+    // Initial load
+    loadActiveWeek(false);
+
+    // Auto-refresh every 10 seconds in the background
+    setInterval(() => {
+      loadActiveWeek(true);
+    }, 10000);
   </script>
 </body>
 </html>
