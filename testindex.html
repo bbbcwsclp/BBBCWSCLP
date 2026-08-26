@@ -237,12 +237,11 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD (Deduplicated by matching game event) ---
+      // --- COMPACT PARLAY SCOREBOARD (Deduplicated & Chronologically Sorted) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
-        // Map each parlay pick to its corresponding ESPN game event ID to group duplicates
-        const gameMap = {}; // key: eventId, value: { event, picks: [ {initials, selection} ] }
+        const gameMap = {};
 
         parlayPicks.forEach(p => {
           const selectionStr = (p.selection || '').toLowerCase();
@@ -263,22 +262,25 @@
             if (!gameMap[eventId]) {
               gameMap[eventId] = {
                 event: matchedEvent,
+                date: new Date(matchedEvent.date || 0),
                 pickEntries: []
               };
             }
             gameMap[eventId].pickEntries.push({ initials, selection: p.selection });
           } else {
-            // Handle unmatched games separately so they don't get lost
             const unmatchedKey = `unmatched_${p.id}`;
             gameMap[unmatchedKey] = {
               event: null,
+              date: new Date(8640000000000000), // push unmatched to the bottom
               pickEntries: [{ initials, selection: p.selection }]
             };
           }
         });
 
-        // Render each unique game card once
-        Object.values(gameMap).forEach(item => {
+        // Sort unique game items chronologically by kickoff date
+        const sortedGames = Object.values(gameMap).sort((a, b) => a.date - b.date);
+
+        sortedGames.forEach(item => {
           const initialsList = item.pickEntries.map(pe => pe.initials).join(', ');
           const displaySelection = item.pickEntries[0].selection;
 
