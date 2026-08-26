@@ -78,7 +78,7 @@
     }
 
     /* Section & Card Styling */
-    .section-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); text-align: left; }
+    .section-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); text-align: center; }
     
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
     .stat-card {
@@ -115,8 +115,8 @@
     }
     .history-week-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
 
-    .history-category { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 0.75rem; margin-bottom: 0.4rem; }
-    .history-picks-list { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 1rem; }
+    .history-category { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 0.75rem; margin-bottom: 0.4rem; text-align: center; }
+    .history-picks-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; font-size: 1rem; }
 
     /* Result Color Coding */
     .res-W { color: var(--success); }
@@ -361,7 +361,7 @@
 
       html += `<div class="section-title" style="margin-top: 1.5rem;">Week-by-Week Breakdown</div>`;
 
-      // Render Past Weeks (Courtside links omitted)
+      // Render Past Weeks
       weeks.forEach(week => {
         const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
         const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
@@ -369,13 +369,13 @@
 
         html += `
           <div class="week-history-card">
-            <div class="history-week-header">
+            <div class="history-week-header" style="justify-content: center;">
               <span>Week ${week.week_number} (${week.status.toUpperCase()})</span>
             </div>
         `;
 
         if (weekPicks.length === 0) {
-          html += `<div style="color: var(--text-muted); font-size: 0.95rem;">No picks recorded for this week.</div>`;
+          html += `<div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">No picks recorded for this week.</div>`;
         } else {
           if (parlayPicks.length > 0) {
             html += `<div class="history-category">Parlay:</div><div class="history-picks-list">`;
