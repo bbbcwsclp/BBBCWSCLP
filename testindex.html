@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+      --accent: #3b82f6;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+
+    /* Navigation Bar */
+    nav { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; font-weight: 600; font-size: 0.95rem; width: 100%; }
+    nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
+
+    /* Week Section Styling */
+    .week-section { margin-bottom: 2.5rem; text-align: center; }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); }
+    .category-title { font-size: 1.15rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.1rem; }
+    .pick-item { font-weight: 700; }
+
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+
+    /* Gambly Link Button Styling */
+    .btn-gambly {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 1.25rem auto 0 auto;
+      background-color: var(--accent);
+      color: white;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+    .btn-gambly:hover {
+      background-color: #2563eb;
+    }
+
+    /* Live Game Card Styling (Carried over from scores.html) */
+    .parlay-scores-container {
+      margin-top: 1.75rem;
+      text-align: left;
+    }
+
+    .section-subtitle {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .game-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+
+    .game-header-info { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      font-size: 0.8rem; 
+      color: var(--text-muted); 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      margin-bottom: 0.75rem; 
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .status-live { background-color: rgba(34, 197, 94, 0.2); color: var(--success); }
+    .status-final { background-color: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .status-sched { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+    .situation-text {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    .team-line { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      font-weight: 700; 
+      font-size: 1.05rem; 
+      margin: 0.6rem 0; 
+    }
+
+    .team-details { display: flex; align-items: center; gap: 0.75rem; }
+    .team-logo { width: 28px; height: 28px; object-fit: contain; }
+    .team-rank { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-right: 0.2rem; }
+    .team-score { font-size: 1.25rem; font-weight: 800; color: var(--text); }
+    .winner { color: var(--gold); }
+
+    .odds-line {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP</h1>
+    </header>
+
+    <nav>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading active week picks...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadActiveWeek() {
+      const container = document.getElementById('content-container');
+
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .eq('status', 'open')
+        .limit(1);
+
+      container.innerHTML = '';
+
+      if (!weeks || weeks.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
+        return;
+      }
+
+      const currentWeek = weeks[0];
+
+      // Fetch picks and ESPN live scoreboard simultaneously
+      const [picksRes, espnRes] = await Promise.all([
+        _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
+        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
+      ]);
+
+      const picks = picksRes.data;
+      let espnEvents = [];
+      if (espnRes && espnRes.ok) {
+        const espnData = await espnRes.json();
+        espnEvents = espnData.events || [];
+      }
+
+      if (!picks || picks.length === 0) {
+        container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
+        return;
+      }
+
+      const parlayPicks = picks.filter(p => p.is_parlay === true);
+      const otherPicks = picks.filter(p => p.is_parlay !== true);
+
+      let html = `<div class="week-section">`;
+      html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
+
+      if (parlayPicks.length > 0) {
+        html += `<div class="picks-group">`;
+        parlayPicks.forEach(p => {
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+        });
+        html += `</div>`;
+      } else {
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
+      }
+
+      // --- DYNAMIC STACKED BUTTONS ---
+      if (currentWeek.slip_link || currentWeek.gambly_link) {
+        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
+        if (currentWeek.slip_link) {
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">📲 Open Slip in Courtside</a>`;
+        }
+        if (currentWeek.gambly_link) {
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">🎲 Open Gambly Link</a>`;
+        }
+        html += `</div>`;
+      }
+
+      // --- MATCH UP SCORE CARDS FOR PARLAY PICKS ---
+      if (parlayPicks.length > 0 && espnEvents.length > 0) {
+        html += `<div class="parlay-scores-container">`;
+        html += `<div class="section-subtitle">Parlay Match Live Scores</div>`;
+
+        parlayPicks.forEach(p => {
+          const selectionStr = (p.selection || '').toLowerCase();
+          
+          const matchedEvent = espnEvents.find(ev => {
+            const comp = ev.competitions[0];
+            return comp.competitors.some(c => {
+              const name = (c.team.name || '').toLowerCase();
+              const shortName = (c.team.shortDisplayName || '').toLowerCase();
+              const displayName = (c.team.displayName || '').toLowerCase();
+              return selectionStr.includes(name) || selectionStr.includes(shortName) || selectionStr.includes(displayName);
+            });
+          });
+
+          if (matchedEvent) {
+            const competition = matchedEvent.competitions[0];
+            const statusType = competition.status.type.state;
+            const statusDetail = competition.status.type.detail;
+            
+            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+            const homeRank = homeTeam.curatedRank?.current <= 25 ? `#${homeTeam.curatedRank.current} ` : '';
+            const awayRank = awayTeam.curatedRank?.current <= 25 ? `#${awayTeam.curatedRank.current} ` : '';
+
+            const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
+            const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+            
+            const homeLogo = homeTeam.team.logo || '';
+            const awayLogo = awayTeam.team.logo || '';
+            
+            const homeScore = homeTeam.score || '0';
+            const awayScore = awayTeam.score || '0';
+
+            let situationHTML = '';
+            if (statusType === 'in' && competition.situation) {
+              const sit = competition.situation;
+              if (sit.downText && sit.shortDisplayName) {
+                situationHTML = `<span class="situation-text">🏈 ${sit.downText} &bull; ${sit.shortDisplayName}</span>`;
+              }
+            }
+
+            const broadcast = competition.broadcasts && competition.broadcasts.length > 0 
+              ? competition.broadcasts[0].names.join(', ') 
+              : '';
+
+            const oddsObj = competition.odds && competition.odds.length > 0 ? competition.odds[0] : null;
+            const spreadText = oddsObj?.details ? `Spread: ${oddsObj.details}` : '';
+            const ouText = oddsObj?.overUnder ? `O/U: ${oddsObj.overUnder}` : '';
+
+            let badgeClass = 'status-sched';
+            let statusLabel = statusDetail;
+            if (statusType === 'in') {
+              badgeClass = 'status-live';
+              statusLabel = `LIVE • ${statusDetail}`;
+            } else if (statusType === 'post') {
+              badgeClass = 'status-final';
+              statusLabel = 'FINAL';
+            }
+
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
+
+            const initials = p.players?.initials || '??';
+
+            html += `
+              <div class="game-card">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #93c5fd; margin-bottom: 0.5rem;">
+                  ${initials}'s Pick: ${p.selection}
+                </div>
+                <div class="game-header-info">
+                  <span class="status-badge ${badgeClass}">${statusLabel}</span>
+                  ${situationHTML}
+                  <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
+                </div>
+                <div class="team-line">
+                  <div class="team-details">
+                    <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
+                    <span class="${isAwayWinner ? 'winner' : ''}"><span class="team-rank">${awayRank}</span>${awayName}</span>
+                  </div>
+                  <span class="team-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
+                </div>
+                <div class="team-line">
+                  <div class="team-details">
+                    <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
+                    <span class="${isHomeWinner ? 'winner' : ''}"><span class="team-rank">${homeRank}</span>${homeName}</span>
+                  </div>
+                  <span class="team-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
+                </div>
+                ${(spreadText || ouText) ? `
+                  <div class="odds-line">
+                    <span>${spreadText}</span>
+                    <span>${ouText}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+      }
+
+      if (otherPicks.length > 0) {
+        html += `
+          <div class="category-title" style="margin-top: 2rem;">Others:</div>
+          <div class="picks-group">
+        `;
+        otherPicks.forEach(p => {
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+        });
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    loadActiveWeek();
+  </script>
+</body>
+</html>
