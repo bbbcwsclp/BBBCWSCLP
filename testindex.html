@@ -21,6 +21,7 @@
       --danger: #ef4444;
       --warning: #eab308;
       --accent: #3b82f6;
+      --gold: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -53,7 +54,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 1.75rem 1.25rem;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
       text-align: center;
     }
@@ -92,6 +93,59 @@
     .btn-gambly:hover {
       background-color: #2563eb;
     }
+
+    /* Upcoming Week Preview Card (Always-On Box) */
+    .upcoming-preview-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
+    .upcoming-preview-header {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .upcoming-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .upcoming-player { font-weight: 700; color: var(--text); }
+    .upcoming-pick { color: var(--text-muted); font-size: 0.85rem; }
+    .upcoming-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+    .upcoming-pending {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1rem 0;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -110,9 +164,13 @@
       <a href="scores.html">Scores</a>
     </nav>
 
+    <!-- Current Week Box Container -->
     <div id="content-container">
       <div style="color: var(--text-muted);">Loading active week picks...</div>
     </div>
+
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
+    <div id="upcoming-preview-container"></div>
   </div>
 
   <script>
@@ -122,34 +180,59 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadActiveWeek() {
+    let activeWeekCache = null;
+    let allPicksCache = [];
+    let liveScoresCache = [];
+
+    async function initPage() {
+      // 1. Fetch active open week from Supabase
       const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
+      if (weeks && weeks.length > 0) {
+        activeWeekCache = weeks[0];
+
+        const { data: picks } = await _supabase
+          .from('picks')
+          .select('*, players(initials)')
+          .eq('week_id', activeWeekCache.id)
+          .order('created_at', { ascending: true });
+
+        allPicksCache = picks || [];
+      }
+
+      // 2. Fetch live scores from ESPN API to cross-reference results
+      try {
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
+        const data = await response.json();
+        if (data && data.events) {
+          liveScoresCache = data.events;
+        }
+      } catch (err) {
+        console.error('Could not fetch live scores for cross-referencing:', err);
+      }
+
+      renderCurrentWeek();
+      renderUpcomingTop5();
+    }
+
+    function renderCurrentWeek() {
       const container = document.getElementById('content-container');
       container.innerHTML = '';
 
-      if (!weeks || weeks.length === 0) {
+      if (!activeWeekCache) {
         container.innerHTML = '<div class="current-week-card" style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
         return;
       }
 
-      const currentWeek = weeks[0];
-
-      const { data: picks } = await _supabase
-        .from('picks')
-        .select('*, players(initials)')
-        .eq('week_id', currentWeek.id)
-        .order('created_at', { ascending: true });
-
-      if (!picks || picks.length === 0) {
+      if (!allPicksCache || allPicksCache.length === 0) {
         container.innerHTML = `
           <div class="current-week-card">
             <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+              <div class="week-title">Week ${activeWeekCache.week_number} Parlay:</div>
               <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
             </div>
           </div>
@@ -157,16 +240,18 @@
         return;
       }
 
-      const parlayPicks = picks.filter(p => p.is_parlay === true);
-      const otherPicks = picks.filter(p => p.is_parlay !== true);
+      const evaluatedPicks = evaluatePicksWithScores(allPicksCache);
+      const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
+      const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
 
       let html = `<div class="current-week-card"><div class="week-section">`;
-      html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
+      html += `<div class="week-title">Week ${activeWeekCache.week_number} Parlay:</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const evaluatedResult = p.computedResult || p.result;
+          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -175,20 +260,20 @@
       }
 
       // --- DYNAMIC STACKED BUTTONS ---
-      if (currentWeek.slip_link || currentWeek.gambly_link) {
+      if (activeWeekCache.slip_link || activeWeekCache.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         
-        if (currentWeek.slip_link) {
+        if (activeWeekCache.slip_link) {
           html += `
-            <a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">
+            <a href="${activeWeekCache.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">
               📲 Open Slip in Courtside
             </a>
           `;
         }
         
-        if (currentWeek.gambly_link) {
+        if (activeWeekCache.gambly_link) {
           html += `
-            <a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">
+            <a href="${activeWeekCache.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">
               🎲 Open Gambly Link
             </a>
           `;
@@ -203,7 +288,8 @@
           <div class="picks-group">
         `;
         otherPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const evaluatedResult = p.computedResult || p.result;
+          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -213,7 +299,136 @@
       container.innerHTML = html;
     }
 
-    loadActiveWeek();
+    // Cross-reference picks with live scoreboard data
+    function evaluatePicksWithScores(picks) {
+      return picks.map(pick => {
+        let computedResult = pick.result || null;
+        let computedMargin = 0;
+
+        const sel = (pick.selection || '').toLowerCase();
+        
+        // Find matching game event in live scores
+        const matchedEvent = liveScoresCache.find(event => {
+          const comp = event.competitions[0];
+          const homeTeam = comp.competitors.find(c => c.homeAway === 'home');
+          const awayTeam = comp.competitors.find(c => c.homeAway === 'away');
+          
+          const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
+          const awayName = (awayTeam.team.shortDisplayName || awayTeam.team.name || '').toLowerCase();
+
+          return sel.includes(homeName) || sel.includes(awayName);
+        });
+
+        if (matchedEvent) {
+          const comp = matchedEvent.competitions[0];
+          const isFinal = comp.status.type.state === 'post';
+
+          if (isFinal) {
+            const homeTeam = comp.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = comp.competitors.find(c => c.homeAway === 'away');
+            
+            const homeScore = parseInt(homeTeam.score || '0', 10);
+            const awayScore = parseInt(awayTeam.score || '0', 10);
+
+            const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
+            
+            // Determine if picked team is home or away
+            const isHomePick = sel.includes(homeName);
+            const pickedTeamScore = isHomePick ? homeScore : awayScore;
+            const oppTeamScore = isHomePick ? awayScore : homeScore;
+
+            // Extract spread or point line from selection string (e.g. "+3.5" or "-7")
+            let spread = 0;
+            const spreadMatch = sel.match(/([+-]?\d+(\.\d+)?)$/);
+            if (spreadMatch) {
+              spread = parseFloat(spreadMatch[1]);
+            }
+
+            const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
+            computedMargin = adjustedMargin;
+
+            if (adjustedMargin > 0) {
+              computedResult = 'W';
+            } else if (adjustedMargin < 0) {
+              computedResult = 'L';
+            } else {
+              computedResult = 'D'; // Push
+            }
+          }
+        }
+
+        return { ...pick, computedResult, margin: computedMargin };
+      });
+    }
+
+    // --- UPCOMING WEEK TOP 5 PARLAY LOGIC (Always-On Box) ---
+    function renderUpcomingTop5() {
+      const previewContainer = document.getElementById('upcoming-preview-container');
+      
+      let weekLabel = activeWeekCache ? `Week ${activeWeekCache.week_number}` : 'Upcoming Week';
+      
+      let previewHtml = `
+        <div class="upcoming-preview-card">
+          <div class="upcoming-preview-header">
+            <span>🚀 Upcoming Week Parlay</span>
+            <span style="font-size: 0.75rem; color: var(--gold); background: rgba(245,158,11,0.15); padding: 0.2rem 0.5rem; border-radius: 4px;">${weekLabel}</span>
+          </div>
+      `;
+
+      if (!activeWeekCache || allPicksCache.length === 0) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+        previewHtml += `</div>`;
+        previewContainer.innerHTML = previewHtml;
+        return;
+      }
+
+      const evaluatedPicks = evaluatePicksWithScores(allPicksCache);
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.computedResult === 'W' || p.computedResult === 'L' || p.computedResult === 'D');
+
+      if (!allFinalized) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+      } else {
+        const winners = evaluatedPicks.filter(p => p.computedResult === 'W');
+        const losses = evaluatedPicks.filter(p => p.computedResult === 'L');
+        const pushes = evaluatedPicks.filter(p => p.computedResult === 'D');
+
+        winners.sort((a, b) => b.margin - a.margin);
+        losses.sort((a, b) => b.margin - a.margin);
+
+        let top5 = [];
+        if (winners.length >= 5) {
+          top5 = winners.slice(0, 5);
+        } else {
+          top5 = [...winners];
+          const needed = 5 - top5.length;
+          top5 = top5.concat(losses.slice(0, needed));
+          
+          if (top5.length < 5) {
+            const stillNeeded = 5 - top5.length;
+            top5 = top5.concat(pushes.slice(0, stillNeeded));
+          }
+        }
+
+        previewHtml += `<div class="upcoming-list">`;
+        top5.forEach((p, idx) => {
+          previewHtml += `
+            <div class="upcoming-item">
+              <div>
+                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
+                <div class="upcoming-pick">${p.selection}</div>
+              </div>
+              <div class="upcoming-badge">Result: ${p.computedResult}</div>
+            </div>
+          `;
+        });
+        previewHtml += `</div>`;
+      }
+
+      previewHtml += `</div>`;
+      previewContainer.innerHTML = previewHtml;
+    }
+
+    initPage();
   </script>
 </body>
 </html>
