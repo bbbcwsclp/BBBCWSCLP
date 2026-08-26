@@ -47,8 +47,19 @@
     nav a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover, nav a.active { color: #93c5fd; text-decoration: underline; }
 
+    /* Current Week Card Container */
+    .current-week-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
     /* Week Section Styling */
-    .week-section { margin-bottom: 2.5rem; text-align: center; }
+    .week-section { margin-bottom: 0; text-align: center; }
     .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); }
     .category-title { font-size: 1.15rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
@@ -92,7 +103,7 @@
     }
 
     .compact-card {
-      background-color: var(--card-bg);
+      background-color: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 0.65rem 0.9rem;
@@ -143,6 +154,60 @@
     .compact-logo { width: 16px; height: 16px; object-fit: contain; }
     .compact-score { font-weight: 800; min-width: 18px; text-align: right; }
     .winner { color: var(--gold); }
+
+    /* Upcoming Week Top 5 Box Styling */
+    .upcoming-preview-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+      width: 100%;
+    }
+    .upcoming-preview-header {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .upcoming-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .upcoming-player { font-weight: 700; color: var(--text); }
+    .upcoming-pick { color: var(--text-muted); font-size: 0.85rem; }
+    .upcoming-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+    .upcoming-pending {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1rem 0;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -164,6 +229,9 @@
     <div id="content-container">
       <div style="color: var(--text-muted);">Loading active week picks...</div>
     </div>
+
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
+    <div id="upcoming-preview-container"></div>
   </div>
 
   <script>
@@ -173,8 +241,66 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Helper function to evaluate picks against ESPN scores and calculate cover margins
+    function evaluatePicksWithScores(picks, espnEvents) {
+      return picks.map(pick => {
+        let computedResult = pick.result || null;
+        let computedMargin = -999;
+
+        const sel = (pick.selection || '').toLowerCase();
+        
+        const matchedEvent = espnEvents.find(ev => {
+          const comp = ev.competitions[0];
+          return comp.competitors.some(c => {
+            const name = (c.team.name || '').toLowerCase();
+            const shortName = (c.team.shortDisplayName || '').toLowerCase();
+            const displayName = (c.team.displayName || '').toLowerCase();
+            return sel.includes(name) || sel.includes(shortName) || sel.includes(displayName);
+          });
+        });
+
+        if (matchedEvent) {
+          const competition = matchedEvent.competitions[0];
+          const isFinal = competition.status.type.state === 'post';
+
+          if (isFinal) {
+            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+            
+            const homeScore = parseInt(homeTeam.score || '0', 10);
+            const awayScore = parseInt(awayTeam.score || '0', 10);
+
+            const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
+            const isHomePick = sel.includes(homeName);
+            const pickedTeamScore = isHomePick ? homeScore : awayScore;
+            const oppTeamScore = isHomePick ? awayScore : homeScore;
+
+            let spread = 0;
+            const spreadMatch = sel.match(/([+-]?\d+(\.\d+)?)$/);
+            if (spreadMatch) {
+              spread = parseFloat(spreadMatch[1]);
+            }
+
+            const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
+            computedMargin = adjustedMargin;
+
+            if (adjustedMargin > 0) {
+              computedResult = 'W';
+            } else if (adjustedMargin < 0) {
+              computedResult = 'L';
+            } else {
+              computedResult = 'D';
+            }
+          }
+        }
+
+        return { ...pick, computedResult, margin: computedMargin };
+      });
+    }
+
     async function loadActiveWeek() {
       const container = document.getElementById('content-container');
+      const previewContainer = document.getElementById('upcoming-preview-container');
 
       const { data: weeks } = await _supabase
         .from('weeks')
@@ -185,7 +311,8 @@
       container.innerHTML = '';
 
       if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
+        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
+        previewContainer.innerHTML = '';
         return;
       }
 
@@ -204,20 +331,39 @@
       }
 
       if (!picks || picks.length === 0) {
-        container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
+        container.innerHTML = `
+          <div class="current-week-card">
+            <div class="week-section">
+              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+            </div>
+          </div>
+        `;
+        previewContainer.innerHTML = `
+          <div class="upcoming-preview-card">
+            <div class="upcoming-preview-header">
+              <span>🚀 Upcoming Week Top 5 Parlay</span>
+              <span style="font-size: 0.75rem; color: var(--gold); background: rgba(245,158,11,0.15); padding: 0.2rem 0.5rem; border-radius: 4px;">Week ${currentWeek.week_number}</span>
+            </div>
+            <div class="upcoming-pending">Results pending until the winners are decided.</div>
+          </div>
+        `;
         return;
       }
 
-      const parlayPicks = picks.filter(p => p.is_parlay === true);
-      const otherPicks = picks.filter(p => p.is_parlay !== true);
+      const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
+      const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
+      const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
 
-      let html = `<div class="week-section">`;
+      // --- RENDER CURRENT WEEK IN BOX ---
+      let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const evaluatedResult = p.computedResult || p.result;
+          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -271,13 +417,12 @@
             const unmatchedKey = `unmatched_${p.id}`;
             gameMap[unmatchedKey] = {
               event: null,
-              dateObj: new Date('9999-12-31'), // Push unmatched to the absolute bottom
+              dateObj: new Date('9999-12-31'),
               pickEntries: [{ initials, selection: p.selection }]
             };
           }
         });
 
-        // Convert map to array and strictly sort ascending by kickoff timestamp
         const sortedGames = Object.values(gameMap).sort((a, b) => a.dateObj - b.dateObj);
 
         sortedGames.forEach(item => {
@@ -357,14 +502,69 @@
           <div class="picks-group">
         `;
         otherPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const evaluatedResult = p.computedResult || p.result;
+          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
-      html += `</div>`;
+      html += `</div></div>`;
       container.innerHTML = html;
+
+      // --- RENDER UPCOMING WEEK TOP 5 PARLAY BOX BELOW ---
+      let previewHtml = `
+        <div class="upcoming-preview-card">
+          <div class="upcoming-preview-header">
+            <span>🚀 Upcoming Week Top 5 Parlay</span>
+            <span style="font-size: 0.75rem; color: var(--gold); background: rgba(245,158,11,0.15); padding: 0.2rem 0.5rem; border-radius: 4px;">Week ${currentWeek.week_number}</span>
+          </div>
+      `;
+
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.computedResult === 'W' || p.computedResult === 'L' || p.computedResult === 'D');
+
+      if (!allFinalized) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+      } else {
+        const winners = evaluatedPicks.filter(p => p.computedResult === 'W');
+        const losses = evaluatedPicks.filter(p => p.computedResult === 'L');
+        const pushes = evaluatedPicks.filter(p => p.computedResult === 'D');
+
+        // Sort winners and losses by margin descending (highest cover margin first)
+        winners.sort((a, b) => b.margin - a.margin);
+        losses.sort((a, b) => b.margin - a.margin);
+
+        let top5 = [];
+        if (winners.length >= 5) {
+          top5 = winners.slice(0, 5);
+        } else {
+          top5 = [...winners];
+          const needed = 5 - top5.length;
+          top5 = top5.concat(losses.slice(0, needed));
+          
+          if (top5.length < 5) {
+            const stillNeeded = 5 - top5.length;
+            top5 = top5.concat(pushes.slice(0, stillNeeded));
+          }
+        }
+
+        previewHtml += `<div class="upcoming-list">`;
+        top5.forEach((p, idx) => {
+          previewHtml += `
+            <div class="upcoming-item">
+              <div>
+                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
+                <div class="upcoming-pick">${p.selection}</div>
+              </div>
+              <div class="upcoming-badge">Result: ${p.computedResult}</div>
+            </div>
+          `;
+        });
+        previewHtml += `</div>`;
+      }
+
+      previewHtml += `</div>`;
+      previewContainer.innerHTML = previewHtml;
     }
 
     loadActiveWeek();
