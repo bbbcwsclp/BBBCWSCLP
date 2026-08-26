@@ -96,7 +96,7 @@
       <a href="standings.html">Standings</a>
       <a href="season.html">Season</a>
       <a href="halloffame.html">HOF</a>
-      <a href="scores.html" class="active">Scores</a>
+      <a href="scores.html">Scores</a>
     </nav>
 
     <div id="content-container">
@@ -139,8 +139,62 @@
         return;
       }
 
-      const parlayPicks = picks.filter(p => p.is_parlay === true);
-      const otherPicks = picks.filter(p => p.is_parlay !== true);
+      // Check if there is a previous week to derive top 5 parlay qualification
+      let parlayPicks = [];
+      let otherPicks = [];
+
+      if (currentWeek.week_number === 1) {
+        // Week 1: Everyone starts in the parlay group by default
+        parlayPicks = picks;
+        otherPicks = [];
+      } else {
+        // Find the previous week number
+        const prevWeekNum = currentWeek.week_number - 1;
+        const { data: prevWeekData } = await _supabase
+          .from('weeks')
+          .select('id')
+          .eq('week_number', prevWeekNum)
+          .limit(1);
+
+        if (prevWeekData && prevWeekData.length > 0) {
+          const prevWeekId = prevWeekData[0].id;
+          const { data: prevPicks } = await _supabase
+            .from('picks')
+            .select('*')
+            .eq('week_id', prevWeekId);
+
+          // Map current picks with their previous week's performance data for sorting
+          const mappedPicks = picks.map(p => {
+            const prevPick = prevPicks ? prevPicks.find(pp => pp.player_id === p.player_id) : null;
+            return {
+              ...p,
+              prevResult: prevPick ? prevPick.result : null,
+              prevMargin: prevPick ? (prevPick.cover_margin || 0) : 0
+            };
+          });
+
+          // Sort rules:
+          // 1. Winners (W) first
+          // 2. Tiebreaker 1 (Overflow > 5 winners): Sorted by highest cover margin (prevMargin desc)
+          // 3. Tiebreaker 2 (Under 5 winners): Sorted by closest losses (smallest negative margin or closest L)
+          mappedPicks.sort((a, b) => {
+            const aWin = a.prevResult === 'W' ? 1 : 0;
+            const bWin = b.prevResult === 'W' ? 1 : 0;
+            if (aWin !== bWin) return bWin - aWin;
+
+            // If both are winners or both non-winners, sort by margin/closeness
+            return b.prevMargin - a.prevMargin;
+          });
+
+          // Top 5 picks go into the parlay group, remainder go to others
+          parlayPicks = mappedPicks.slice(0, 5);
+          otherPicks = mappedPicks.slice(5);
+        } else {
+          // Fallback if previous week record isn't found
+          parlayPicks = picks;
+          otherPicks = [];
+        }
+      }
 
       let html = `<div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
