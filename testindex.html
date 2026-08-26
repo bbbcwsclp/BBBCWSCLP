@@ -93,37 +93,39 @@
       background-color: #2563eb;
     }
 
-    /* Compact Parlay Scoreboard Ticker */
+    /* Clean Compact Parlay Scoreboard Ticker */
     .compact-scores-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
       margin-top: 1.5rem;
       text-align: left;
     }
 
     .compact-card {
-      background-color: var(--bg);
+      background-color: #0b1120;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.65rem 0.9rem;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.85rem;
+      gap: 1rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .compact-left {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
-      max-width: 52%;
+      gap: 0.3rem;
+      flex-grow: 1;
+      min-width: 0;
     }
 
     .compact-pick-info {
       font-weight: 700;
       color: #93c5fd;
+      font-size: 0.9rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -131,29 +133,31 @@
 
     .compact-status {
       font-size: 0.7rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
-    .compact-status.live { color: var(--success); font-weight: 700; }
+    .compact-status.live { color: var(--success); }
 
     .compact-teams {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.3rem;
       align-items: flex-end;
-      font-weight: 600;
+      flex-shrink: 0;
+      font-size: 0.85rem;
     }
 
     .compact-team-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
     }
 
-    .compact-logo { width: 16px; height: 16px; object-fit: contain; }
-    .compact-score { font-weight: 800; min-width: 18px; text-align: right; }
+    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
+    .compact-team-name { font-weight: 600; color: var(--text); }
+    .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
     .winner { color: var(--gold); }
 
     /* Upcoming Week Top 5 Box Styling */
@@ -242,12 +246,22 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    function getTeamSearchTerms(selection) {
+      if (!selection) return [];
+      let clean = selection.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
+      if (clean.includes('/')) {
+        return clean.split('/').map(t => t.trim().toLowerCase());
+      }
+      return [clean.toLowerCase()];
+    }
+
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
         let computedMargin = -999;
 
-        const sel = (pick.selection || '').toLowerCase();
+        const searchTerms = getTeamSearchTerms(pick.selection);
         
         const matchedEvent = espnEvents.find(ev => {
           const comp = ev.competitions[0];
@@ -255,7 +269,10 @@
             const name = (c.team.name || '').toLowerCase();
             const shortName = (c.team.shortDisplayName || '').toLowerCase();
             const displayName = (c.team.displayName || '').toLowerCase();
-            return sel.includes(name) || sel.includes(shortName) || sel.includes(displayName);
+            const abbreviation = (c.team.abbreviation || '').toLowerCase();
+            return searchTerms.some(term => 
+              term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
+            );
           });
         });
 
@@ -271,12 +288,13 @@
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
             const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
-            const isHomePick = sel.includes(homeName);
+            const selLower = (pick.selection || '').toLowerCase();
+            const isHomePick = selLower.includes(homeName);
             const pickedTeamScore = isHomePick ? homeScore : awayScore;
             const oppTeamScore = isHomePick ? awayScore : homeScore;
 
             let spread = 0;
-            const spreadMatch = sel.match(/([+-]?\d+(\.\d+)?)$/);
+            const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
             if (spreadMatch) {
               spread = parseFloat(spreadMatch[1]);
             }
@@ -383,14 +401,14 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD (Strict Chronological Sort) ---
+      // --- CLEAN COMPACT PARLAY SCOREBOARD ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
         const gameMap = {};
 
         parlayPicks.forEach(p => {
-          const selectionStr = (p.selection || '').toLowerCase();
+          const searchTerms = getTeamSearchTerms(p.selection);
           const initials = p.players?.initials || '??';
 
           const matchedEvent = espnEvents.find(ev => {
@@ -399,7 +417,10 @@
               const name = (c.team.name || '').toLowerCase();
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
               const displayName = (c.team.displayName || '').toLowerCase();
-              return selectionStr.includes(name) || selectionStr.includes(shortName) || selectionStr.includes(displayName);
+              const abbreviation = (c.team.abbreviation || '').toLowerCase();
+              return searchTerms.some(term => 
+                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
+              );
             });
           });
 
@@ -467,12 +488,12 @@
                 <div class="compact-teams">
                   <div class="compact-team-row">
                     <img src="${awayLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="${isAwayWinner ? 'winner' : ''}">${awayName}</span>
+                    <span class="compact-team-name ${isAwayWinner ? 'winner' : ''}">${awayName}</span>
                     <span class="compact-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
                   </div>
                   <div class="compact-team-row">
                     <img src="${homeLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="${isHomeWinner ? 'winner' : ''}">${homeName}</span>
+                    <span class="compact-team-name ${isHomeWinner ? 'winner' : ''}">${homeName}</span>
                     <span class="compact-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
                   </div>
                 </div>
