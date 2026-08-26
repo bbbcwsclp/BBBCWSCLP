@@ -117,7 +117,7 @@
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: background-color 0.2s;
+      transition: background-color: 0.2s;
     }
     .btn-gambly:hover {
       background-color: #2563eb;
@@ -152,6 +152,13 @@
       min-width: 0;
     }
 
+    /* Multi-line pick container inside the scorecard */
+    .compact-picks-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
     .compact-pick-info {
       font-weight: 700;
       color: #93c5fd;
@@ -167,6 +174,7 @@
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-top: 0.15rem;
     }
     .compact-status.live { color: var(--success); }
 
@@ -280,7 +288,6 @@
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
-      
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
       clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
@@ -460,26 +467,16 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD WITH EXACT-MATCH GROUPING ---
+      // --- COMPACT PARLAY SCOREBOARD (GROUPED BY GAME EVENT, STACKING DIFFERENT LINES) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
-        // Group identical picks together by exact case-trimmed selection string
-        const groupedMap = new Map();
-        parlayPicks.forEach(p => {
-          const selKey = (p.selection || '').trim().toLowerCase();
-          if (!groupedMap.has(selKey)) {
-            groupedMap.set(selKey, {
-              selection: p.selection,
-              initialsList: []
-            });
-          }
-          groupedMap.get(selKey).initialsList.push(p.players?.initials || '??');
-        });
+        const gameEventMap = {};
 
-        const pickCards = Array.from(groupedMap.values()).map(group => {
-          const searchTerms = getTeamSearchTerms(group.selection);
-          const initialsCombined = group.initialsList.join(':');
+        parlayPicks.forEach(p => {
+          const searchTerms = getTeamSearchTerms(p.selection);
+          const initials = p.players?.initials || '??';
+          const trimmedSelection = p.selection.trim();
 
           const matchedEvent = espnEvents.find(ev => {
             const comp = ev.competitions[0];
@@ -494,20 +491,39 @@
             });
           });
 
-          return {
-            initials: initialsCombined,
-            selection: group.selection,
-            event: matchedEvent || null,
-            dateObj: matchedEvent ? new Date(matchedEvent.date) : new Date('9999-12-31')
-          };
+          if (matchedEvent) {
+            const eventId = matchedEvent.id;
+            if (!gameEventMap[eventId]) {
+              gameEventMap[eventId] = {
+                event: matchedEvent,
+                dateObj: new Date(matchedEvent.date),
+                entries: [] // store unique selections and who picked them
+              };
+            }
+            
+            // Check if this exact selection string already exists for this game
+            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
+            if (existingEntry) {
+              existingEntry.initialsList.push(initials);
+            } else {
+              gameEventMap[eventId].entries.push({
+                selection: trimmedSelection,
+                initialsList: [initials]
+              });
+            }
+          } else {
+            const unmatchedKey = `unmatched_${p.id}`;
+            gameEventMap[unmatchedKey] = {
+              event: null,
+              dateObj: new Date('9999-12-31'),
+              entries: [{ selection: trimmedSelection, initialsList: [initials] }]
+            };
+          }
         });
 
-        pickCards.sort((a, b) => a.dateObj - b.dateObj);
+        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
 
-        pickCards.forEach(item => {
-          const initials = item.initials;
-          const displaySelection = item.selection;
-
+        sortedGames.forEach(item => {
           if (item.event) {
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
@@ -537,10 +553,18 @@
             const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
             const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
+            // Build stacked pick info lines inside the card
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initials}:${displaySelection}</div>
+                  ${picksStackHtml}
                   <div class="compact-status ${statusClass}">${statusText}</div>
                 </div>
                 <div class="compact-teams">
@@ -558,10 +582,17 @@
               </div>
             `;
           } else {
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initials}:${displaySelection}</div>
+                  ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
                 <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
@@ -626,7 +657,7 @@
         }
 
         previewHtml += `<div class="upcoming-list">`;
-        top5.sort((a, b) => b.margin - a.margin).forEach((p, idx) => {
+        top5.forEach((p, idx) => {
           previewHtml += `
             <div class="upcoming-item">
               <div>
