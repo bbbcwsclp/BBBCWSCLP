@@ -207,16 +207,23 @@
     let rawEvents = [];
     let currentFilter = 'all';
 
-    async function fetchScores() {
+    async function fetchScores(isBackgroundRefresh = false) {
       const container = document.getElementById('scores-container');
       const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300';
 
       try {
+        // Only show the loading message on the initial load, not background polls
+        if (!isBackgroundRefresh && rawEvents.length === 0) {
+          container.innerHTML = '<div class="loading-msg">Fetching matchups through August 30...</div>';
+        }
+
         const response = await fetch(apiURL);
         const data = await response.json();
 
         if (!data.events || data.events.length === 0) {
-          container.innerHTML = '<div class="loading-msg">No games scheduled.</div>';
+          if (!isBackgroundRefresh) {
+            container.innerHTML = '<div class="loading-msg">No games scheduled.</div>';
+          }
           return;
         }
 
@@ -230,7 +237,9 @@
         });
 
         if (rawEvents.length === 0) {
-          container.innerHTML = '<div class="loading-msg">No games scheduled through August 30.</div>';
+          if (!isBackgroundRefresh) {
+            container.innerHTML = '<div class="loading-msg">No games scheduled through August 30.</div>';
+          }
           return;
         }
 
@@ -238,7 +247,10 @@
 
       } catch (err) {
         console.error('Error loading scores:', err);
-        container.innerHTML = '<div class="error-msg">Could not load live FBS scores. Please try again later.</div>';
+        // Only show error message if we don't already have rendered games
+        if (rawEvents.length === 0) {
+          container.innerHTML = '<div class="error-msg">Could not load live FBS scores. Please try again later.</div>';
+        }
       }
     }
 
@@ -253,8 +265,7 @@
 
     function renderGames() {
       const container = document.getElementById('scores-container');
-      container.innerHTML = '';
-
+      
       let filteredEvents = rawEvents;
 
       // Group/Conference Filtering Logic
@@ -291,6 +302,9 @@
 
         return getPriority(stateA) - getPriority(stateB);
       });
+
+      // Build HTML string to update DOM cleanly all at once
+      let html = '';
 
       filteredEvents.forEach(event => {
         const competition = event.competitions[0];
@@ -345,42 +359,47 @@
         const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
         const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
-        // Create card element
-        const card = document.createElement('div');
-        card.className = 'game-card';
-
-        card.innerHTML = `
-          <div class="game-header-info">
-            <span class="status-badge ${badgeClass}">${statusLabel}</span>
-            ${situationHTML}
-            <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
-          </div>
-          <div class="team-line">
-            <div class="team-details">
-              <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
-              <span class="${isAwayWinner ? 'winner' : ''}"><span class="team-rank">${awayRank}</span>${awayName}</span>
+        html += `
+          <div class="game-card">
+            <div class="game-header-info">
+              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              ${situationHTML}
+              <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
             </div>
-            <span class="team-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
-          </div>
-          <div class="team-line">
-            <div class="team-details">
-              <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
-              <span class="${isHomeWinner ? 'winner' : ''}"><span class="team-rank">${homeRank}</span>${homeName}</span>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${isAwayWinner ? 'winner' : ''}"><span class="team-rank">${awayRank}</span>${awayName}</span>
+              </div>
+              <span class="team-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
             </div>
-            <span class="team-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
-          </div>
-          ${(spreadText || ouText) ? `
-            <div class="odds-line">
-              <span>${spreadText}</span>
-              <span>${ouText}</span>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${isHomeWinner ? 'winner' : ''}"><span class="team-rank">${homeRank}</span>${homeName}</span>
+              </div>
+              <span class="team-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
             </div>
-          ` : ''}
+            ${(spreadText || ouText) ? `
+              <div class="odds-line">
+                <span>${spreadText}</span>
+                <span>${ouText}</span>
+              </div>
+            ` : ''}
+          </div>
         `;
-        container.appendChild(card);
       });
+
+      container.innerHTML = html;
     }
 
-    fetchScores();
+    // Initial load
+    fetchScores(false);
+
+    // Auto-refresh every 10 seconds in the background
+    setInterval(() => {
+      fetchScores(true);
+    }, 10000);
   </script>
 </body>
 </html>
