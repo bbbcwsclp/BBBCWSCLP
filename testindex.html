@@ -237,13 +237,17 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD ---
+      // --- COMPACT PARLAY SCOREBOARD (Deduplicated by matching game event) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
+        // Map each parlay pick to its corresponding ESPN game event ID to group duplicates
+        const gameMap = {}; // key: eventId, value: { event, picks: [ {initials, selection} ] }
+
         parlayPicks.forEach(p => {
           const selectionStr = (p.selection || '').toLowerCase();
-          
+          const initials = p.players?.initials || '??';
+
           const matchedEvent = espnEvents.find(ev => {
             const comp = ev.competitions[0];
             return comp.competitors.some(c => {
@@ -254,11 +258,33 @@
             });
           });
 
-          const initials = p.players?.initials || '??';
-
           if (matchedEvent) {
-            const competition = matchedEvent.competitions[0];
-            const statusType = competition.status.type.state; // 'pre', 'in', 'post'
+            const eventId = matchedEvent.id;
+            if (!gameMap[eventId]) {
+              gameMap[eventId] = {
+                event: matchedEvent,
+                pickEntries: []
+              };
+            }
+            gameMap[eventId].pickEntries.push({ initials, selection: p.selection });
+          } else {
+            // Handle unmatched games separately so they don't get lost
+            const unmatchedKey = `unmatched_${p.id}`;
+            gameMap[unmatchedKey] = {
+              event: null,
+              pickEntries: [{ initials, selection: p.selection }]
+            };
+          }
+        });
+
+        // Render each unique game card once
+        Object.values(gameMap).forEach(item => {
+          const initialsList = item.pickEntries.map(pe => pe.initials).join(', ');
+          const displaySelection = item.pickEntries[0].selection;
+
+          if (item.event) {
+            const competition = item.event.competitions[0];
+            const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
             
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
@@ -288,7 +314,7 @@
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initials}: ${p.selection}</div>
+                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
                   <div class="compact-status ${statusClass}">${statusText}</div>
                 </div>
                 <div class="compact-teams">
@@ -306,11 +332,10 @@
               </div>
             `;
           } else {
-            // Fallback if game hasn't matched or isn't on ESPN slate yet
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initials}: ${p.selection}</div>
+                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
                   <div class="compact-status">Matchup pending</div>
                 </div>
                 <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
@@ -320,6 +345,7 @@
             `;
           }
         });
+
         html += `</div>`;
       }
 
