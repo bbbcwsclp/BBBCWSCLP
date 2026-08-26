@@ -126,20 +126,58 @@
       background-color: rgba(59, 130, 246, 0.08);
     }
 
-    /* Podium row accent borders and subtle glows */
-    tbody tr:nth-child(1) { 
-      border-left: 4px solid #facc15; 
-      background-color: rgba(250, 204, 21, 0.03); 
+    /* Podium Row Outlines & Glows */
+    tbody tr:nth-child(1) td { 
+      border-top: 1px solid rgba(250, 204, 21, 0.4);
+      border-bottom: 1px solid rgba(250, 204, 21, 0.4);
+      background-color: rgba(250, 204, 21, 0.05);
+      box-shadow: inset 3px 0 0 #facc15; /* Gives it a clean left anchor accent */
     } 
-    tbody tr:nth-child(2) { 
-      border-left: 4px solid #cbd5e1; 
-      background-color: rgba(203, 213, 225, 0.03); 
-    } 
-    tbody tr:nth-child(3) { 
-      border-left: 4px solid #fb923c; 
-      background-color: rgba(251, 146, 60, 0.03); 
+    tbody tr:nth-child(1) td:first-child { 
+      border-left: 1px solid rgba(250, 204, 21, 0.4);
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    tbody tr:nth-child(1) td:last-child { 
+      border-right: 1px solid rgba(250, 204, 21, 0.4);
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
     }
 
+    tbody tr:nth-child(2) td { 
+      border-top: 1px solid rgba(203, 213, 225, 0.4);
+      border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+      background-color: rgba(203, 213, 225, 0.04);
+      box-shadow: inset 3px 0 0 #cbd5e1;
+    } 
+    tbody tr:nth-child(2) td:first-child { 
+      border-left: 1px solid rgba(203, 213, 225, 0.4);
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    tbody tr:nth-child(2) td:last-child { 
+      border-right: 1px solid rgba(203, 213, 225, 0.4);
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+
+    tbody tr:nth-child(3) td { 
+      border-top: 1px solid rgba(251, 146, 60, 0.4);
+      border-bottom: 1px solid rgba(251, 146, 60, 0.4);
+      background-color: rgba(251, 146, 60, 0.04);
+      box-shadow: inset 3px 0 0 #fb923c;
+    } 
+    tbody tr:nth-child(3) td:first-child { 
+      border-left: 1px solid rgba(251, 146, 60, 0.4);
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    tbody tr:nth-child(3) td:last-child { 
+      border-right: 1px solid rgba(251, 146, 60, 0.4);
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+    
     /* Player initials styling */
     td:nth-child(2) {
       font-weight: 700;
