@@ -156,7 +156,7 @@
     }
 
     .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-name { font-weight: 600; color: var(--text); }
+    .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
     .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
     .winner { color: var(--gold); }
 
@@ -401,7 +401,7 @@
         html += `</div>`;
       }
 
-      // --- CLEAN COMPACT PARLAY SCOREBOARD ---
+      // --- COMPACT PARLAY SCOREBOARD WITH ABBREVIATIONS ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
@@ -458,8 +458,8 @@
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
-            const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
             
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
@@ -488,12 +488,12 @@
                 <div class="compact-teams">
                   <div class="compact-team-row">
                     <img src="${awayLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="compact-team-name ${isAwayWinner ? 'winner' : ''}">${awayName}</span>
+                    <span class="compact-team-abbr ${isAwayWinner ? 'winner' : ''}">${awayAbbr}</span>
                     <span class="compact-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
                   </div>
                   <div class="compact-team-row">
                     <img src="${homeLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="compact-team-name ${isHomeWinner ? 'winner' : ''}">${homeName}</span>
+                    <span class="compact-team-abbr ${isHomeWinner ? 'winner' : ''}">${homeAbbr}</span>
                     <span class="compact-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
                   </div>
                 </div>
