@@ -88,6 +88,39 @@
       justify-content: space-between;
       align-items: center;
     }
+
+    /* Previous Week Top 5 Callout Card */
+    .prev-top5-card {
+      background-color: rgba(15, 23, 42, 0.6);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .prev-top5-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+    .prev-top5-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+    }
+    .prev-top5-item {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+    .prev-top5-item span { color: var(--text); font-weight: 600; }
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
   </style>
 </head>
 <body>
@@ -173,6 +206,7 @@
           <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
+      <div id="prev-top5-admin-container"></div>
       <div id="active-container">
         <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
       </div>
@@ -327,10 +361,54 @@
     });
 
     async function loadAdminPicks() {
-      const { data: picks } = await _supabase
-        .from('picks')
-        .select('*, weeks(week_number, status), players(initials)')
-        .order('created_at', { ascending: false });
+      // Fetch all weeks to calculate previous week
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      const currentWeek = weeks?.find(w => w.status === 'open') || (weeks ? weeks[0] : null);
+      const previousWeek = currentWeek ? weeks.find(w => w.week_number === currentWeek.week_number - 1) : null;
+
+      const queries = [
+        _supabase.from('picks').select('*, weeks(week_number, status), players(initials)').order('created_at', { ascending: false })
+      ];
+
+      if (previousWeek) {
+        queries.push(
+          _supabase.from('picks').select('*, players(initials)').eq('week_id', previousWeek.id).eq('is_parlay', true)
+        );
+      }
+
+      const results = await Promise.all(queries);
+      const picksRes = results[0];
+      const prevPicksRes = previousWeek ? results[1] : { data: [] };
+
+      const picks = picksRes.data;
+      const prevParlayPicks = prevPicksRes.data || [];
+
+      // Render Previous Week Top 5 in Admin
+      const prevTop5Container = document.getElementById('prev-top5-admin-container');
+      if (previousWeek && prevParlayPicks.length > 0) {
+        let prevHtml = `
+          <div class="prev-top5-card">
+            <div class="prev-top5-header">🏆 Previous Week (${previousWeek.week_number}) Top 5 Parlay</div>
+            <div class="prev-top5-list">
+        `;
+        prevParlayPicks.forEach(pp => {
+          const resClass = pp.result ? `res-${pp.result}` : '';
+          prevHtml += `
+            <div class="prev-top5-item">
+              <span>${pp.players?.initials || '??'}: ${pp.selection}</span>
+              <strong class="${resClass}">${pp.result || 'PENDING'}</strong>
+            </div>
+          `;
+        });
+        prevHtml += `</div></div>`;
+        prevTop5Container.innerHTML = prevHtml;
+      } else {
+        prevTop5Container.innerHTML = '';
+      }
 
       const activeContainer = document.getElementById('active-container');
       const finalizedContainer = document.getElementById('finalized-container');
