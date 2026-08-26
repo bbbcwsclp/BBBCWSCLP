@@ -237,7 +237,7 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD (Deduplicated & Chronologically Sorted) ---
+      // --- COMPACT PARLAY SCOREBOARD (Strict Chronological Sort) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
@@ -262,7 +262,7 @@
             if (!gameMap[eventId]) {
               gameMap[eventId] = {
                 event: matchedEvent,
-                date: new Date(matchedEvent.date || 0),
+                dateObj: new Date(matchedEvent.date),
                 pickEntries: []
               };
             }
@@ -271,14 +271,14 @@
             const unmatchedKey = `unmatched_${p.id}`;
             gameMap[unmatchedKey] = {
               event: null,
-              date: new Date(8640000000000000), // push unmatched to the bottom
+              dateObj: new Date('9999-12-31'), // Push unmatched to the absolute bottom
               pickEntries: [{ initials, selection: p.selection }]
             };
           }
         });
 
-        // Sort unique game items chronologically by kickoff date
-        const sortedGames = Object.values(gameMap).sort((a, b) => a.date - b.date);
+        // Convert map to array and strictly sort ascending by kickoff timestamp
+        const sortedGames = Object.values(gameMap).sort((a, b) => a.dateObj - b.dateObj);
 
         sortedGames.forEach(item => {
           const initialsList = item.pickEntries.map(pe => pe.initials).join(', ');
