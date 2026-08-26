@@ -117,7 +117,7 @@
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: background-color 0.2s;
+      transition: background-color: 0.2s;
     }
     .btn-gambly:hover {
       background-color: #2563eb;
@@ -152,6 +152,13 @@
       min-width: 0;
     }
 
+    /* Multi-line pick container inside the scorecard */
+    .compact-picks-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
     .compact-pick-info {
       font-weight: 700;
       color: #93c5fd;
@@ -167,6 +174,7 @@
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-top: 0.15rem;
     }
     .compact-status.live { color: var(--success); }
 
@@ -279,8 +287,12 @@
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
-      let clean = selection.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      let clean = selection.trim();
+      clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
+
       if (clean.includes('/')) {
         return clean.split('/').map(t => t.trim().toLowerCase());
       }
@@ -293,7 +305,9 @@
         let computedMargin = -999;
 
         const searchTerms = getTeamSearchTerms(pick.selection);
-        
+        const selLower = (pick.selection || '').toLowerCase();
+        const isTeamTotal = /\b(team total|tt)\b/.test(selLower);
+
         const matchedEvent = espnEvents.find(ev => {
           const comp = ev.competitions[0];
           return comp.competitors.some(c => {
@@ -319,26 +333,48 @@
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
             const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
-            const selLower = (pick.selection || '').toLowerCase();
-            const isHomePick = selLower.includes(homeName);
+            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
+            const isHomePick = searchTerms.some(term => homeName.includes(term) || term.includes(homeName) || homeAbbr === term);
+            
             const pickedTeamScore = isHomePick ? homeScore : awayScore;
-            const oppTeamScore = isHomePick ? awayScore : homeScore;
 
-            let spread = 0;
-            const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
-            if (spreadMatch) {
-              spread = parseFloat(spreadMatch[1]);
-            }
-
-            const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
-            computedMargin = adjustedMargin;
-
-            if (adjustedMargin > 0) {
-              computedResult = 'W';
-            } else if (adjustedMargin < 0) {
-              computedResult = 'L';
+            if (isTeamTotal) {
+              let line = 0;
+              const lineMatch = selLower.match(/[ou]\s*(\d+(\.\d+)?)/);
+              if (lineMatch) {
+                line = parseFloat(lineMatch[1]);
+              }
+              const isOver = /\bo\b/.test(selLower) || /\bover\b/.test(selLower);
+              
+              if (isOver) {
+                computedMargin = pickedTeamScore - line;
+                if (pickedTeamScore > line) computedResult = 'W';
+                else if (pickedTeamScore < line) computedResult = 'L';
+                else computedResult = 'D';
+              } else {
+                computedMargin = line - pickedTeamScore;
+                if (pickedTeamScore < line) computedResult = 'W';
+                else if (pickedTeamScore > line) computedResult = 'L';
+                else computedResult = 'D';
+              }
             } else {
-              computedResult = 'D';
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
+              let spread = 0;
+              const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
+              if (spreadMatch) {
+                spread = parseFloat(spreadMatch[1]);
+              }
+
+              const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
+              computedMargin = adjustedMargin;
+
+              if (adjustedMargin > 0) {
+                computedResult = 'W';
+              } else if (adjustedMargin < 0) {
+                computedResult = 'L';
+              } else {
+                computedResult = 'D';
+              }
             }
           }
         }
@@ -431,15 +467,16 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD WITH ABBREVIATIONS ---
+      // --- COMPACT PARLAY SCOREBOARD (GROUPED BY GAME EVENT, STACKING DIFFERENT LINES) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
-        const gameMap = {};
+        const gameEventMap = {};
 
         parlayPicks.forEach(p => {
           const searchTerms = getTeamSearchTerms(p.selection);
           const initials = p.players?.initials || '??';
+          const trimmedSelection = p.selection.trim();
 
           const matchedEvent = espnEvents.find(ev => {
             const comp = ev.competitions[0];
@@ -456,30 +493,37 @@
 
           if (matchedEvent) {
             const eventId = matchedEvent.id;
-            if (!gameMap[eventId]) {
-              gameMap[eventId] = {
+            if (!gameEventMap[eventId]) {
+              gameEventMap[eventId] = {
                 event: matchedEvent,
                 dateObj: new Date(matchedEvent.date),
-                pickEntries: []
+                entries: [] // store unique selections and who picked them
               };
             }
-            gameMap[eventId].pickEntries.push({ initials, selection: p.selection });
+            
+            // Check if this exact selection string already exists for this game
+            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
+            if (existingEntry) {
+              existingEntry.initialsList.push(initials);
+            } else {
+              gameEventMap[eventId].entries.push({
+                selection: trimmedSelection,
+                initialsList: [initials]
+              });
+            }
           } else {
             const unmatchedKey = `unmatched_${p.id}`;
-            gameMap[unmatchedKey] = {
+            gameEventMap[unmatchedKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
-              pickEntries: [{ initials, selection: p.selection }]
+              entries: [{ selection: trimmedSelection, initialsList: [initials] }]
             };
           }
         });
 
-        const sortedGames = Object.values(gameMap).sort((a, b) => a.dateObj - b.dateObj);
+        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
 
         sortedGames.forEach(item => {
-          const initialsList = item.pickEntries.map(pe => pe.initials).join(', ');
-          const displaySelection = item.pickEntries[0].selection;
-
           if (item.event) {
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
@@ -509,10 +553,18 @@
             const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
             const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
+            // Build stacked pick info lines inside the card
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
+                  ${picksStackHtml}
                   <div class="compact-status ${statusClass}">${statusText}</div>
                 </div>
                 <div class="compact-teams">
@@ -530,10 +582,17 @@
               </div>
             `;
           } else {
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
             html += `
               <div class="compact-card">
                 <div class="compact-left">
-                  <div class="compact-pick-info">${initialsList}: ${displaySelection}</div>
+                  ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
                 <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
