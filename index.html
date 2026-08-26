@@ -96,7 +96,7 @@
       <a href="standings.html">Standings</a>
       <a href="season.html">Season</a>
       <a href="halloffame.html">HOF</a>
-      <a href="scores.html">Scores</a>
+      <a href="scores.html" class="active">Scores</a>
     </nav>
 
     <div id="content-container">
@@ -112,7 +112,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadActiveWeek() {
-      const { data: weeks, error: weekError } = await _supabase
+      const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
@@ -121,82 +121,26 @@
       const container = document.getElementById('content-container');
       container.innerHTML = '';
 
-      if (weekError || !weeks || weeks.length === 0) {
+      if (!weeks || weeks.length === 0) {
         container.innerHTML = '<div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div>';
         return;
       }
 
       const currentWeek = weeks[0];
 
-      // Fetch picks, players, and weeks separately to guarantee data mapping reliability
-      const [picksRes, playersRes] = await Promise.all([
-        _supabase.from('picks').select('*').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        _supabase.from('players').select('*')
-      ]);
-
-      const picks = picksRes.data;
-      const players = playersRes.data;
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*, players(initials)')
+        .eq('week_id', currentWeek.id)
+        .order('created_at', { ascending: true });
 
       if (!picks || picks.length === 0) {
         container.innerHTML = `<div class="week-section"><div class="week-title">Week ${currentWeek.week_number} Parlay:</div><div style="color: var(--text-muted);">No picks submitted for this week yet.</div></div>`;
         return;
       }
 
-      // Map player records into each pick object safely in code
-      const playerMap = {};
-      if (players) {
-        players.forEach(pl => { playerMap[pl.id] = pl; });
-      }
-
-      const enrichedPicks = picks.map(p => ({
-        ...p,
-        playerObj: playerMap[p.player_id] || {}
-      }));
-
-      let parlayPicks = [];
-      let otherPicks = [];
-
-      if (currentWeek.week_number === 1) {
-        parlayPicks = enrichedPicks;
-        otherPicks = [];
-      } else {
-        const prevWeekNum = currentWeek.week_number - 1;
-        const { data: prevWeekData } = await _supabase
-          .from('weeks')
-          .select('id')
-          .eq('week_number', prevWeekNum)
-          .limit(1);
-
-        if (prevWeekData && prevWeekData.length > 0) {
-          const prevWeekId = prevWeekData[0].id;
-          const { data: prevPicks } = await _supabase
-            .from('picks')
-            .select('*')
-            .eq('week_id', prevWeekId);
-
-          const mappedPicks = enrichedPicks.map(p => {
-            const prevPick = prevPicks ? prevPicks.find(pp => pp.player_id === p.player_id) : null;
-            return {
-              ...p,
-              prevResult: prevPick ? prevPick.result : null,
-              prevMargin: prevPick ? (prevPick.cover_margin || 0) : 0
-            };
-          });
-
-          mappedPicks.sort((a, b) => {
-            const aWin = a.prevResult === 'W' ? 1 : 0;
-            const bWin = b.prevResult === 'W' ? 1 : 0;
-            if (aWin !== bWin) return bWin - aWin;
-            return b.prevMargin - a.prevMargin;
-          });
-
-          parlayPicks = mappedPicks.slice(0, 5);
-          otherPicks = mappedPicks.slice(5);
-        } else {
-          parlayPicks = enrichedPicks;
-          otherPicks = [];
-        }
-      }
+      const parlayPicks = picks.filter(p => p.is_parlay === true);
+      const otherPicks = picks.filter(p => p.is_parlay !== true);
 
       let html = `<div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
@@ -205,15 +149,14 @@
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          const initials = p.playerObj.initials || p.player_initials || '??';
-          html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- DYNAMIC STACKED BUTTONS ---
+    // --- DYNAMIC STACKED BUTTONS ---
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         
@@ -243,8 +186,7 @@
         `;
         otherPicks.forEach(p => {
           const resClass = p.result ? `res-${p.result}` : 'res-pending';
-          const initials = p.playerObj.initials || p.player_initials || '??';
-          html += `<div class="pick-item ${resClass}">${initials}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
