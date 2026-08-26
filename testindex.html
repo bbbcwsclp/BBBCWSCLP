@@ -146,6 +146,34 @@
       padding: 1rem 0;
       font-style: italic;
     }
+
+    /* Live Scores / Schedule Container Styling */
+    .scores-section {
+      margin-top: 2.5rem;
+      text-align: left;
+      width: 100%;
+    }
+    .scores-header {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .score-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .team-info { display: flex; flex-direction: column; gap: 0.25rem; }
+    .team-row { font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; gap: 1rem; }
+    .game-status { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-align: right; }
   </style>
 </head>
 <body>
@@ -171,6 +199,14 @@
 
     <!-- Always-On Upcoming Week / Top 5 Box Container -->
     <div id="upcoming-preview-container"></div>
+
+    <!-- Live Scores & Schedule Section Restored -->
+    <div class="scores-section">
+      <div class="scores-header">Live Schedule & Scores</div>
+      <div id="scores-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading live scores...</div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -204,7 +240,7 @@
         allPicksCache = picks || [];
       }
 
-      // 2. Fetch live scores from ESPN API to cross-reference results
+      // 2. Fetch live scores from ESPN API to cross-reference results and populate schedule
       try {
         const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
         const data = await response.json();
@@ -212,11 +248,12 @@
           liveScoresCache = data.events;
         }
       } catch (err) {
-        console.error('Could not fetch live scores for cross-referencing:', err);
+        console.error('Could not fetch live scores:', err);
       }
 
       renderCurrentWeek();
       renderUpcomingTop5();
+      renderLiveScoresList();
     }
 
     function renderCurrentWeek() {
@@ -307,7 +344,6 @@
 
         const sel = (pick.selection || '').toLowerCase();
         
-        // Find matching game event in live scores
         const matchedEvent = liveScoresCache.find(event => {
           const comp = event.competitions[0];
           const homeTeam = comp.competitors.find(c => c.homeAway === 'home');
@@ -331,13 +367,10 @@
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
             const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
-            
-            // Determine if picked team is home or away
             const isHomePick = sel.includes(homeName);
             const pickedTeamScore = isHomePick ? homeScore : awayScore;
             const oppTeamScore = isHomePick ? awayScore : homeScore;
 
-            // Extract spread or point line from selection string (e.g. "+3.5" or "-7")
             let spread = 0;
             const spreadMatch = sel.match(/([+-]?\d+(\.\d+)?)$/);
             if (spreadMatch) {
@@ -352,7 +385,7 @@
             } else if (adjustedMargin < 0) {
               computedResult = 'L';
             } else {
-              computedResult = 'D'; // Push
+              computedResult = 'D';
             }
           }
         }
@@ -426,6 +459,50 @@
 
       previewHtml += `</div>`;
       previewContainer.innerHTML = previewHtml;
+    }
+
+    // Render live schedule/scores list below
+    function renderLiveScoresList() {
+      const scoresContainer = document.getElementById('scores-container');
+      if (!liveScoresCache || liveScoresCache.length === 0) {
+        scoresContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">No live games or schedule found right now.</div>';
+        return;
+      }
+
+      let html = '';
+      liveScoresCache.forEach(event => {
+        const comp = event.competitions[0];
+        const homeTeam = comp.competitors.find(c => c.homeAway === 'home');
+        const awayTeam = comp.competitors.find(c => c.homeAway === 'away');
+        
+        const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
+        const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+        const homeScore = homeTeam.score || '0';
+        const awayScore = awayTeam.score || '0';
+        
+        const state = comp.status.type.state; // 'pre', 'in', 'post'
+        let statusText = comp.status.type.detail; // e.g. "Final", "Halftime", "Thu, 7:00 PM EDT"
+
+        html += `
+          <div class="score-card">
+            <div class="team-info" style="width: 100%;">
+              <div class="team-row">
+                <span>${awayName}</span>
+                <span>${state !== 'pre' ? awayScore : ''}</span>
+              </div>
+              <div class="team-row" style="margin-top: 0.25rem;">
+                <span>${homeName}</span>
+                <span>${state !== 'pre' ? homeScore : ''}</span>
+              </div>
+            </div>
+            <div class="game-status" style="min-width: 100px; padding-left: 1rem; border-left: 1px solid var(--border);">
+              ${statusText}
+            </div>
+          </div>
+        `;
+      });
+
+      scoresContainer.innerHTML = html;
     }
 
     initPage();
