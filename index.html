@@ -29,7 +29,7 @@
     body { 
       background-color: var(--bg); 
       color: var(--text); 
-      padding: 1rem 1rem 4rem 1rem; 
+      padding: 2rem 1rem 4rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -38,27 +38,17 @@
 
     .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
-    /* Sticky Header & Nav Container */
-    .sticky-header-wrapper {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background-color: var(--bg);
-      padding-top: 1rem;
-      padding-bottom: 0.75rem;
-      width: 100%;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
-      margin-bottom: 1.5rem;
-    }
-
-    header img { max-height: 80px; margin-bottom: 0.5rem; object-fit: contain; }
-    h1.main-title { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1rem; color: var(--text); }
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
     /* Navigation Bar */
     nav { 
       display: flex; 
       justify-content: center; 
       gap: 0.35rem; 
+      margin-bottom: 2.5rem; 
       width: 100%; 
     }
     
@@ -274,20 +264,18 @@
 <body>
 
   <div class="container">
-    <div class="sticky-header-wrapper">
-      <header>
-        <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-        <h1 class="main-title">BBBCWSCLP</h1>
-      </header>
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP</h1>
+    </header>
 
-      <nav>
-        <a href="index.html" class="active">Weekly</a>
-        <a href="standings.html">Standings</a>
-        <a href="season.html">Season</a>
-        <a href="halloffame.html">HOF</a>
-        <a href="scores.html">Scores</a>
-      </nav>
-    </div>
+    <nav>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
+    </nav>
 
     <div id="content-container">
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
