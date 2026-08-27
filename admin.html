@@ -107,6 +107,11 @@
       background-size: 1rem;
       padding-right: 2.5rem;
     }
+
+    .input-with-action {
+      display: flex;
+      gap: 0.5rem;
+    }
     
     .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
     .checkbox-group input { width: auto; }
@@ -122,15 +127,16 @@
     .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
     
     .delete-btn { 
-      width: 28px; 
-      height: 28px; 
+      width: 38px; 
+      height: 42px; 
       padding: 0; 
-      font-size: 0.8rem; 
+      font-size: 0.85rem; 
       background-color: var(--danger); 
-      border-radius: 4px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
     .delete-btn:hover { background-color: #dc2626; }
     
@@ -177,50 +183,39 @@
       align-items: center;
     }
 
-    /* Search Filter Input */
     .filter-input {
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-      padding: 0.5rem 0.75rem;
-      background: #0b1120;
+      margin-bottom: 1.1rem;
     }
 
-    /* Live Score Badge next to picks */
     .live-score-tag {
-      display: inline-block;
-      font-size: 0.7rem;
-      padding: 0.1rem 0.35rem;
-      background: #334155;
+      font-size: 0.75rem;
       color: var(--gold);
-      border-radius: 4px;
       margin-top: 0.2rem;
-      font-weight: 600;
+      display: block;
     }
 
-    /* Sticky Bottom Quick Action Bar */
     .sticky-action-bar {
       position: fixed;
-      bottom: -70px;
+      bottom: -80px;
       left: 0;
       right: 0;
-      background: rgba(30, 41, 59, 0.95);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(5px);
       border-top: 1px solid var(--border);
-      padding: 0.75rem 1rem;
+      padding: 1rem;
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      z-index: 1000;
-      transition: bottom 0.3s ease-in-out;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
+      transition: bottom 0.3s ease;
+      z-index: 100;
     }
+
     .sticky-action-bar.visible {
       bottom: 0;
     }
+
     .sticky-action-bar button {
-      max-width: 220px;
-      padding: 0.6rem 1rem;
-      font-size: 0.9rem;
+      max-width: 300px;
     }
   </style>
 </head>
@@ -246,8 +241,22 @@
       <h2>1. Open or Close a Week</h2>
       <form id="week-form">
         <div class="form-group">
-          <label for="week-number">Week Number to Create/Update</label>
-          <input type="number" id="week-number" required placeholder="e.g. 1">
+          <label for="week-number-select">Week Number to Create/Update</label>
+          <select id="week-number-select" required>
+            <option value="0">Week 0</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+            <option value="5">Week 5</option>
+            <option value="6">Week 6</option>
+            <option value="7">Week 7</option>
+            <option value="8">Week 8</option>
+            <option value="9">Week 9</option>
+            <option value="10">Week 10</option>
+            <option value="11">Week 11</option>
+            <option value="12">Week 12</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="week-status">Week Status</label>
@@ -258,11 +267,17 @@
         </div>
         <div class="form-group">
           <label for="week-slip-link">Courtside Slip Link URL</label>
-          <input type="url" id="week-slip-link" placeholder="https://courtside.app/...">
+          <div class="input-with-action">
+            <input type="text" id="week-slip-link" autocomplete="off" placeholder="https://courtside.app/...">
+            <button type="button" class="delete-btn" onclick="clearWeekLink('slip')" title="Clear Slip Link">✕</button>
+          </div>
         </div>
         <div class="form-group">
           <label for="week-gambly-link">Gambly Link URL</label>
-          <input type="url" id="week-gambly-link" placeholder="https://gambly.com...">
+          <div class="input-with-action">
+            <input type="text" id="week-gambly-link" autocomplete="off" placeholder="https://gambly.com...">
+            <button type="button" class="delete-btn" onclick="clearWeekLink('gambly')" title="Clear Gambly Link">✕</button>
+          </div>
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
@@ -348,6 +363,11 @@
     let allWeeksCache = [];
     let hasUnsavedChanges = false;
 
+    const weekSelect = document.getElementById('week-number-select');
+    const statusSelect = document.getElementById('week-status');
+    const slipLinkInput = document.getElementById('week-slip-link');
+    const gamblyLinkInput = document.getElementById('week-gambly-link');
+
     async function initAdmin() {
       await loadDropdowns();
       await loadAdminPicks();
@@ -361,22 +381,31 @@
 
       allWeeksCache = weeks || [];
 
-      const weekSelect = document.getElementById('pick-week');
-      weekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      const pickWeekSelect = document.getElementById('pick-week');
+      pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
       
+      let openWeekNum = null;
       let openWeekId = '';
 
       if (weeks) {
         weeks.forEach(w => {
-          if (w.status === 'open') {
+          if (w.status === 'open' && openWeekNum === null) {
+            openWeekNum = w.week_number;
             openWeekId = w.id;
           }
-          weekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+          pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
         });
       }
 
       if (openWeekId) {
-        weekSelect.value = openWeekId;
+        pickWeekSelect.value = openWeekId;
+      }
+
+      if (openWeekNum !== null) {
+        weekSelect.value = openWeekNum;
+        loadWeekDetails(openWeekNum);
+      } else {
+        loadWeekDetails(parseInt(weekSelect.value, 10));
       }
 
       const playerSelect = document.getElementById('pick-player');
@@ -393,29 +422,60 @@
       }
     }
 
-    document.getElementById('week-number').addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      const found = allWeeksCache.find(w => w.week_number === val);
-      const slipLinkInput = document.getElementById('week-slip-link');
-      const gamblyLinkInput = document.getElementById('week-gambly-link');
-      const statusSelect = document.getElementById('week-status');
-
+    async function loadWeekDetails(weekNum) {
+      const found = allWeeksCache.find(w => w.week_number === weekNum);
       if (found) {
+        statusSelect.value = found.status || 'open';
         slipLinkInput.value = found.slip_link || '';
         gamblyLinkInput.value = found.gambly_link || '';
-        statusSelect.value = found.status || 'open';
       } else {
+        statusSelect.value = 'open';
         slipLinkInput.value = '';
         gamblyLinkInput.value = '';
       }
+    }
+
+    weekSelect.addEventListener('change', (e) => {
+      loadWeekDetails(parseInt(e.target.value, 10));
     });
+
+    async function clearWeekLink(linkType) {
+      const weekNum = parseInt(weekSelect.value, 10);
+      const fieldToClear = linkType === 'slip' ? 'slip_link' : 'gambly_link';
+      const msg = document.getElementById('week-msg');
+
+      if (!confirm(`Are you sure you want to clear the ${linkType === 'slip' ? 'Courtside Slip' : 'Gambly'} link for Week ${weekNum}?`)) return;
+
+      const updatePayload = {};
+      updatePayload[fieldToClear] = null;
+
+      const { error } = await _supabase
+        .from('weeks')
+        .update(updatePayload)
+        .eq('season', 2026)
+        .eq('week_number', weekNum);
+
+      if (error) {
+        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error clearing link: ${error.message}`;
+      } else {
+        if (linkType === 'slip') slipLinkInput.value = '';
+        else gamblyLinkInput.value = '';
+
+        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Successfully cleared link for Week ${weekNum}!`;
+        initAdmin();
+      }
+    }
 
     document.getElementById('week-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const weekNum = parseInt(document.getElementById('week-number').value);
-      const status = document.getElementById('week-status').value;
-      const slipLink = document.getElementById('week-slip-link').value.trim();
-      const gamblyLink = document.getElementById('week-gambly-link').value.trim();
+      const weekNum = parseInt(weekSelect.value, 10);
+      const status = statusSelect.value;
+      const slipLink = slipLinkInput.value.trim();
+      const gamblyLink = gamblyLinkInput.value.trim();
       const msg = document.getElementById('week-msg');
 
       const { error } = await _supabase
@@ -436,9 +496,6 @@
         msg.style.background = 'rgba(34, 197, 94, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Week ${weekNum} updated successfully!`;
-        document.getElementById('week-number').value = '';
-        document.getElementById('week-slip-link').value = '';
-        document.getElementById('week-gambly-link').value = '';
         initAdmin();
       }
     });
@@ -592,7 +649,6 @@
             row.style.background = 'rgba(59, 130, 246, 0.08)';
             setUnsavedState(true);
           });
-          // Power user shortcut: Enter saves or moves forward
           if(input.tagName === 'INPUT' && input.classList.contains('row-selection')) {
             input.addEventListener('keydown', (e) => {
               if (e.key === 'Enter') {
@@ -710,7 +766,6 @@
               const pickedTeamScore = isHomePick ? homeScore : awayScore;
               const oppTeamScore = isHomePick ? awayScore : homeScore;
               
-              // Display Live/Final Score in badge
               scoreTag.style.display = 'block';
               scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (${comp.status.type.completed ? 'Final' : comp.status.type.shortDetail})`;
 
