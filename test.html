@@ -23,7 +23,7 @@
     body { 
       background-color: var(--bg); 
       color: var(--text); 
-      padding: 2rem 1rem 4rem 1rem; 
+      padding: 2rem 1rem 5rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -31,7 +31,7 @@
       overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; }
+    .container { width: 100%; max-width: 680px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 1.5rem; }
     header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
@@ -75,10 +75,9 @@
       border-color: var(--accent);
     }
     
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; position: relative; }
     .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    /* Refined form controls for mobile usability */
     .form-group { margin-bottom: 1.1rem; }
     
     label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
@@ -88,20 +87,18 @@
       padding: 0.7rem 0.85rem; 
       background: #0f172a; 
       border: 1px solid var(--border); 
-      border-radius: 8px; /* Slightly smoother rounded corners */
+      border-radius: 8px;
       color: var(--text); 
       font-size: 0.95rem; 
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    /* Modern focus glow for active typing */
     input:focus, select:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
-    /* Prevent long select text from crowding the arrow */
     select {
       appearance: none;
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -117,7 +114,6 @@
     button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
     button:hover { background-color: #2563eb; }
 
-    /* Compact Mobile-Friendly Table Updates */
     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
     th, td { text-align: left; padding: 0.5rem 0.3rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
@@ -138,12 +134,11 @@
     }
     .delete-btn:hover { background-color: #dc2626; }
     
-    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; }
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.4rem; transition: all 0.3s ease; }
     
     .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
     .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
     
-    /* Clean button grid layout for mobile */
     .btn-row { 
       display: grid; 
       grid-template-columns: 1fr 1fr; 
@@ -158,7 +153,7 @@
       white-space: nowrap;
     }
     .btn-row button:first-child {
-      grid-column: span 2; /* Make Auto-Select full width on top */
+      grid-column: span 2;
     }
 
     .btn-batch { background-color: var(--success); }
@@ -180,6 +175,52 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    /* Search Filter Input */
+    .filter-input {
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      background: #0b1120;
+    }
+
+    /* Live Score Badge next to picks */
+    .live-score-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.35rem;
+      background: #334155;
+      color: var(--gold);
+      border-radius: 4px;
+      margin-top: 0.2rem;
+      font-weight: 600;
+    }
+
+    /* Sticky Bottom Quick Action Bar */
+    .sticky-action-bar {
+      position: fixed;
+      bottom: -70px;
+      left: 0;
+      right: 0;
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 1000;
+      transition: bottom 0.3s ease-in-out;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+    }
+    .sticky-action-bar.visible {
+      bottom: 0;
+    }
+    .sticky-action-bar button {
+      max-width: 220px;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -267,6 +308,7 @@
           <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
       <div id="active-container">
         <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
       </div>
@@ -283,11 +325,17 @@
           <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
         </div>
       </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
       <div id="finalized-container">
         <div style="color: var(--text-muted); text-align: center; padding: 1rem;">No finalized picks found.</div>
       </div>
       <div id="finalized-msg" class="msg"></div>
     </div>
+  </div>
+
+  <!-- Sticky Mobile Quick-Save Bar -->
+  <div id="sticky-save-bar" class="sticky-action-bar">
+    <button class="btn-batch btn-success" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
   </div>
 
   <script>
@@ -298,6 +346,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allWeeksCache = [];
+    let hasUnsavedChanges = false;
 
     async function initAdmin() {
       await loadDropdowns();
@@ -380,9 +429,11 @@
         }], { onConflict: 'season,week_number' });
 
       if (error) {
+        msg.style.background = 'rgba(239, 68, 68, 0.15)';
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
+        msg.style.background = 'rgba(34, 197, 94, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Week ${weekNum} updated successfully!`;
         document.getElementById('week-number').value = '';
@@ -410,9 +461,11 @@
         }]);
 
       if (error) {
+        msg.style.background = 'rgba(239, 68, 68, 0.15)';
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
+        msg.style.background = 'rgba(34, 197, 94, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Pick added successfully!`;
         document.getElementById('pick-selection').value = '';
@@ -450,6 +503,7 @@
 
       renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.');
       renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.');
+      attachRowChangeListeners();
     }
 
     function renderPicksByWeek(picksArray, containerElement, emptyMessage) {
@@ -497,9 +551,13 @@
         weekPicks.forEach(p => {
           const tr = document.createElement('tr');
           tr.dataset.pickId = p.id;
+          tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
           tr.innerHTML = `
             <td><strong>${p.players?.initials || '??'}</strong></td>
-            <td><input type="text" class="row-selection" value="${p.selection || ''}"></td>
+            <td>
+              <input type="text" class="row-selection" value="${p.selection || ''}">
+              <div class="live-score-tag" style="display:none;"></div>
+            </td>
             <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
             <td>
               <select class="row-result">
@@ -518,6 +576,58 @@
 
         tableWrapper.appendChild(table);
         containerElement.appendChild(tableWrapper);
+      });
+    }
+
+    function attachRowChangeListeners() {
+      const allRows = document.querySelectorAll('tr[data-pick-id]');
+      allRows.forEach(row => {
+        const inputs = row.querySelectorAll('input, select');
+        inputs.forEach(input => {
+          input.addEventListener('input', () => {
+            row.style.background = 'rgba(59, 130, 246, 0.08)';
+            setUnsavedState(true);
+          });
+          input.addEventListener('change', () => {
+            row.style.background = 'rgba(59, 130, 246, 0.08)';
+            setUnsavedState(true);
+          });
+          // Power user shortcut: Enter saves or moves forward
+          if(input.tagName === 'INPUT' && input.classList.contains('row-selection')) {
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+              }
+            });
+          }
+        });
+      });
+    }
+
+    function setUnsavedState(isDirty) {
+      hasUnsavedChanges = isDirty;
+      const bar = document.getElementById('sticky-save-bar');
+      if (isDirty) {
+        bar.classList.add('visible');
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
+
+    function filterPicksTable(sectionType, query) {
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
+      const container = document.getElementById(containerId);
+      const rows = container.querySelectorAll('tr[data-pick-id]');
+      const term = query.toLowerCase().trim();
+
+      rows.forEach(row => {
+        const searchKey = row.dataset.searchKey || '';
+        if (!term || searchKey.includes(term)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
       });
     }
 
@@ -544,6 +654,7 @@
 
       if (rows.length === 0) return;
 
+      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
 
@@ -552,24 +663,27 @@
         const data = await response.json();
 
         if (!data.events) {
+          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
           msgDiv.style.color = 'var(--danger)';
           msgDiv.innerText = 'Could not retrieve live games from ESPN.';
           return;
         }
 
         let gradedCount = 0;
+        let winCount = 0;
+        let lossCount = 0;
+        let drawCount = 0;
 
         rows.forEach(row => {
           const selectionInput = row.querySelector('.row-selection');
           const resultSelect = row.querySelector('.row-result');
+          const scoreTag = row.querySelector('.live-score-tag');
           const selText = selectionInput.value.trim().toLowerCase();
           const searchTerms = getTeamSearchTerms(selText);
           const isTeamTotal = /\b(team total|tt)\b/.test(selText) || /\b[ou]\s*\d+/.test(selText);
 
           for (const event of data.events) {
             const comp = event.competitions[0];
-            if (comp.status.type.state !== 'post') continue;
-
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const away = comp.competitors.find(c => c.homeAway === 'away');
 
@@ -594,43 +708,42 @@
 
             if (isHomePick || isAwayPick) {
               const pickedTeamScore = isHomePick ? homeScore : awayScore;
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
+              
+              // Display Live/Final Score in badge
+              scoreTag.style.display = 'block';
+              scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (${comp.status.type.completed ? 'Final' : comp.status.type.shortDetail})`;
 
-              if (isTeamTotal) {
-                let line = 0;
-                const lineMatch = selText.match(/[ou]\s*(\d+(\.\d+)?)/);
-                if (lineMatch) {
-                  line = parseFloat(lineMatch[1]);
-                }
-                const isOver = /\bo\b/.test(selText) || /\bover\b/.test(selText);
+              if (comp.status.type.state === 'post') {
+                if (isTeamTotal) {
+                  let line = 0;
+                  const lineMatch = selText.match(/[ou]\s*(\d+(\.\d+)?)/);
+                  if (lineMatch) line = parseFloat(lineMatch[1]);
+                  const isOver = /\bo\b/.test(selText) || /\bover\b/.test(selText);
 
-                if (isOver) {
-                  if (pickedTeamScore > line) resultSelect.value = 'W';
-                  else if (pickedTeamScore < line) resultSelect.value = 'L';
-                  else resultSelect.value = 'D';
-                } else {
-                  if (pickedTeamScore < line) resultSelect.value = 'W';
-                  else if (pickedTeamScore > line) resultSelect.value = 'L';
-                  else resultSelect.value = 'D';
-                }
-                gradedCount++;
-              } else {
-                const oppTeamScore = isHomePick ? awayScore : homeScore;
-                let spread = 0;
-                const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-                if (spreadMatch) {
-                  spread = parseFloat(spreadMatch[1]);
-                }
-
-                const adjustedScore = pickedTeamScore + spread;
-                if (adjustedScore > oppTeamScore) {
-                  resultSelect.value = 'W';
-                  gradedCount++;
-                } else if (adjustedScore < oppTeamScore) {
-                  resultSelect.value = 'L';
+                  if (isOver) {
+                    if (pickedTeamScore > line) { resultSelect.value = 'W'; winCount++; }
+                    else if (pickedTeamScore < line) { resultSelect.value = 'L'; lossCount++; }
+                    else { resultSelect.value = 'D'; drawCount++; }
+                  } else {
+                    if (pickedTeamScore < line) { resultSelect.value = 'W'; winCount++; }
+                    else if (pickedTeamScore > line) { resultSelect.value = 'L'; lossCount++; }
+                    else { resultSelect.value = 'D'; drawCount++; }
+                  }
                   gradedCount++;
                 } else {
-                  resultSelect.value = 'D';
-                  gradedCount++;
+                  let spread = 0;
+                  const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+                  if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+                  const adjustedScore = pickedTeamScore + spread;
+                  if (adjustedScore > oppTeamScore) {
+                    resultSelect.value = 'W'; winCount++; gradedCount++;
+                  } else if (adjustedScore < oppTeamScore) {
+                    resultSelect.value = 'L'; lossCount++; gradedCount++;
+                  } else {
+                    resultSelect.value = 'D'; drawCount++; gradedCount++;
+                  }
                 }
               }
               break;
@@ -638,12 +751,14 @@
           }
         });
 
+        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
         msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = `Auto-graded ${gradedCount} picks! Review changes and click "Save All" to confirm.`;
-        setTimeout(() => { msgDiv.innerText = ''; }, 5000);
+        msgDiv.innerText = `Auto-graded ${gradedCount} final games (${winCount} Wins, ${lossCount} Losses, ${drawCount} Pushes). Review and save!`;
+        setUnsavedState(true);
 
       } catch (err) {
         console.error('Auto-grade error:', err);
+        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
         msgDiv.style.color = 'var(--danger)';
         msgDiv.innerText = 'Error connecting to ESPN score feed.';
       }
@@ -658,6 +773,7 @@
 
       if (rows.length === 0) return;
 
+      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Calculating margins and selecting Top 5 parlay picks...';
 
@@ -666,6 +782,7 @@
         const data = await response.json();
 
         if (!data.events) {
+          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
           msgDiv.style.color = 'var(--danger)';
           msgDiv.innerText = 'Could not retrieve live games from ESPN.';
           return;
@@ -756,19 +873,17 @@
 
         rows.forEach(row => {
           const pCheckbox = row.querySelector('.row-parlay');
-          if (top5Ids.has(row.dataset.pickId)) {
-            pCheckbox.checked = true;
-          } else {
-            pCheckbox.checked = false;
-          }
+          pCheckbox.checked = top5Ids.has(row.dataset.pickId);
         });
 
+        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
         msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = `Successfully auto-selected the top ${top5.length} parlay picks! Review and click "Save All" to confirm.`;
-        setTimeout(() => { msgDiv.innerText = ''; }, 5000);
+        msgDiv.innerText = `Successfully auto-selected the top ${top5.length} parlay picks! Review and save.`;
+        setUnsavedState(true);
 
       } catch (err) {
         console.error('Auto-select error:', err);
+        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
         msgDiv.style.color = 'var(--danger)';
         msgDiv.innerText = 'Error fetching score data for top 5 selection.';
       }
@@ -776,15 +891,18 @@
 
     async function saveAllPicks(sectionType) {
       const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
-      const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
       const container = document.getElementById(containerId);
-      const msgDiv = document.getElementById(msgId);
       const rows = container.querySelectorAll('tr[data-pick-id]');
+      await persistRows(rows);
+    }
 
-      if (rows.length === 0) return;
+    async function saveAllCurrentModifiedPicks() {
+      const allRows = document.querySelectorAll('tr[data-pick-id]');
+      await persistRows(allRows);
+    }
 
-      msgDiv.style.color = 'var(--text-muted)';
-      msgDiv.innerText = 'Saving changes...';
+    async function persistRows(rows) {
+      if (!rows || rows.length === 0) return;
 
       let hasError = false;
 
@@ -808,16 +926,16 @@
         if (error) {
           hasError = true;
           console.error(`Error updating pick ${pickId}:`, error.message);
+        } else {
+          row.style.background = '';
         }
       }
 
       if (hasError) {
-        msgDiv.style.color = 'var(--danger)';
-        msgDiv.innerText = 'Some picks failed to save. Check console for details.';
+        alert('Some picks failed to save. Check console for details.');
       } else {
-        msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = 'All changes saved successfully!';
-        setTimeout(() => { msgDiv.innerText = ''; }, 3000);
+        setUnsavedState(false);
+        initAdmin();
       }
     }
 
