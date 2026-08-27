@@ -261,11 +261,11 @@
         </div>
         <div class="form-group">
           <label for="week-slip-link">Courtside Slip Link URL</label>
-          <input type="text" id="week-slip-link" placeholder="https://courtside.app/...">
+          <input type="text" id="week-slip-link" autocomplete="off" placeholder="https://courtside.app/...">
         </div>
         <div class="form-group">
           <label for="week-gambly-link">Gambly Link URL</label>
-          <input type="text" id="week-gambly-link" placeholder="https://gambly.com...">
+          <input type="text" id="week-gambly-link" autocomplete="off" placeholder="https://gambly.com...">
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
@@ -355,6 +355,13 @@
     const statusSelect = document.getElementById('week-status');
     const slipLinkInput = document.getElementById('week-slip-link');
     const gamblyLinkInput = document.getElementById('week-gambly-link');
+
+    // Force-enable paste safety net for link text boxes
+    [slipLinkInput, gamblyLinkInput].forEach(input => {
+      input.addEventListener('paste', (e) => {
+        e.stopPropagation(); // Prevent external event blocks
+      });
+    });
 
     async function initAdmin() {
       await loadDropdowns();
