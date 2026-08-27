@@ -3,24 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Admin</title>
+  <title>BBBCWSCLP — Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
-  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
-
   <style>
     :root {
       --bg: #0f172a;
-      --card-bg: #1a2638;
-      --card-inner: #0b1120;
+      --card-bg: #1e293b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
-      --warning: #eab308;
-      --accent: #3b82f6;
+      --gold: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -28,159 +23,322 @@
     body { 
       background-color: var(--bg); 
       color: var(--text); 
-      padding: 2rem 1rem 4rem 1rem; 
+      padding: 2rem 1rem 5rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 680px; margin: 0 auto; }
 
-    header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
+
+    nav { 
+      display: flex; 
+      justify-content: center; 
+      gap: 0.5rem; 
+      margin-bottom: 2.5rem; 
+      width: 100%; 
+      max-width: 380px; 
+      margin-left: auto;
+      margin-right: auto;
+      flex-wrap: wrap; 
+    }
     
-    h1.main-title { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
-
-    .card {
+    nav a { 
+      color: var(--text-muted); 
+      text-decoration: none; 
+      transition: all 0.2s ease;
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
-      text-align: left;
-    }
-
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      color: var(--text);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 0.35rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      background-color: var(--card-inner);
-      border: 1px solid var(--border);
+      padding: 0.5rem 0.8rem;
       border-radius: 6px;
-      padding: 0.65rem 0.85rem;
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
+      font-weight: 600; 
+      font-size: 0.85rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      white-space: nowrap;
+    }
+    
+    nav a:hover { 
+      color: var(--text); 
+      border-color: var(--accent);
+      background-color: #273548;
     }
 
-    input:focus, select:focus, textarea:focus {
+    nav a.active { 
+      color: white; 
+      background-color: var(--accent);
       border-color: var(--accent);
     }
+    
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; position: relative; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    .btn {
-      background-color: var(--accent);
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      cursor: pointer;
+    .form-group { margin-bottom: 1.1rem; }
+    
+    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+    
+    input, select { 
+      width: 100%; 
+      padding: 0.7rem 0.85rem; 
+      background: #0f172a; 
+      border: 1px solid var(--border); 
+      border-radius: 8px;
+      color: var(--text); 
+      font-size: 0.95rem; 
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1rem;
+      padding-right: 2.5rem;
+    }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input { width: auto; }
+
+    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
+    button:hover { background-color: #2563eb; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.5rem 0.3rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+
+    .row-selection { width: 100%; padding: 0.35rem; font-size: 0.85rem; }
+    .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
+    
+    .delete-btn { 
+      width: 28px; 
+      height: 28px; 
+      padding: 0; 
+      font-size: 0.8rem; 
+      background-color: var(--danger); 
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .delete-btn:hover { background-color: #dc2626; }
+    
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.4rem; transition: all 0.3s ease; }
+    
+    .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+    
+    .btn-row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 0.5rem; 
       width: 100%;
-      font-size: 0.95rem;
-      transition: background-color 0.2s;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      margin-bottom: 0.5rem;
+    }
+    .btn-row button {
+      width: 100%;
+      padding: 0.6rem 0.5rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .btn-row button:first-child {
+      grid-column: span 2;
     }
 
-    .btn:hover {
-      background-color: #2563eb;
+    .btn-batch { background-color: var(--success); }
+    .btn-batch:hover { background-color: #16a34a; }
+    .btn-autograde { background-color: #d97706; }
+    .btn-autograde:hover { background-color: #b45309; }
+    .btn-autoselect { background-color: #8b5cf6; }
+    .btn-autoselect:hover { background-color: #7c3aed; }
+
+    .week-section-banner {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      margin: 1.25rem 0 0.5rem 0;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .btn-danger {
-      background-color: var(--danger);
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-    }
-    .btn-danger:hover {
-      background-color: #dc2626;
+    .filter-input {
+      margin-bottom: 1.1rem;
     }
 
-    #status-msg {
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-align: center;
-      min-height: 1.2rem;
+    .live-score-tag {
+      font-size: 0.75rem;
+      color: var(--gold);
+      margin-top: 0.2rem;
+      display: block;
     }
-    .success-text { color: var(--success); }
-    .error-text { color: var(--danger); }
+
+    .sticky-action-bar {
+      position: fixed;
+      bottom: -80px;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(5px);
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
+      transition: bottom 0.3s ease;
+      z-index: 100;
+    }
+
+    .sticky-action-bar.visible {
+      bottom: 0;
+    }
+
+    .sticky-action-bar button {
+      max-width: 300px;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP — Admin</h1>
+      <h1>BBBC Admin Panel</h1>
+      <p>Manage Weeks, Picks, and Results</p>
     </header>
 
+    <nav>
+      <a href="index.html">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="scores.html">Scores</a>
+      <a href="admin.html" class="active">Admin</a>
+      <a href="halloffame.html">HOF</a>
+    </nav>
+
+    <!-- Create / Manage Week Card -->
     <div class="card">
-      <div class="card-title">Manage Week Status & Links</div>
-      
-      <div class="form-group">
-        <label for="week-number-select">Week Number</label>
-        <select id="week-number-select">
-          <option value="0">Week 0</option>
-          <option value="1">Week 1</option>
-          <option value="2">Week 2</option>
-          <option value="3">Week 3</option>
-          <option value="4">Week 4</option>
-          <option value="5">Week 5</option>
-          <option value="6">Week 6</option>
-          <option value="7">Week 7</option>
-          <option value="8">Week 8</option>
-          <option value="9">Week 9</option>
-          <option value="10">Week 10</option>
-          <option value="11">Week 11</option>
-          <option value="12">Week 12</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="week-status">Status</label>
-        <select id="week-status">
-          <option value="open">Open (Active Weekly)</option>
-          <option value="closed">Closed / Finalized</option>
-          <option value="upcoming">Upcoming</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="slip-link">Courtside Slip Link</label>
-        <input type="text" id="slip-link" placeholder="Paste Courtside slip URL...">
-      </div>
-
-      <div class="form-group">
-        <label for="gambly-link">Gambly Link</label>
-        <input type="text" id="gambly-link" placeholder="Paste Gambly URL...">
-      </div>
-
-      <button class="btn" id="save-week-btn">Save Week Settings</button>
+      <h2>1. Open or Close a Week</h2>
+      <form id="week-form">
+        <div class="form-group">
+          <label for="week-number-select">Week Number to Create/Update</label>
+          <select id="week-number-select" required>
+            <option value="0">Week 0</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+            <option value="5">Week 5</option>
+            <option value="6">Week 6</option>
+            <option value="7">Week 7</option>
+            <option value="8">Week 8</option>
+            <option value="9">Week 9</option>
+            <option value="10">Week 10</option>
+            <option value="11">Week 11</option>
+            <option value="12">Week 12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="week-status">Week Status</label>
+          <select id="week-status">
+            <option value="open">Open (Active on Main Page)</option>
+            <option value="closed">Closed / Finished</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="week-slip-link">Courtside Slip Link URL</label>
+          <input type="url" id="week-slip-link" placeholder="https://courtside.app/...">
+        </div>
+        <div class="form-group">
+          <label for="week-gambly-link">Gambly Link URL</label>
+          <input type="url" id="week-gambly-link" placeholder="https://gambly.com...">
+        </div>
+        <button type="submit">Save Week Details</button>
+        <div id="week-msg" class="msg"></div>
+      </form>
     </div>
 
-    <div id="status-msg"></div>
+    <!-- Add New Pick Card -->
+    <div class="card">
+      <h2>2. Add a Member Pick</h2>
+      <form id="pick-form">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5 or Alabama Over 31.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- Active Week Picks Card -->
+    <div class="card">
+      <div class="table-header-action">
+        <h2>3. Manage & Grade Active Week Picks</h2>
+        <div class="btn-row">
+          <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
+          <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
+          <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
+        </div>
+      </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
+      <div id="active-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
+      </div>
+      <div id="active-msg" class="msg"></div>
+    </div>
+
+    <!-- Finalized / Closed Weeks Card -->
+    <div class="card">
+      <div class="table-header-action">
+        <h2>4. Finalized & Closed Week Picks</h2>
+        <div class="btn-row">
+          <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
+          <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
+          <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
+        </div>
+      </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
+      <div id="finalized-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">No finalized picks found.</div>
+      </div>
+      <div id="finalized-msg" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- Sticky Mobile Quick-Save Bar -->
+  <div id="sticky-save-bar" class="sticky-action-bar">
+    <button class="btn-batch btn-success" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
   </div>
 
   <script>
@@ -190,63 +348,79 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let allWeeksCache = [];
+    let hasUnsavedChanges = false;
+
     const weekSelect = document.getElementById('week-number-select');
     const statusSelect = document.getElementById('week-status');
-    const slipLinkInput = document.getElementById('slip-link');
-    const gamblyLinkInput = document.getElementById('gambly-link');
-    const saveBtn = document.getElementById('save-week-btn');
-    const statusMsg = document.getElementById('status-msg');
+    const slipLinkInput = document.getElementById('week-slip-link');
+    const gamblyLinkInput = document.getElementById('week-gambly-link');
 
-    // On load, fetch the open week to set as default, and also listen for dropdown changes
     async function initAdmin() {
-      try {
-        const { data: openWeeks, error } = await _supabase
-          .from('weeks')
-          .select('*')
-          .eq('status', 'open')
-          .limit(1);
+      await loadDropdowns();
+      await loadAdminPicks();
+    }
 
-        if (!error && openWeeks && openWeeks.length > 0) {
-          const openWeek = openWeeks[0];
-          weekSelect.value = openWeek.week_number;
-          loadWeekDetails(openWeek.week_number);
-        } else {
-          // Fallback to loading week 1 if no open week exists
-          loadWeekDetails(weekSelect.value);
-        }
-      } catch (err) {
-        console.error('Initialization error:', err);
+    async function loadDropdowns() {
+      const { data: weeks } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      allWeeksCache = weeks || [];
+
+      const pickWeekSelect = document.getElementById('pick-week');
+      pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      
+      let openWeekNum = null;
+      let openWeekId = '';
+
+      if (weeks) {
+        weeks.forEach(w => {
+          if (w.status === 'open' && openWeekNum === null) {
+            openWeekNum = w.week_number;
+            openWeekId = w.id;
+          }
+          pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+        });
+      }
+
+      if (openWeekId) {
+        pickWeekSelect.value = openWeekId;
+      }
+
+      // Set default selected week in the Week Management section to the open week, or 1
+      if (openWeekNum !== null) {
+        weekSelect.value = openWeekNum;
+        loadWeekDetails(openWeekNum);
+      } else {
+        loadWeekDetails(parseInt(weekSelect.value, 10));
+      }
+
+      const playerSelect = document.getElementById('pick-player');
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .order('initials', { ascending: true });
+
+      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+      if (players) {
+        players.forEach(p => {
+          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
+        });
       }
     }
 
     async function loadWeekDetails(weekNum) {
-      statusMsg.textContent = 'Loading week details...';
-      statusMsg.className = '';
-
-      const { data, error } = await _supabase
-        .from('weeks')
-        .select('*')
-        .eq('week_number', weekNum)
-        .maybeSingle();
-
-      if (error) {
-        statusMsg.textContent = 'Error loading week data.';
-        statusMsg.className = 'error-text';
-        return;
-      }
-
-      if (data) {
-        statusSelect.value = data.status || 'open';
-        slipLinkInput.value = data.slip_link || '';
-        gamblyLinkInput.value = data.gambly_link || '';
-        statusMsg.textContent = `Loaded existing record for Week ${weekNum}.`;
-        statusMsg.className = 'success-text';
+      const found = allWeeksCache.find(w => w.week_number === weekNum);
+      if (found) {
+        statusSelect.value = found.status || 'open';
+        slipLinkInput.value = found.slip_link || '';
+        gamblyLinkInput.value = found.gambly_link || '';
       } else {
-        statusSelect.value = 'upcoming';
+        statusSelect.value = 'open';
         slipLinkInput.value = '';
         gamblyLinkInput.value = '';
-        statusMsg.textContent = `No record found for Week ${weekNum} yet. Saving will create it.`;
-        statusMsg.className = '';
       }
     }
 
@@ -254,47 +428,542 @@
       loadWeekDetails(parseInt(e.target.value, 10));
     });
 
-    saveBtn.addEventListener('click', async () => {
+    document.getElementById('week-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
       const weekNum = parseInt(weekSelect.value, 10);
       const status = statusSelect.value;
-      const slip_link = slipLinkInput.value.trim();
-      const gambly_link = gamblyLinkInput.value.trim();
+      const slipLink = slipLinkInput.value.trim();
+      const gamblyLink = gamblyLinkInput.value.trim();
+      const msg = document.getElementById('week-msg');
 
-      saveBtn.disabled = true;
-      statusMsg.textContent = 'Saving week settings...';
-      statusMsg.className = '';
-
-      // Check if record exists
-      const { data: existing } = await _supabase
+      const { error } = await _supabase
         .from('weeks')
-        .select('id')
-        .eq('week_number', weekNum)
-        .maybeSingle();
+        .upsert([{ 
+          season: 2026, 
+          week_number: weekNum, 
+          status: status, 
+          slip_link: slipLink || null,
+          gambly_link: gamblyLink || null 
+        }], { onConflict: 'season,week_number' });
 
-      let result;
-      if (existing) {
-        result = await _supabase
-          .from('weeks')
-          .update({ status, slip_link, gambly_link })
-          .eq('week_number', weekNum);
+      if (error) {
+        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
       } else {
-        result = await _supabase
-          .from('weeks')
-          .insert([{ week_number: weekNum, status, slip_link, gambly_link }]);
-      }
-
-      saveBtn.disabled = false;
-
-      if (result.error) {
-        statusMsg.textContent = `Error saving: ${result.error.message}`;
-        statusMsg.className = 'error-text';
-      } else {
-        statusMsg.textContent = `Successfully saved settings for Week ${weekNum}!`;
-        statusMsg.className = 'success-text';
+        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Week ${weekNum} updated successfully!`;
+        initAdmin();
       }
     });
 
-    // Run on startup
+    document.getElementById('pick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weekId = document.getElementById('pick-week').value;
+      const playerId = document.getElementById('pick-player').value;
+      const selection = document.getElementById('pick-selection').value;
+      const isParlay = document.getElementById('pick-is-parlay').checked;
+      const msg = document.getElementById('pick-msg');
+
+      const { error } = await _supabase
+        .from('picks')
+        .insert([{ 
+          week_id: weekId, 
+          player_id: playerId, 
+          selection: selection, 
+          is_parlay: isParlay 
+        }]);
+
+      if (error) {
+        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error: ${error.message}`;
+      } else {
+        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.color = 'var(--success)';
+        msg.innerText = `Pick added successfully!`;
+        document.getElementById('pick-selection').value = '';
+        document.getElementById('pick-is-parlay').checked = false;
+        initAdmin();
+      }
+    });
+
+    async function loadAdminPicks() {
+      const { data: picks } = await _supabase
+        .from('picks')
+        .select('*, weeks(week_number, status), players(initials)')
+        .order('created_at', { ascending: false });
+
+      const activeContainer = document.getElementById('active-container');
+      const finalizedContainer = document.getElementById('finalized-container');
+      
+      activeContainer.innerHTML = '';
+      finalizedContainer.innerHTML = '';
+
+      if (!picks || picks.length === 0) {
+        activeContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No picks found.</div>';
+        finalizedContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No finalized picks found.</div>';
+        return;
+      }
+
+      const activePicks = [];
+      const finalizedPicks = [];
+
+      picks.forEach(p => {
+        const isClosed = p.weeks?.status === 'closed';
+        if (isClosed) finalizedPicks.push(p);
+        else activePicks.push(p);
+      });
+
+      renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.');
+      renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.');
+      attachRowChangeListeners();
+    }
+
+    function renderPicksByWeek(picksArray, containerElement, emptyMessage) {
+      if (picksArray.length === 0) {
+        containerElement.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1rem;">${emptyMessage}</div>`;
+        return;
+      }
+
+      const grouped = {};
+      picksArray.forEach(p => {
+        const wkNum = p.weeks?.week_number ?? '??';
+        if (!grouped[wkNum]) grouped[wkNum] = [];
+        grouped[wkNum].push(p);
+      });
+
+      const sortedWeeks = Object.keys(grouped).sort((a, b) => b - a);
+
+      sortedWeeks.forEach(wkNum => {
+        const weekPicks = grouped[wkNum];
+
+        const banner = document.createElement('div');
+        banner.className = 'week-section-banner';
+        banner.innerHTML = `<span>Week ${wkNum}</span><span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${weekPicks.length} Picks</span>`;
+        containerElement.appendChild(banner);
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.style.overflowX = 'auto';
+
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width: 15%;">Player</th>
+              <th style="width: 45%;">Selection</th>
+              <th style="width: 15%; text-align: center;">Parlay</th>
+              <th style="width: 15%;">Result</th>
+              <th style="width: 10%;"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+
+        weekPicks.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.dataset.pickId = p.id;
+          tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
+          tr.innerHTML = `
+            <td><strong>${p.players?.initials || '??'}</strong></td>
+            <td>
+              <input type="text" class="row-selection" value="${p.selection || ''}">
+              <div class="live-score-tag" style="display:none;"></div>
+            </td>
+            <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
+            <td>
+              <select class="row-result">
+                <option value="" ${!p.result ? 'selected' : ''}>--</option>
+                <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
+                <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
+                <option value="D" ${p.result === 'D' ? 'selected' : ''}>D</option>
+              </select>
+            </td>
+            <td>
+              <button class="delete-btn" onclick="deletePick('${p.id}')" title="Delete">✕</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        tableWrapper.appendChild(table);
+        containerElement.appendChild(tableWrapper);
+      });
+    }
+
+    function attachRowChangeListeners() {
+      const allRows = document.querySelectorAll('tr[data-pick-id]');
+      allRows.forEach(row => {
+        const inputs = row.querySelectorAll('input, select');
+        inputs.forEach(input => {
+          input.addEventListener('input', () => {
+            row.style.background = 'rgba(59, 130, 246, 0.08)';
+            setUnsavedState(true);
+          });
+          input.addEventListener('change', () => {
+            row.style.background = 'rgba(59, 130, 246, 0.08)';
+            setUnsavedState(true);
+          });
+          if(input.tagName === 'INPUT' && input.classList.contains('row-selection')) {
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+              }
+            });
+          }
+        });
+      });
+    }
+
+    function setUnsavedState(isDirty) {
+      hasUnsavedChanges = isDirty;
+      const bar = document.getElementById('sticky-save-bar');
+      if (isDirty) {
+        bar.classList.add('visible');
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
+
+    function filterPicksTable(sectionType, query) {
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
+      const container = document.getElementById(containerId);
+      const rows = container.querySelectorAll('tr[data-pick-id]');
+      const term = query.toLowerCase().trim();
+
+      rows.forEach(row => {
+        const searchKey = row.dataset.searchKey || '';
+        if (!term || searchKey.includes(term)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    function getTeamSearchTerms(selection) {
+      if (!selection) return [];
+      let clean = selection.trim();
+      clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
+      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
+
+      if (clean.includes('/')) {
+        return clean.split('/').map(t => t.trim().toLowerCase());
+      }
+      return [clean.toLowerCase()];
+    }
+
+    async function autoGradePicks(sectionType) {
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
+      const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
+      const container = document.getElementById(containerId);
+      const msgDiv = document.getElementById(msgId);
+      const rows = container.querySelectorAll('tr[data-pick-id]');
+
+      if (rows.length === 0) return;
+
+      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
+      msgDiv.style.color = 'var(--text-muted)';
+      msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
+
+      try {
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
+        const data = await response.json();
+
+        if (!data.events) {
+          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgDiv.style.color = 'var(--danger)';
+          msgDiv.innerText = 'Could not retrieve live games from ESPN.';
+          return;
+        }
+
+        let gradedCount = 0;
+        let winCount = 0;
+        let lossCount = 0;
+        let drawCount = 0;
+
+        rows.forEach(row => {
+          const selectionInput = row.querySelector('.row-selection');
+          const resultSelect = row.querySelector('.row-result');
+          const scoreTag = row.querySelector('.live-score-tag');
+          const selText = selectionInput.value.trim().toLowerCase();
+          const searchTerms = getTeamSearchTerms(selText);
+          const isTeamTotal = /\b(team total|tt)\b/.test(selText) || /\b[ou]\s*\d+/.test(selText);
+
+          for (const event of data.events) {
+            const comp = event.competitions[0];
+            const home = comp.competitors.find(c => c.homeAway === 'home');
+            const away = comp.competitors.find(c => c.homeAway === 'away');
+
+            const homeName = (home.team.name || '').toLowerCase();
+            const homeShort = (home.team.shortDisplayName || '').toLowerCase();
+            const homeAbbr = (home.team.abbreviation || '').toLowerCase();
+
+            const awayName = (away.team.name || '').toLowerCase();
+            const awayShort = (away.team.shortDisplayName || '').toLowerCase();
+            const awayAbbr = (away.team.abbreviation || '').toLowerCase();
+
+            const homeScore = parseInt(home.score || '0', 10);
+            const awayScore = parseInt(away.score || '0', 10);
+
+            const isHomePick = searchTerms.some(term => 
+              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
+            );
+
+            const isAwayPick = searchTerms.some(term => 
+              term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
+            );
+
+            if (isHomePick || isAwayPick) {
+              const pickedTeamScore = isHomePick ? homeScore : awayScore;
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
+              
+              scoreTag.style.display = 'block';
+              scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (${comp.status.type.completed ? 'Final' : comp.status.type.shortDetail})`;
+
+              if (comp.status.type.state === 'post') {
+                if (isTeamTotal) {
+                  let line = 0;
+                  const lineMatch = selText.match(/[ou]\s*(\d+(\.\d+)?)/);
+                  if (lineMatch) line = parseFloat(lineMatch[1]);
+                  const isOver = /\bo\b/.test(selText) || /\bover\b/.test(selText);
+
+                  if (isOver) {
+                    if (pickedTeamScore > line) { resultSelect.value = 'W'; winCount++; }
+                    else if (pickedTeamScore < line) { resultSelect.value = 'L'; lossCount++; }
+                    else { resultSelect.value = 'D'; drawCount++; }
+                  } else {
+                    if (pickedTeamScore < line) { resultSelect.value = 'W'; winCount++; }
+                    else if (pickedTeamScore > line) { resultSelect.value = 'L'; lossCount++; }
+                    else { resultSelect.value = 'D'; drawCount++; }
+                  }
+                  gradedCount++;
+                } else {
+                  let spread = 0;
+                  const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+                  if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+                  const adjustedScore = pickedTeamScore + spread;
+                  if (adjustedScore > oppTeamScore) {
+                    resultSelect.value = 'W'; winCount++; gradedCount++;
+                  } else if (adjustedScore < oppTeamScore) {
+                    resultSelect.value = 'L'; lossCount++; gradedCount++;
+                  } else {
+                    resultSelect.value = 'D'; drawCount++; gradedCount++;
+                  }
+                }
+              }
+              break;
+            }
+          }
+        });
+
+        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
+        msgDiv.style.color = 'var(--success)';
+        msgDiv.innerText = `Auto-graded ${gradedCount} final games (${winCount} Wins, ${lossCount} Losses, ${drawCount} Pushes). Review and save!`;
+        setUnsavedState(true);
+
+      } catch (err) {
+        console.error('Auto-grade error:', err);
+        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+        msgDiv.style.color = 'var(--danger)';
+        msgDiv.innerText = 'Error connecting to ESPN score feed.';
+      }
+    }
+
+    async function autoSelectTop5(sectionType) {
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
+      const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
+      const container = document.getElementById(containerId);
+      const msgDiv = document.getElementById(msgId);
+      const rows = container.querySelectorAll('tr[data-pick-id]');
+
+      if (rows.length === 0) return;
+
+      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
+      msgDiv.style.color = 'var(--text-muted)';
+      msgDiv.innerText = 'Calculating margins and selecting Top 5 parlay picks...';
+
+      try {
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
+        const data = await response.json();
+
+        if (!data.events) {
+          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgDiv.style.color = 'var(--danger)';
+          msgDiv.innerText = 'Could not retrieve live games from ESPN.';
+          return;
+        }
+
+        const evaluatedRows = [];
+
+        rows.forEach(row => {
+          const selectionInput = row.querySelector('.row-selection');
+          const resultSelect = row.querySelector('.row-result');
+          const selText = selectionInput.value.trim().toLowerCase();
+          const searchTerms = getTeamSearchTerms(selText);
+          const isTeamTotal = /\b(team total|tt)\b/.test(selText) || /\b[ou]\s*\d+/.test(selText);
+
+          let computedResult = resultSelect.value || null;
+          let margin = -999;
+
+          for (const event of data.events) {
+            const comp = event.competitions[0];
+            if (comp.status.type.state !== 'post') continue;
+
+            const home = comp.competitors.find(c => c.homeAway === 'home');
+            const away = comp.competitors.find(c => c.homeAway === 'away');
+
+            const homeName = (home.team.name || '').toLowerCase();
+            const homeShort = (home.team.shortDisplayName || '').toLowerCase();
+            const homeAbbr = (home.team.abbreviation || '').toLowerCase();
+
+            const awayName = (away.team.name || '').toLowerCase();
+            const awayShort = (away.team.shortDisplayName || '').toLowerCase();
+            const awayAbbr = (away.team.abbreviation || '').toLowerCase();
+
+            const homeScore = parseInt(home.score || '0', 10);
+            const awayScore = parseInt(away.score || '0', 10);
+
+            const isHomePick = searchTerms.some(term => 
+              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
+            );
+
+            const isAwayPick = searchTerms.some(term => 
+              term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
+            );
+
+            if (isHomePick || isAwayPick) {
+              const pickedTeamScore = isHomePick ? homeScore : awayScore;
+
+              if (isTeamTotal) {
+                let line = 0;
+                const lineMatch = selText.match(/[ou]\s*(\d+(\.\d+)?)/);
+                if (lineMatch) line = parseFloat(lineMatch[1]);
+                const isOver = /\bo\b/.test(selText) || /\bover\b/.test(selText);
+                
+                margin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
+                computedResult = margin > 0 ? 'W' : (margin < 0 ? 'L' : 'D');
+              } else {
+                const oppTeamScore = isHomePick ? awayScore : homeScore;
+                let spread = 0;
+                const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+                if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+                margin = (pickedTeamScore + spread) - oppTeamScore;
+                computedResult = margin > 0 ? 'W' : (margin < 0 ? 'L' : 'D');
+              }
+              break;
+            }
+          }
+
+          evaluatedRows.push({ row, result: computedResult, margin });
+        });
+
+        const winners = evaluatedRows.filter(r => r.result === 'W').sort((a, b) => b.margin - a.margin);
+        const losses = evaluatedRows.filter(r => r.result === 'L').sort((a, b) => b.margin - a.margin);
+        const pushes = evaluatedRows.filter(r => r.result === 'D').sort((a, b) => b.margin - a.margin);
+
+        let top5 = [];
+        if (winners.length >= 5) {
+          top5 = winners.slice(0, 5);
+        } else {
+          top5 = [...winners];
+          const needed = 5 - top5.length;
+          top5 = top5.concat(losses.slice(0, needed));
+          if (top5.length < 5) {
+            top5 = top5.concat(pushes.slice(0, 5 - top5.length));
+          }
+        }
+
+        const top5Ids = new Set(top5.map(item => item.row.dataset.pickId));
+
+        rows.forEach(row => {
+          const pCheckbox = row.querySelector('.row-parlay');
+          pCheckbox.checked = top5Ids.has(row.dataset.pickId);
+        });
+
+        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
+        msgDiv.style.color = 'var(--success)';
+        msgDiv.innerText = `Successfully auto-selected the top ${top5.length} parlay picks! Review and save.`;
+        setUnsavedState(true);
+
+      } catch (err) {
+        console.error('Auto-select error:', err);
+        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+        msgDiv.style.color = 'var(--danger)';
+        msgDiv.innerText = 'Error fetching score data for top 5 selection.';
+      }
+    }
+
+    async function saveAllPicks(sectionType) {
+      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
+      const container = document.getElementById(containerId);
+      const rows = container.querySelectorAll('tr[data-pick-id]');
+      await persistRows(rows);
+    }
+
+    async function saveAllCurrentModifiedPicks() {
+      const allRows = document.querySelectorAll('tr[data-pick-id]');
+      await persistRows(allRows);
+    }
+
+    async function persistRows(rows) {
+      if (!rows || rows.length === 0) return;
+
+      let hasError = false;
+
+      for (const row of rows) {
+        const pickId = row.dataset.pickId;
+        if (!pickId) continue;
+
+        const selection = row.querySelector('.row-selection').value;
+        const isParlay = row.querySelector('.row-parlay').checked;
+        const result = row.querySelector('.row-result').value;
+
+        const { error } = await _supabase
+          .from('picks')
+          .update({ 
+            selection: selection, 
+            is_parlay: isParlay, 
+            result: result || null 
+          })
+          .eq('id', pickId);
+
+        if (error) {
+          hasError = true;
+          console.error(`Error updating pick ${pickId}:`, error.message);
+        } else {
+          row.style.background = '';
+        }
+      }
+
+      if (hasError) {
+        alert('Some picks failed to save. Check console for details.');
+      } else {
+        setUnsavedState(false);
+        initAdmin();
+      }
+    }
+
+    async function deletePick(pickId) {
+      if (!confirm('Are you sure you want to delete this pick?')) return;
+
+      const { error } = await _supabase.from('picks').delete().eq('id', pickId);
+
+      if (error) {
+        alert(`Error deleting pick: ${error.message}`);
+      } else {
+        initAdmin();
+      }
+    }
+
     initAdmin();
   </script>
 </body>
