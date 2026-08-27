@@ -135,7 +135,6 @@
 
     /* Tabular numeric alignment for stats */
     td:nth-child(3), td:nth-child(4) {
-      color: var(--text-muted);
       font-variant-numeric: tabular-nums;
     }
     
@@ -288,12 +287,20 @@
           formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">D</a>S${after}`;
         }
 
+        // Dynamic Win % Color Logic (Green if wins > losses, Red if losses > wins, muted default if even)
+        let pctColor = 'var(--text-muted)';
+        if (p.wins > p.losses) {
+          pctColor = 'var(--success)';
+        } else if (p.losses > p.wins) {
+          pctColor = 'var(--danger)';
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="${rankClass}">${rankDisplay}</td>
           <td><strong class="${nameClass}">${formattedInitials}</strong></td>
           <td>${p.wins}-${p.losses}-${p.draws}</td>
-          <td>${(p.winPct * 100).toFixed(1)}%</td>
+          <td style="color: ${pctColor}; font-weight: 700;">${(p.winPct * 100).toFixed(1)}%</td>
         `;
         tbody.appendChild(tr);
       });
