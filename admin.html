@@ -261,11 +261,11 @@
         </div>
         <div class="form-group">
           <label for="week-slip-link">Courtside Slip Link URL</label>
-          <input type="url" id="week-slip-link" placeholder="https://courtside.app/...">
+          <input type="text" id="week-slip-link" placeholder="https://courtside.app/...">
         </div>
         <div class="form-group">
           <label for="week-gambly-link">Gambly Link URL</label>
-          <input type="url" id="week-gambly-link" placeholder="https://gambly.com...">
+          <input type="text" id="week-gambly-link" placeholder="https://gambly.com...">
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
@@ -389,7 +389,6 @@
         pickWeekSelect.value = openWeekId;
       }
 
-      // Set default selected week in the Week Management section to the open week, or 1
       if (openWeekNum !== null) {
         weekSelect.value = openWeekNum;
         loadWeekDetails(openWeekNum);
