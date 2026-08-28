@@ -5,25 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BBBCWSCLP — Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --accent: #3b82f6;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --gold: #f59e0b;
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+      --purple: #a78bfa;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { 
-      background-color: var(--bg); 
-      color: var(--text); 
-      padding: 2rem 1rem 5rem 1rem; 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 5rem 1rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -34,74 +57,128 @@
     .container { width: 100%; max-width: 680px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
-    header p { color: var(--text-muted); margin-top: 0.3rem; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    header h1 {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1;
+    }
+    header p { font-family: var(--font-label); color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem; }
 
-    nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 0.5rem; 
-      margin-bottom: 2.5rem; 
-      width: 100%; 
-      max-width: 380px; 
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 480px;
       margin-left: auto;
       margin-right: auto;
-      flex-wrap: wrap; 
+      flex-wrap: wrap;
     }
-    
-    nav a { 
-      color: var(--text-muted); 
-      text-decoration: none; 
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
       transition: all 0.2s ease;
-      background-color: var(--card-bg);
+      background-color: transparent;
       border: 1px solid var(--border);
-      padding: 0.5rem 0.8rem;
-      border-radius: 6px;
-      font-weight: 600; 
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
       font-size: 0.85rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       white-space: nowrap;
     }
-    
-    nav a:hover { 
-      color: var(--text); 
-      border-color: var(--accent);
-      background-color: #273548;
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
     }
 
-    nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
     }
-    
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; position: relative; }
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+    nav a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .card h2 {
+      font-family: var(--font-label);
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.6rem;
+      color: var(--text);
+    }
 
     .form-group { margin-bottom: 1.1rem; }
-    
-    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
-    
-    input, select { 
-      width: 100%; 
-      padding: 0.7rem 0.85rem; 
-      background: #0f172a; 
-      border: 1px solid var(--border); 
-      border-radius: 8px;
-      color: var(--text); 
-      font-size: 0.95rem; 
+
+    label {
+      display: block;
+      font-family: var(--font-label);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font-label);
+      font-size: 0.95rem;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     input:focus, select:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.15);
     }
 
     select {
       appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c8a90' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
       background-size: 1rem;
@@ -112,75 +189,121 @@
       display: flex;
       gap: 0.5rem;
     }
-    
+
     .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
     .checkbox-group input { width: auto; }
 
-    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
-    button:hover { background-color: #2563eb; }
+    button {
+      background-color: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-label);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      width: 100%;
+    }
+    button:hover { background-color: #ffc457; transform: translateY(-1px); }
 
     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
     th, td { text-align: left; padding: 0.5rem 0.3rem; border-bottom: 1px solid var(--border); }
-    th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+    th {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { font-family: var(--font-label); }
 
     .row-selection { width: 100%; padding: 0.35rem; font-size: 0.85rem; }
-    .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
-    
-    .delete-btn { 
-      width: 38px; 
-      height: 42px; 
-      padding: 0; 
-      font-size: 0.85rem; 
-      background-color: var(--danger); 
-      border-radius: 8px;
+    .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; font-family: var(--font-mono); font-weight: 700; text-align: center; }
+    .row-result.res-select-W { background-color: rgba(52, 214, 122, 0.12); border-color: rgba(52, 214, 122, 0.4); color: var(--success); }
+    .row-result.res-select-L { background-color: rgba(255, 77, 77, 0.12); border-color: rgba(255, 77, 77, 0.4); color: var(--danger); }
+    .row-result.res-select-D { background-color: rgba(79, 184, 255, 0.12); border-color: rgba(79, 184, 255, 0.4); color: var(--warning); }
+
+    .delete-btn {
+      width: 38px;
+      height: 42px;
+      padding: 0;
+      font-size: 0.85rem;
+      background-color: var(--danger);
+      color: var(--text);
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    .delete-btn:hover { background-color: #dc2626; }
-    
-    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.4rem; transition: all 0.3s ease; }
-    
+    .delete-btn:hover { background-color: #ff6b6b; }
+
+    .msg {
+      margin-top: 0.75rem;
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      text-align: center;
+      border-radius: 6px;
+      padding: 0.4rem;
+      transition: all 0.3s ease;
+    }
+
     .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
     .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
-    
-    .btn-row { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 0.5rem; 
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
       width: 100%;
       margin-bottom: 0.5rem;
     }
     .btn-row button {
       width: 100%;
       padding: 0.6rem 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       white-space: nowrap;
     }
     .btn-row button:first-child {
       grid-column: span 2;
     }
 
-    .btn-batch { background-color: var(--success); }
-    .btn-batch:hover { background-color: #16a34a; }
-    .btn-autograde { background-color: #d97706; }
-    .btn-autograde:hover { background-color: #b45309; }
-    .btn-autoselect { background-color: #8b5cf6; }
-    .btn-autoselect:hover { background-color: #7c3aed; }
+    .btn-batch { background-color: var(--success); color: var(--bg); }
+    .btn-batch:hover { background-color: #4fe092; }
+    .btn-autograde { background-color: var(--warning); color: var(--bg); }
+    .btn-autograde:hover { background-color: #72c8ff; }
+    .btn-autoselect { background-color: var(--purple); color: var(--bg); }
+    .btn-autoselect:hover { background-color: #bda4fc; }
 
     .week-section-banner {
-      background: #0f172a;
+      background: var(--card-inner);
       border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
       padding: 0.6rem 1rem;
-      border-radius: 8px;
+      border-radius: 6px;
       margin: 1.25rem 0 0.5rem 0;
-      font-weight: 800;
+      font-family: var(--font-label);
+      font-weight: 700;
       font-size: 1rem;
-      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    .week-section-banner span:last-child {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .filter-input {
@@ -188,8 +311,9 @@
     }
 
     .live-score-tag {
-      font-size: 0.75rem;
-      color: var(--gold);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
       margin-top: 0.2rem;
       display: block;
     }
@@ -199,7 +323,7 @@
       bottom: -80px;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(10, 14, 16, 0.95);
       backdrop-filter: blur(5px);
       border-top: 1px solid var(--border);
       padding: 1rem;
@@ -223,6 +347,7 @@
 
   <div class="container">
     <header>
+      <div class="eyebrow">Admin Console</div>
       <h1>BBBC Admin Panel</h1>
       <p>Manage Weeks, Picks, and Results</p>
     </header>
@@ -306,7 +431,7 @@
         </div>
         <div class="form-group checkbox-group">
           <input type="checkbox" id="pick-is-parlay">
-          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text); text-transform: none;">Include in Week's Top Parlay</label>
         </div>
         <button type="submit">Submit Pick</button>
         <div id="pick-msg" class="msg"></div>
@@ -320,7 +445,7 @@
         <div class="btn-row">
           <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
           <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
-          <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
+          <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
       <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
@@ -337,7 +462,7 @@
         <div class="btn-row">
           <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
           <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
-          <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
+          <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
         </div>
       </div>
       <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
@@ -350,7 +475,7 @@
 
   <!-- Sticky Mobile Quick-Save Bar -->
   <div id="sticky-save-bar" class="sticky-action-bar">
-    <button class="btn-batch btn-success" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
+    <button class="btn-batch" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
   </div>
 
   <script>
@@ -361,7 +486,12 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allWeeksCache = [];
-    let hasUnsavedChanges = false;
+
+    // Section-level dirty tracking (instead of one global flag) so saving one
+    // table can never silently wipe out unsaved edits sitting in the other one.
+    let activeDirty = false;
+    let finalizedDirty = false;
+    let hasInitializedWeekSelect = false;
 
     const weekSelect = document.getElementById('week-number-select');
     const statusSelect = document.getElementById('week-status');
@@ -373,17 +503,45 @@
       await loadAdminPicks();
     }
 
+    function hasAnyUnsavedChanges() {
+      return activeDirty || finalizedDirty;
+    }
+
+    function markSectionDirty(sectionType, isDirty) {
+      if (sectionType === 'active') activeDirty = isDirty;
+      else finalizedDirty = isDirty;
+      updateStickyBarVisibility();
+    }
+
+    function updateStickyBarVisibility() {
+      const bar = document.getElementById('sticky-save-bar');
+      if (hasAnyUnsavedChanges()) bar.classList.add('visible');
+      else bar.classList.remove('visible');
+    }
+
+    // Used before any action that would fully reload the picks tables
+    // (deleting a pick, adding a new one) so in-progress edits aren't
+    // silently discarded without the admin knowing.
+    function confirmDiscardIfDirty(message) {
+      if (!hasAnyUnsavedChanges()) return true;
+      return confirm(message || 'You have unsaved pick edits that haven\'t been saved yet. Continue and lose those changes?');
+    }
+
     async function loadDropdowns() {
-      const { data: weeks } = await _supabase
+      const { data: weeks, error: weeksError } = await _supabase
         .from('weeks')
         .select('*')
         .order('week_number', { ascending: false });
+
+      if (weeksError) {
+        console.error('Failed to load weeks:', weeksError);
+      }
 
       allWeeksCache = weeks || [];
 
       const pickWeekSelect = document.getElementById('pick-week');
       pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
-      
+
       let openWeekNum = null;
       let openWeekId = '';
 
@@ -401,18 +559,27 @@
         pickWeekSelect.value = openWeekId;
       }
 
-      if (openWeekNum !== null) {
-        weekSelect.value = openWeekNum;
-        loadWeekDetails(openWeekNum);
-      } else {
-        loadWeekDetails(parseInt(weekSelect.value, 10));
+      // Only snap the "Open or Close a Week" selector to the currently-open
+      // week on first load. On every later refresh, leave it wherever the
+      // admin left it — otherwise adding a pick or clearing a link would
+      // silently yank them back to a different week mid-edit.
+      if (!hasInitializedWeekSelect) {
+        hasInitializedWeekSelect = true;
+        if (openWeekNum !== null) {
+          weekSelect.value = openWeekNum;
+        }
       }
+      loadWeekDetails(parseInt(weekSelect.value, 10));
 
       const playerSelect = document.getElementById('pick-player');
-      const { data: players } = await _supabase
+      const { data: players, error: playersError } = await _supabase
         .from('players')
         .select('*')
         .order('initials', { ascending: true });
+
+      if (playersError) {
+        console.error('Failed to load players:', playersError);
+      }
 
       playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
       if (players) {
@@ -456,17 +623,19 @@
         .eq('week_number', weekNum);
 
       if (error) {
-        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error clearing link: ${error.message}`;
       } else {
         if (linkType === 'slip') slipLinkInput.value = '';
         else gamblyLinkInput.value = '';
 
-        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.background = 'rgba(52, 214, 122, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Successfully cleared link for Week ${weekNum}!`;
-        initAdmin();
+        // Week metadata only — never touches the picks tables, so there's
+        // nothing here that can clobber in-progress row edits.
+        loadDropdowns();
       }
     }
 
@@ -480,23 +649,25 @@
 
       const { error } = await _supabase
         .from('weeks')
-        .upsert([{ 
-          season: 2026, 
-          week_number: weekNum, 
-          status: status, 
+        .upsert([{
+          season: 2026,
+          week_number: weekNum,
+          status: status,
           slip_link: slipLink || null,
-          gambly_link: gamblyLink || null 
+          gambly_link: gamblyLink || null
         }], { onConflict: 'season,week_number' });
 
       if (error) {
-        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
-        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.background = 'rgba(52, 214, 122, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Week ${weekNum} updated successfully!`;
-        initAdmin();
+        // Week metadata only — same as above, safe to refresh without
+        // touching (or risking) any unsaved picks-table edits.
+        loadDropdowns();
       }
     });
 
@@ -510,38 +681,52 @@
 
       const { error } = await _supabase
         .from('picks')
-        .insert([{ 
-          week_id: weekId, 
-          player_id: playerId, 
-          selection: selection, 
-          is_parlay: isParlay 
+        .insert([{
+          week_id: weekId,
+          player_id: playerId,
+          selection: selection,
+          is_parlay: isParlay
         }]);
 
       if (error) {
-        msg.style.background = 'rgba(239, 68, 68, 0.15)';
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
-        msg.style.background = 'rgba(34, 197, 94, 0.15)';
+        msg.style.background = 'rgba(52, 214, 122, 0.15)';
         msg.style.color = 'var(--success)';
         msg.innerText = `Pick added successfully!`;
         document.getElementById('pick-selection').value = '';
         document.getElementById('pick-is-parlay').checked = false;
-        initAdmin();
+
+        // Adding a pick DOES need the tables reloaded so the new row shows
+        // up — but that's a full reload, so warn first if there are
+        // unsaved edits sitting in the tables that would be lost.
+        if (confirmDiscardIfDirty('Adding this pick will refresh the picks tables. You have unsaved edits there — continue and lose them?')) {
+          initAdmin();
+        }
       }
     });
 
     async function loadAdminPicks() {
-      const { data: picks } = await _supabase
+      const { data: picks, error } = await _supabase
         .from('picks')
         .select('*, weeks(week_number, status), players(initials)')
         .order('created_at', { ascending: false });
 
       const activeContainer = document.getElementById('active-container');
       const finalizedContainer = document.getElementById('finalized-container');
-      
+
       activeContainer.innerHTML = '';
       finalizedContainer.innerHTML = '';
+
+      if (error) {
+        console.error('Failed to load picks:', error);
+        const errHtml = `<div style="color: var(--danger); text-align: center; padding: 1rem;">Couldn't load picks (connection error). Try refreshing.</div>`;
+        activeContainer.innerHTML = errHtml;
+        finalizedContainer.innerHTML = errHtml;
+        return;
+      }
 
       if (!picks || picks.length === 0) {
         activeContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No picks found.</div>';
@@ -583,7 +768,7 @@
 
         const banner = document.createElement('div');
         banner.className = 'week-section-banner';
-        banner.innerHTML = `<span>Week ${wkNum}</span><span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${weekPicks.length} Picks</span>`;
+        banner.innerHTML = `<span>Week ${wkNum}</span><span>${weekPicks.length} Picks</span>`;
         containerElement.appendChild(banner);
 
         const tableWrapper = document.createElement('div');
@@ -609,6 +794,7 @@
           const tr = document.createElement('tr');
           tr.dataset.pickId = p.id;
           tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
+          const resultClass = p.result ? `res-select-${p.result}` : '';
           tr.innerHTML = `
             <td><strong>${p.players?.initials || '??'}</strong></td>
             <td>
@@ -617,7 +803,7 @@
             </td>
             <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
             <td>
-              <select class="row-result">
+              <select class="row-result ${resultClass}">
                 <option value="" ${!p.result ? 'selected' : ''}>--</option>
                 <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
                 <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
@@ -636,20 +822,27 @@
       });
     }
 
+    function updateResultSelectColor(select) {
+      select.classList.remove('res-select-W', 'res-select-L', 'res-select-D');
+      if (select.value) select.classList.add(`res-select-${select.value}`);
+    }
+
     function attachRowChangeListeners() {
       const allRows = document.querySelectorAll('tr[data-pick-id]');
       allRows.forEach(row => {
+        const sectionType = row.closest('#active-container') ? 'active' : 'finalized';
         const inputs = row.querySelectorAll('input, select');
         inputs.forEach(input => {
-          input.addEventListener('input', () => {
-            row.style.background = 'rgba(59, 130, 246, 0.08)';
-            setUnsavedState(true);
-          });
-          input.addEventListener('change', () => {
-            row.style.background = 'rgba(59, 130, 246, 0.08)';
-            setUnsavedState(true);
-          });
-          if(input.tagName === 'INPUT' && input.classList.contains('row-selection')) {
+          const markDirty = () => {
+            row.style.background = 'rgba(255, 176, 32, 0.06)';
+            markSectionDirty(sectionType, true);
+          };
+          input.addEventListener('input', markDirty);
+          input.addEventListener('change', markDirty);
+          if (input.classList.contains('row-result')) {
+            input.addEventListener('change', () => updateResultSelectColor(input));
+          }
+          if (input.tagName === 'INPUT' && input.classList.contains('row-selection')) {
             input.addEventListener('keydown', (e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -659,16 +852,6 @@
           }
         });
       });
-    }
-
-    function setUnsavedState(isDirty) {
-      hasUnsavedChanges = isDirty;
-      const bar = document.getElementById('sticky-save-bar');
-      if (isDirty) {
-        bar.classList.add('visible');
-      } else {
-        bar.classList.remove('visible');
-      }
     }
 
     function filterPicksTable(sectionType, query) {
@@ -690,10 +873,13 @@
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
+      // Strip "team total"/"tt" first, then the o##/u## total pattern, THEN
+      // the generic trailing spread number. Doing the generic strip before
+      // the o/u strip (the old order) chops the number off first and leaves
+      // a stray "o"/"u" character stuck to the team name.
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
-      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
 
       if (clean.includes('/')) {
         return clean.split('/').map(t => t.trim().toLowerCase());
@@ -710,16 +896,20 @@
 
       if (rows.length === 0) return;
 
-      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
+      msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400');
+        // NOTE: matches the group ID used on the public weekly page (groups=80).
+        // The previous value here (81) didn't match the public page and may
+        // have been pulling a different division's games — worth confirming
+        // groups=80 is right for your conference before relying on this.
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=400');
         const data = await response.json();
 
         if (!data.events) {
-          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
           msgDiv.style.color = 'var(--danger)';
           msgDiv.innerText = 'Could not retrieve live games from ESPN.';
           return;
@@ -754,18 +944,18 @@
             const homeScore = parseInt(home.score || '0', 10);
             const awayScore = parseInt(away.score || '0', 10);
 
-            const isHomePick = searchTerms.some(term => 
+            const isHomePick = searchTerms.some(term =>
               term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
             );
 
-            const isAwayPick = searchTerms.some(term => 
+            const isAwayPick = searchTerms.some(term =>
               term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
             );
 
             if (isHomePick || isAwayPick) {
               const pickedTeamScore = isHomePick ? homeScore : awayScore;
               const oppTeamScore = isHomePick ? awayScore : homeScore;
-              
+
               scoreTag.style.display = 'block';
               scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (${comp.status.type.completed ? 'Final' : comp.status.type.shortDetail})`;
 
@@ -800,20 +990,22 @@
                     resultSelect.value = 'D'; drawCount++; gradedCount++;
                   }
                 }
+                updateResultSelectColor(resultSelect);
+                row.style.background = 'rgba(255, 176, 32, 0.06)';
               }
               break;
             }
           }
         });
 
-        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
+        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
         msgDiv.style.color = 'var(--success)';
         msgDiv.innerText = `Auto-graded ${gradedCount} final games (${winCount} Wins, ${lossCount} Losses, ${drawCount} Pushes). Review and save!`;
-        setUnsavedState(true);
+        markSectionDirty(sectionType, true);
 
       } catch (err) {
         console.error('Auto-grade error:', err);
-        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+        msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
         msgDiv.style.color = 'var(--danger)';
         msgDiv.innerText = 'Error connecting to ESPN score feed.';
       }
@@ -828,16 +1020,16 @@
 
       if (rows.length === 0) return;
 
-      msgDiv.style.background = 'rgba(148, 163, 184, 0.1)';
+      msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
       msgDiv.style.color = 'var(--text-muted)';
       msgDiv.innerText = 'Calculating margins and selecting Top 5 parlay picks...';
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400');
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=400');
         const data = await response.json();
 
         if (!data.events) {
-          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
           msgDiv.style.color = 'var(--danger)';
           msgDiv.innerText = 'Could not retrieve live games from ESPN.';
           return;
@@ -873,11 +1065,11 @@
             const homeScore = parseInt(home.score || '0', 10);
             const awayScore = parseInt(away.score || '0', 10);
 
-            const isHomePick = searchTerms.some(term => 
+            const isHomePick = searchTerms.some(term =>
               term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
             );
 
-            const isAwayPick = searchTerms.some(term => 
+            const isAwayPick = searchTerms.some(term =>
               term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
             );
 
@@ -889,7 +1081,7 @@
                 const lineMatch = selText.match(/[ou]\s*(\d+(\.\d+)?)/);
                 if (lineMatch) line = parseFloat(lineMatch[1]);
                 const isOver = /\bo\b/.test(selText) || /\bover\b/.test(selText);
-                
+
                 margin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
                 computedResult = margin > 0 ? 'W' : (margin < 0 ? 'L' : 'D');
               } else {
@@ -928,17 +1120,21 @@
 
         rows.forEach(row => {
           const pCheckbox = row.querySelector('.row-parlay');
+          const wasChecked = pCheckbox.checked;
           pCheckbox.checked = top5Ids.has(row.dataset.pickId);
+          if (pCheckbox.checked !== wasChecked) {
+            row.style.background = 'rgba(255, 176, 32, 0.06)';
+          }
         });
 
-        msgDiv.style.background = 'rgba(34, 197, 94, 0.15)';
+        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
         msgDiv.style.color = 'var(--success)';
         msgDiv.innerText = `Successfully auto-selected the top ${top5.length} parlay picks! Review and save.`;
-        setUnsavedState(true);
+        markSectionDirty(sectionType, true);
 
       } catch (err) {
         console.error('Auto-select error:', err);
-        msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+        msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
         msgDiv.style.color = 'var(--danger)';
         msgDiv.innerText = 'Error fetching score data for top 5 selection.';
       }
@@ -948,15 +1144,15 @@
       const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
       const container = document.getElementById(containerId);
       const rows = container.querySelectorAll('tr[data-pick-id]');
-      await persistRows(rows);
+      await persistRows(rows, [sectionType]);
     }
 
     async function saveAllCurrentModifiedPicks() {
       const allRows = document.querySelectorAll('tr[data-pick-id]');
-      await persistRows(allRows);
+      await persistRows(allRows, ['active', 'finalized']);
     }
 
-    async function persistRows(rows) {
+    async function persistRows(rows, sectionsToClear) {
       if (!rows || rows.length === 0) return;
 
       let hasError = false;
@@ -971,10 +1167,10 @@
 
         const { error } = await _supabase
           .from('picks')
-          .update({ 
-            selection: selection, 
-            is_parlay: isParlay, 
-            result: result || null 
+          .update({
+            selection: selection,
+            is_parlay: isParlay,
+            result: result || null
           })
           .eq('id', pickId);
 
@@ -988,14 +1184,23 @@
 
       if (hasError) {
         alert('Some picks failed to save. Check console for details.');
-      } else {
-        setUnsavedState(false);
-        initAdmin();
+        return;
+      }
+
+      sectionsToClear.forEach(s => markSectionDirty(s, false));
+
+      // Only do a full reload from the server once BOTH sections are clean —
+      // if the other table still has unsaved edits, reloading now would
+      // wipe them out even though this save itself succeeded.
+      if (!hasAnyUnsavedChanges()) {
+        await initAdmin();
       }
     }
 
     async function deletePick(pickId) {
       if (!confirm('Are you sure you want to delete this pick?')) return;
+
+      if (!confirmDiscardIfDirty('Deleting this pick will refresh the picks tables. You have unsaved edits elsewhere — continue and lose them?')) return;
 
       const { error } = await _supabase.from('picks').delete().eq('id', pickId);
 
