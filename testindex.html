@@ -3,33 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Weekly (Test)</title>
+  <title>BBBCWSCLP — Weekly</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
   <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1a2638;
-      --card-inner: #0b1120;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --warning: #eab308;
-      --accent: #3b82f6;
-      --gold: #f59e0b;
+      /* Graphite stadium-night base, not a generic navy */
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      /* Scoreboard result colors: kept visually distinct from the hero accent */
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      /* Tote-board amber: the one hero/signature color, used for live + accents */
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { 
-      background-color: var(--bg); 
-      color: var(--text); 
-      padding: 2rem 1rem 4rem 1rem; 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(34, 48, 56, 0.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.35) 1px, transparent 1px);
+      background-size: 48px 48px;
+      background-position: center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -40,49 +60,144 @@
 
     header { margin-bottom: 1rem; width: 100%; }
     header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
-    /* Navigation Bar */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
     nav { 
       display: flex; 
       justify-content: center; 
       gap: 0.35rem; 
-      margin-bottom: 2.5rem; 
+      margin-bottom: 2rem; 
       width: 100%; 
     }
     
     nav a { 
+      font-family: var(--font-label);
       color: var(--text-muted); 
       text-decoration: none; 
       transition: all 0.2s ease;
-      background-color: var(--card-bg);
+      background-color: transparent;
       border: 1px solid var(--border);
-      padding: 0.4rem 0.6rem;
-      border-radius: 6px;
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
       font-weight: 600; 
-      font-size: 0.82rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       white-space: nowrap;
     }
     
     nav a:hover { 
       color: var(--text); 
-      border-color: var(--accent);
-      background-color: #273548;
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
     }
 
     nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
+      color: var(--accent); 
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    nav a:focus-visible, .btn-gambly:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Live Ticker — the signature broadcast element */
+    .ticker-wrap {
+      width: 100%;
+      background-color: var(--card-inner);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .ticker-wrap::before, .ticker-wrap::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 24px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--card-inner), transparent); }
+    .ticker-wrap::after { right: 0; background: linear-gradient(270deg, var(--card-inner), transparent); }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: ticker-scroll 40s linear infinite;
+    }
+    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 0.55rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-right: 1px solid var(--border);
+    }
+    .ticker-item .tk-status {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+    .ticker-item.tk-live .tk-status { color: var(--success); }
+    .ticker-item .tk-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+      animation: tk-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tk-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker-track { animation: none; }
+      .tk-dot { animation: none; }
     }
 
     /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
@@ -91,14 +206,52 @@
 
     /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
-    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .week-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 400;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+    .category-title {
+      font-family: var(--font-label);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
-    .pick-item { font-weight: 700; }
+    /* Picks Inline Flow — W/L/D read as scoreboard tags, not plain colored text */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem 0.75rem; margin-bottom: 1rem; }
+    .pick-item {
+      font-family: var(--font-label);
+      font-weight: 600;
+      font-size: 0.95rem;
+      background-color: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.35rem 0.6rem 0.35rem 0.5rem;
+    }
+    .pick-item::before {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.72rem;
+      margin-right: 0.4rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      vertical-align: middle;
+    }
+    .pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
+    .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
+    .pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
+    .pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
 
-    /* Result Color Coding */
+    /* Result Color Coding (kept for compatibility with any other usage) */
     .res-W { color: var(--success); }
     .res-L { color: var(--danger); }
     .res-D { color: var(--warning); }
@@ -111,18 +264,22 @@
       max-width: 400px;
       margin: 1.25rem auto 0 auto;
       background-color: var(--accent);
-      color: white;
+      color: var(--bg);
       text-align: center;
       padding: 0.75rem 1rem;
-      border-radius: 8px;
+      border-radius: 4px;
+      font-family: var(--font-label);
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: background-color 0.2s;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(255, 176, 32, 0.25);
     }
     .btn-gambly:hover {
-      background-color: #2563eb;
+      background-color: #ffc457;
+      transform: translateY(-1px);
     }
 
     /* Clean Compact Parlay Scoreboard Ticker */
@@ -137,13 +294,16 @@
     .compact-card {
       background-color: var(--card-inner);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-left: 3px solid var(--border);
+      border-radius: 4px;
       padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .compact-card:has(.compact-status.live) {
+      border-left-color: var(--success);
     }
 
     .compact-left {
@@ -162,15 +322,17 @@
     }
 
     .compact-pick-info {
-      font-weight: 700;
-      color: #93c5fd;
+      font-family: var(--font-label);
+      font-weight: 600;
+      color: #ffd38a;
       font-size: 0.88rem;
       overflow-wrap: break-word;
       word-break: break-word;
     }
 
     .compact-status {
-      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -178,11 +340,20 @@
       width: fit-content;
     }
     .compact-status.live {
-      background-color: rgba(34, 197, 94, 0.15);
+      background-color: rgba(52, 214, 122, 0.12);
       color: var(--success);
       padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 3px;
+      border: 1px solid rgba(52, 214, 122, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .compact-status.live::before {
+      content: '';
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--success);
+      animation: tk-pulse 1.4s ease-in-out infinite;
     }
 
     .compact-teams {
@@ -201,15 +372,33 @@
     }
 
     .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
-    .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
-    .winner { color: var(--gold); }
+    .compact-team-abbr {
+      font-family: var(--font-label);
+      font-weight: 700;
+      color: var(--text);
+      min-width: 34px;
+      text-align: left;
+      letter-spacing: 0.3px;
+    }
+    .compact-score {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      min-width: 26px;
+      text-align: right;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.05rem 0.3rem;
+    }
+    .winner { color: var(--accent); }
+    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
 
     /* Upcoming Week Top 5 Box Styling */
     .upcoming-preview-card {
-      background: linear-gradient(135deg, #1a2638 0%, #0f172a 100%);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      border-radius: 12px;
+      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid rgba(255, 176, 32, 0.3);
+      border-radius: 6px;
       padding: 1.25rem;
       margin-top: 2rem;
       text-align: left;
@@ -217,11 +406,12 @@
       width: 100%;
     }
     .upcoming-preview-header {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: var(--gold);
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1.5px;
       margin-bottom: 0.75rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
@@ -235,25 +425,55 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(15, 23, 42, 0.6);
+      gap: 0.75rem;
+      background: rgba(6, 10, 12, 0.6);
       padding: 0.5rem 0.75rem;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 0.9rem;
-      border: 1px solid rgba(51, 65, 85, 0.5);
+      border: 1px solid var(--border);
     }
-    .upcoming-player { font-weight: 700; color: var(--text); }
+    .upcoming-rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--accent);
+      background: rgba(255, 176, 32, 0.1);
+      border: 1px solid rgba(255, 176, 32, 0.35);
+      border-radius: 3px;
+      min-width: 1.6rem;
+      text-align: center;
+      padding: 0.15rem 0;
+      flex-shrink: 0;
+    }
+    .upcoming-body { min-width: 0; flex-grow: 1; }
+    .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
     .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
     .upcoming-badge {
-      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
       font-weight: 700;
       padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background: rgba(34, 197, 94, 0.15);
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .upcoming-badge.res-W {
+      background: rgba(52, 214, 122, 0.12);
       color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border: 1px solid rgba(52, 214, 122, 0.3);
+    }
+    .upcoming-badge.res-L {
+      background: rgba(255, 77, 77, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 77, 77, 0.3);
+    }
+    .upcoming-badge.res-D {
+      background: rgba(79, 184, 255, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(79, 184, 255, 0.3);
     }
     .upcoming-pending {
-      font-size: 0.88rem;
+      font-family: var(--font-label);
+      font-size: 0.9rem;
       color: var(--text-muted);
       text-align: center;
       padding: 1rem 0;
@@ -266,16 +486,21 @@
   <div class="container">
     <header>
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP (TEST)</h1>
+      <div class="eyebrow">Week Results</div>
+      <h1 class="main-title">BBBCWSCLP</h1>
     </header>
 
     <nav>
-      <a href="testindex.html" class="active">Weekly</a>
-      <a href="teststandings.html">Standings</a>
-      <a href="testseason.html">Season</a>
-      <a href="testadmin.html">HOF</a>
-      <a href="testscores.html">Scores</a>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
     </nav>
+
+    <div class="ticker-wrap" id="ticker-wrap" style="display: none;">
+      <div class="ticker-track" id="ticker-track"></div>
+    </div>
 
     <div id="content-container">
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
@@ -298,9 +523,8 @@
       if (!selection) return [];
       let clean = selection.trim();
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
-      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
 
       if (clean.includes('/')) {
         return clean.split('/').map(t => t.trim().toLowerCase());
@@ -311,10 +535,13 @@
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
-        let computedMargin = -999;
+        // Neutral default: only picks matched to a live/final ESPN event get a real
+        // computed margin below. Manually-graded picks (no event match) keep this
+        // neutral value so they don't get sorted as if they were a huge loss.
+        let computedMargin = 0;
 
         const searchTerms = getTeamSearchTerms(pick.selection);
-        const selLower = (pick.selection || '').toLowerCase();
+        const selLower = (pick.selection || '').trim().toLowerCase();
         const isTeamTotal = /\b(team total|tt)\b/.test(selLower);
 
         const matchedEvent = espnEvents.find(ev => {
@@ -392,6 +619,59 @@
       });
     }
 
+    function renderTicker(espnEvents) {
+      const wrap = document.getElementById('ticker-wrap');
+      const track = document.getElementById('ticker-track');
+      if (!espnEvents || espnEvents.length === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      const esc = (s) => String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+
+      const items = espnEvents.map(ev => {
+        const comp = ev.competitions?.[0];
+        if (!comp) return null;
+        const competitors = comp.competitors || [];
+        const home = competitors.find(c => c.homeAway === 'home');
+        const away = competitors.find(c => c.homeAway === 'away');
+        if (!home || !away) return null;
+
+        const state = comp.status?.type?.state; // 'pre' | 'in' | 'post'
+        const isLive = state === 'in';
+        const statusText = state === 'pre'
+          ? (comp.status?.type?.shortDetail || 'Upcoming')
+          : state === 'post'
+            ? 'Final'
+            : (comp.status?.type?.shortDetail || 'Live');
+
+        const homeAbbr = esc(home.team?.abbreviation || home.team?.shortDisplayName || '');
+        const awayAbbr = esc(away.team?.abbreviation || away.team?.shortDisplayName || '');
+        const homeScore = state === 'pre' ? '' : esc(home.score ?? '0');
+        const awayScore = state === 'pre' ? '' : esc(away.score ?? '0');
+        const scoreText = state === 'pre' ? 'vs' : `${awayScore}\u2013${homeScore}`;
+
+        return `
+          <div class="ticker-item ${isLive ? 'tk-live' : ''}">
+            ${isLive ? '<span class="tk-dot"></span>' : ''}
+            <span>${awayAbbr} ${scoreText} ${homeAbbr}</span>
+            <span class="tk-status">${esc(statusText)}</span>
+          </div>
+        `;
+      }).filter(Boolean);
+
+      if (items.length === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      // Duplicate the sequence so the scroll loop (translateX -50%) is seamless
+      track.innerHTML = items.join('') + items.join('');
+      wrap.style.display = 'block';
+    }
+
     async function loadActiveWeek(isBackgroundRefresh = false) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
@@ -400,15 +680,14 @@
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
-      // Pointing to test_weeks table instead of weeks
       const { data: weeks } = await _supabase
-        .from('test_weeks')
+        .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
       if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active in test environment.</div></div>';
+        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
         previewContainer.innerHTML = '';
         hasLoadedOnce = true;
         return;
@@ -416,10 +695,9 @@
 
       const currentWeek = weeks[0];
 
-      // Pointing to test_picks and test_players tables
       const [picksRes, espnRes] = await Promise.all([
-        _supabase.from('test_picks').select('*, test_players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400').catch(() => null)
+        _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
+        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
       ]);
 
       const picks = picksRes.data;
@@ -428,13 +706,25 @@
         const espnData = await espnRes.json();
         espnEvents = espnData.events || [];
       }
+      renderTicker(espnEvents);
+
+      if (picksRes.error) {
+        console.error('Supabase picks query failed:', picksRes.error);
+        container.innerHTML = `
+          <div class="current-week-card">
+            <div style="color: var(--danger);">Couldn't load this week's picks (connection error). Try refreshing.</div>
+          </div>
+        `;
+        hasLoadedOnce = true;
+        return;
+      }
 
       if (!picks || picks.length === 0) {
         container.innerHTML = `
           <div class="current-week-card">
             <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay (Test):</div>
-              <div style="color: var(--text-muted);">No test picks submitted for this week yet.</div>
+              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
             </div>
           </div>
         `;
@@ -463,7 +753,7 @@
         parlayPicks.forEach(p => {
           const evaluatedResult = p.computedResult || p.result;
           const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.test_players?.initials || '??'}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
@@ -490,7 +780,7 @@
 
         parlayPicks.forEach(p => {
           const searchTerms = getTeamSearchTerms(p.selection);
-          const initials = p.test_players?.initials || '??';
+          const initials = p.players?.initials || '??';
           const trimmedSelection = p.selection.trim();
 
           const matchedEvent = espnEvents.find(ev => {
@@ -627,7 +917,7 @@
         otherPicks.forEach(p => {
           const evaluatedResult = p.computedResult || p.result;
           const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.test_players?.initials || '??'}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
@@ -673,11 +963,12 @@
         top5.forEach((p, idx) => {
           previewHtml += `
             <div class="upcoming-item">
-              <div>
-                <span class="upcoming-player">#${idx + 1} ${p.test_players?.initials || '??'}</span>
+              <div class="upcoming-rank">${idx + 1}</div>
+              <div class="upcoming-body">
+                <span class="upcoming-player">${p.players?.initials || '??'}</span>
                 <div class="upcoming-pick">${p.selection}</div>
               </div>
-              <div class="upcoming-badge">Result: ${p.computedResult}</div>
+              <div class="upcoming-badge res-${p.computedResult}">${p.computedResult}</div>
             </div>
           `;
         });
