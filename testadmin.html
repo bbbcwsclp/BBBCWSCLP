@@ -15,6 +15,7 @@
       --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
+      --gold: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -163,10 +164,10 @@
 
     .btn-batch { background-color: var(--success); }
     .btn-batch:hover { background-color: #16a34a; }
-    .btn-autograde { background-color: #475569; }
-    .btn-autograde:hover { background-color: #334155; }
-    .btn-autoselect { background-color: #334155; }
-    .btn-autoselect:hover { background-color: #1e293b; }
+    .btn-autograde { background-color: #d97706; }
+    .btn-autograde:hover { background-color: #b45309; }
+    .btn-autoselect { background-color: #8b5cf6; }
+    .btn-autoselect:hover { background-color: #7c3aed; }
 
     .week-section-banner {
       background: #0f172a;
@@ -176,7 +177,7 @@
       margin: 1.25rem 0 0.5rem 0;
       font-weight: 800;
       font-size: 1rem;
-      color: var(--text);
+      color: var(--gold);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -188,7 +189,7 @@
 
     .live-score-tag {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--gold);
       margin-top: 0.2rem;
       display: block;
     }
@@ -300,7 +301,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="pick-selection">Selection (e.g. Alabama -7.5 or Alabama Over 31.5)</label>
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
           <input type="text" id="pick-selection" required placeholder="Enter pick details">
         </div>
         <div class="form-group checkbox-group">
@@ -317,7 +318,7 @@
       <div class="table-header-action">
         <h2>3. Manage & Grade Active Week Picks</h2>
         <div class="btn-row">
-          <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-Select Top 5">⭐ Auto-Select Top 5</button>
+          <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
           <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
           <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
@@ -334,7 +335,7 @@
       <div class="table-header-action">
         <h2>4. Finalized & Closed Week Picks</h2>
         <div class="btn-row">
-          <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-Select Top 5">⭐ Auto-Select Top 5</button>
+          <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
           <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
           <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
         </div>
@@ -638,25 +639,6 @@
     function attachRowChangeListeners() {
       const allRows = document.querySelectorAll('tr[data-pick-id]');
       allRows.forEach(row => {
-        const selectionInput = row.querySelector('.row-selection');
-
-        // Explicitly handle and force paste capability on selection text inputs
-        if (selectionInput) {
-          selectionInput.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = (e.clipboardData || window.clipboardData).getData('text');
-            const start = selectionInput.selectionStart;
-            const end = selectionInput.selectionEnd;
-            const val = selectionInput.value;
-            selectionInput.value = val.substring(0, start) + text + val.substring(end);
-            selectionInput.selectionStart = selectionInput.selectionEnd = start + text.length;
-            
-            // Mark row as modified
-            row.style.background = 'rgba(59, 130, 246, 0.08)';
-            setUnsavedState(true);
-          });
-        }
-
         const inputs = row.querySelectorAll('input, select');
         inputs.forEach(input => {
           input.addEventListener('input', () => {
