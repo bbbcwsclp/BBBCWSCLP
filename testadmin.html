@@ -715,7 +715,7 @@
       msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=150&limit=400');
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400');
         const data = await response.json();
 
         if (!data.events) {
@@ -833,7 +833,7 @@
       msgDiv.innerText = 'Calculating margins and selecting Top 5 parlay picks...';
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=150&limit=400');
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400');
         const data = await response.json();
 
         if (!data.events) {
