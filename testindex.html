@@ -231,32 +231,32 @@
       letter-spacing: 1.5px;
     }
 
-    /* Picks Inline Flow — a scannable list, not a grid of boxed pills */
+    /* Picks Grid — boxed for scanning, but only one layer of framing (a fill,
+       no stroke) instead of a bordered box nested around a bordered badge.
+       Real CSS grid so columns line up cleanly instead of wrapping raggedly. */
     .picks-group {
-      display: flex;
-      flex-direction: column;
-      margin: 0 auto 1rem auto;
-      max-width: 420px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1rem;
       text-align: left;
     }
     .pick-item {
       font-family: var(--font-label);
       font-weight: 600;
       font-size: 0.95rem;
-      background: none;
+      background-color: var(--card-inner);
       border: none;
-      border-bottom: 1px solid var(--border);
-      border-radius: 0;
-      padding: 0.6rem 0.15rem;
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
       display: flex;
       align-items: center;
     }
-    .pick-item:last-child { border-bottom: none; }
     .pick-item::before {
       font-family: var(--font-mono);
       font-weight: 700;
       font-size: 0.68rem;
-      margin-right: 0.6rem;
+      margin-right: 0.55rem;
       padding: 0.1rem 0.35rem;
       border-radius: 3px;
       display: inline-flex;
