@@ -43,10 +43,12 @@
       font-family: var(--font-label);
       background-color: var(--bg);
       background-image:
-        linear-gradient(rgba(34, 48, 56, 0.35) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 48, 56, 0.35) 1px, transparent 1px);
-      background-size: 48px 48px;
-      background-position: center top;
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
       background-attachment: fixed;
       color: var(--text);
       padding: 2rem 1rem 4rem 1rem;
@@ -150,7 +152,10 @@
     .ticker-track {
       display: flex;
       width: max-content;
-      animation: ticker-scroll 40s linear infinite;
+      animation-name: ticker-scroll;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      /* duration is set inline by JS based on actual content width, see renderTicker() */
     }
     .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
 
@@ -670,6 +675,16 @@
       // Duplicate the sequence so the scroll loop (translateX -50%) is seamless
       track.innerHTML = items.join('') + items.join('');
       wrap.style.display = 'block';
+
+      // Drive scroll speed from actual content width, not a guessed flat duration,
+      // so it reads at the same pace whether there are 3 games or 30.
+      requestAnimationFrame(() => {
+        const singleSetWidth = track.scrollWidth / 2;
+        const PIXELS_PER_SECOND = 55; // comfortable news-ticker reading pace
+        const MIN_DURATION = 18; // floor so a short list doesn't zip past
+        const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
+        track.style.animationDuration = `${duration}s`;
+      });
     }
 
     async function loadActiveWeek(isBackgroundRefresh = false) {
