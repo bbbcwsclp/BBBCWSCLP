@@ -231,39 +231,30 @@
       letter-spacing: 1.5px;
     }
 
-    /* Picks Grid — boxed for scanning, but only one layer of framing (a fill,
-       no stroke) instead of a bordered box nested around a bordered badge.
-       Real CSS grid so columns line up cleanly instead of wrapping raggedly. */
-    .picks-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 0.6rem;
-      margin-bottom: 1rem;
-      text-align: left;
-    }
+    /* Picks Inline Flow — W/L/D read as scoreboard tags, not plain colored text */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem 0.75rem; margin-bottom: 1rem; }
     .pick-item {
       font-family: var(--font-label);
       font-weight: 600;
       font-size: 0.95rem;
       background-color: var(--card-inner);
-      border: none;
-      border-radius: 6px;
-      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.35rem 0.6rem 0.35rem 0.5rem;
       display: flex;
       align-items: center;
     }
     .pick-item::before {
       font-family: var(--font-mono);
       font-weight: 700;
-      font-size: 0.68rem;
-      margin-right: 0.55rem;
+      font-size: 0.72rem;
+      margin-right: 0.4rem;
       padding: 0.1rem 0.35rem;
       border-radius: 3px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
-      flex-shrink: 0;
     }
     .pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
     .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
@@ -786,7 +777,7 @@
         });
         html += `</div>`;
       } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; max-width: none;">No consensus parlay picks designated yet.</div>`;
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
       // --- DYNAMIC STACKED BUTTONS ---
