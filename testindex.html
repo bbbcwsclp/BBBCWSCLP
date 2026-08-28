@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Weekly</title>
+  <title>BBBCWSCLP — Weekly (Test)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
@@ -266,13 +266,13 @@
   <div class="container">
     <header>
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <h1 class="main-title">BBBCWSCLP</h1>
+      <h1 class="main-title">BBBCWSCLP (TEST)</h1>
     </header>
 
     <nav>
       <a href="testindex.html" class="active">Weekly</a>
-      <a href="standings.html">Standings</a>
-      <a href="season.html">Season</a>
+      <a href="teststandings.html">Standings</a>
+      <a href="testseason.html">Season</a>
       <a href="testadmin.html">HOF</a>
       <a href="testscores.html">Scores</a>
     </nav>
@@ -400,14 +400,15 @@
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
+      // Pointing to test_weeks table instead of weeks
       const { data: weeks } = await _supabase
-        .from('weeks')
+        .from('test_weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
       if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
+        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active in test environment.</div></div>';
         previewContainer.innerHTML = '';
         hasLoadedOnce = true;
         return;
@@ -415,8 +416,9 @@
 
       const currentWeek = weeks[0];
 
+      // Pointing to test_picks and test_players tables
       const [picksRes, espnRes] = await Promise.all([
-        _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
+        _supabase.from('test_picks').select('*, test_players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
         fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400').catch(() => null)
       ]);
 
@@ -431,8 +433,8 @@
         container.innerHTML = `
           <div class="current-week-card">
             <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
-              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+              <div class="week-title">Week ${currentWeek.week_number} Parlay (Test):</div>
+              <div style="color: var(--text-muted);">No test picks submitted for this week yet.</div>
             </div>
           </div>
         `;
@@ -461,7 +463,7 @@
         parlayPicks.forEach(p => {
           const evaluatedResult = p.computedResult || p.result;
           const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.test_players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
@@ -488,7 +490,7 @@
 
         parlayPicks.forEach(p => {
           const searchTerms = getTeamSearchTerms(p.selection);
-          const initials = p.players?.initials || '??';
+          const initials = p.test_players?.initials || '??';
           const trimmedSelection = p.selection.trim();
 
           const matchedEvent = espnEvents.find(ev => {
@@ -625,7 +627,7 @@
         otherPicks.forEach(p => {
           const evaluatedResult = p.computedResult || p.result;
           const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+          html += `<div class="pick-item ${resClass}">${p.test_players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
@@ -672,7 +674,7 @@
           previewHtml += `
             <div class="upcoming-item">
               <div>
-                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
+                <span class="upcoming-player">#${idx + 1} ${p.test_players?.initials || '??'}</span>
                 <div class="upcoming-pick">${p.selection}</div>
               </div>
               <div class="upcoming-badge">Result: ${p.computedResult}</div>
@@ -696,3 +698,4 @@
     }, 10000);
   </script>
 </body>
+</html>
