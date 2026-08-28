@@ -417,7 +417,7 @@
 
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
+        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=150&limit=400').catch(() => null)
       ]);
 
       const picks = picksRes.data;
