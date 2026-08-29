@@ -685,7 +685,7 @@
       // so it reads at the same pace whether there are 3 games or 30.
       requestAnimationFrame(() => {
         const singleSetWidth = track.scrollWidth / 2;
-        const PIXELS_PER_SECOND = 55; // comfortable news-ticker reading pace
+        const PIXELS_PER_SECOND = 27; // comfortable news-ticker reading pace
         const MIN_DURATION = 18; // floor so a short list doesn't zip past
         const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
         track.style.animationDuration = `${duration}s`;
