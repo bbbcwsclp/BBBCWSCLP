@@ -281,6 +281,7 @@
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
     </div>
 
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
     <div id="upcoming-preview-container"></div>
   </div>
 
@@ -467,10 +468,10 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- VIDEO PLAYER WITH THUMBNAIL POSTER ---
+      // --- CLEAN VIDEO PLAYER (CLICK TO PLAY/PAUSE) ---
       html += `
         <div style="margin: 1.25rem 0;">
-          <video width="100%" controls preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;">
+          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000; cursor: pointer;" onclick="if(this.paused){this.play();}else{this.pause();}">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
