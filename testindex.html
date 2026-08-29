@@ -3,471 +3,372 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Weekly</title>
+  <title>BBBCWSCLP — Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
-  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
     :root {
-      --bg: #0a0e10;
-      --card-bg: #14191d;
-      --card-inner: #060a0c;
-      --text: #eef2f2;
-      --text-muted: #7c8a90;
-      --border: #223038;
-
-      --success: #34d67a;
-      --danger: #ff4d4d;
-      --warning: #4fb8ff;
-
-      --accent: #ffb020;
-      --gold: #ffb020;
-
-      --font-display: 'Anton', 'Arial Narrow', sans-serif;
-      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
-      --font-label: 'Barlow Condensed', system-ui, sans-serif;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #3b82f6;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --gold: #f59e0b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font-label);
-      background-color: var(--bg);
-      background-image:
-        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
-        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
-        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
-      background-size: auto, auto, 56px 56px, 56px 56px;
-      background-position: center top, center top, center top, center top;
-      background-attachment: fixed;
-      color: var(--text);
-      padding: 2rem 1rem 4rem 1rem;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 5rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+    .container { width: 100%; max-width: 680px; margin: 0 auto; }
 
-    header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
-
-    .eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 0.4rem;
-    }
-
-    h1.main-title {
-      font-family: var(--font-display);
-      font-size: 3rem;
-      font-weight: 400;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      color: var(--text);
-      line-height: 1;
-    }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
+    header p { color: var(--text-muted); margin-top: 0.3rem; }
 
     nav { 
       display: flex; 
       justify-content: center; 
-      gap: 0.35rem; 
-      margin-bottom: 2rem; 
+      gap: 0.5rem; 
+      margin-bottom: 2.5rem; 
       width: 100%; 
+      max-width: 380px; 
+      margin-left: auto;
+      margin-right: auto;
+      flex-wrap: wrap; 
     }
     
     nav a { 
-      font-family: var(--font-label);
       color: var(--text-muted); 
       text-decoration: none; 
       transition: all 0.2s ease;
-      background-color: transparent;
+      background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-bottom: 2px solid var(--border);
-      padding: 0.4rem 0.75rem;
-      border-radius: 4px 4px 0 0;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
       font-weight: 600; 
       font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
       white-space: nowrap;
     }
     
     nav a:hover { 
       color: var(--text); 
-      border-bottom-color: var(--accent);
-      background-color: rgba(255, 176, 32, 0.06);
+      border-color: var(--accent);
+      background-color: #273548;
     }
 
     nav a.active { 
-      color: var(--accent); 
-      background-color: rgba(255, 176, 32, 0.08);
-      border-color: var(--border);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    nav a:focus-visible, .btn-gambly:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-
-    .ticker-wrap {
-      width: 100%;
-      background-color: var(--card-inner);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      overflow: hidden;
-      margin-bottom: 2rem;
-      position: relative;
-    }
-    .ticker-wrap::before, .ticker-wrap::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 24px;
-      z-index: 2;
-      pointer-events: none;
-    }
-    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--card-inner), transparent); }
-    .ticker-wrap::after { right: 0; background: linear-gradient(270deg, var(--card-inner), transparent); }
-
-    .ticker-track {
-      display: flex;
-      width: max-content;
-      animation-name: ticker-scroll;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
-    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
-
-    @keyframes ticker-scroll {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
-
-    .ticker-item {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      padding: 0.55rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-right: 1px solid var(--border);
-    }
-    .ticker-item .tk-status {
-      color: var(--text-muted);
-      font-size: 0.7rem;
-    }
-    .ticker-item.tk-live .tk-status { color: var(--success); }
-    .ticker-item .tk-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--success);
-      display: inline-block;
-      animation: tk-pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes tk-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.25; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ticker-track { animation: none; }
-      .tk-dot { animation: none; }
-    }
-
-    /* Current Week Card Container */
-    .current-week-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.75rem 1.25rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
-      text-align: center;
-    }
-
-    /* Week Section Styling */
-    .week-section { margin-bottom: 0; text-align: center; }
-    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
-    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
-
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
-    .pick-item { font-weight: 700; }
-
-    .pick-item.res-W { color: var(--success); }
-    .pick-item.res-L { color: var(--danger); }
-    .pick-item.res-D { color: var(--warning); }
-    .pick-item.res-pending { color: var(--text); }
-
-    .btn-gambly {
-      display: block;
-      width: 100%;
-      max-width: 400px;
-      margin: 1.5rem auto 0 auto;
+      color: white; 
       background-color: var(--accent);
-      color: var(--bg);
-      text-align: center;
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      font-family: var(--font-label);
-      font-weight: 700;
-      text-decoration: none;
-      font-size: 0.95rem;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 2px 8px rgba(255, 176, 32, 0.25);
-    }
-    .btn-gambly:hover {
-      background-color: #ffc457;
-      transform: translateY(-1px);
-    }
-
-    .compact-scores-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-top: 2rem;
-      text-align: left;
-    }
-
-    .compact-card {
-      background-color: var(--card-inner);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--border);
-      border-radius: 4px;
-      padding: 0.85rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-    .compact-card:has(.compact-status.live) {
-      border-left-color: var(--success);
-    }
-
-    .compact-left {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      flex-grow: 1;
-      min-width: 0;
-    }
-
-    .compact-picks-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .compact-pick-info {
-      font-family: var(--font-label);
-      font-weight: 600;
-      color: #ffd38a;
-      font-size: 0.88rem;
-      overflow-wrap: break-word;
-      word-break: break-word;
-    }
-
-    .compact-status {
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      width: fit-content;
-    }
-    .compact-status.live {
-      background-color: rgba(52, 214, 122, 0.12);
-      color: var(--success);
-      padding: 0.15rem 0.5rem;
-      border-radius: 3px;
-      border: 1px solid rgba(52, 214, 122, 0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-    .compact-status.live::before {
-      content: '';
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--success);
-      animation: tk-pulse 1.4s ease-in-out infinite;
-    }
-
-    .compact-teams {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-      align-items: flex-end;
-      flex-shrink: 0;
-      font-size: 0.85rem;
-    }
-
-    .compact-team-row {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-abbr {
-      font-family: var(--font-label);
-      font-weight: 700;
-      color: var(--text);
-      min-width: 34px;
-      text-align: left;
-      letter-spacing: 0.3px;
+      border-color: var(--accent);
     }
     
-    .compact-score {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      width: 30px; 
-      height: 24px;
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; position: relative; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+    .form-group { margin-bottom: 1.1rem; }
+    
+    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+    
+    input, select { 
+      width: 100%; 
+      padding: 0.7rem 0.85rem; 
+      background: #0f172a; 
+      border: 1px solid var(--border); 
+      border-radius: 8px;
+      color: var(--text); 
+      font-size: 0.95rem; 
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1rem;
+      padding-right: 2.5rem;
+    }
+
+    .input-with-action {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-group input { width: auto; }
+
+    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
+    button:hover { background-color: #2563eb; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.35rem 0.2rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+
+    .row-selection { width: 100%; padding: 0.35rem; font-size: 0.85rem; }
+    .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
+    
+    /* Standard/Form Delete Button */
+    .delete-btn { 
+      width: 48px;
+      background-color: var(--danger); 
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      color: var(--text);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 3px;
+      flex-shrink: 0;
     }
-    .winner { color: var(--accent); }
-    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
+    .delete-btn:hover { background-color: #dc2626; }
 
-    /* Upcoming Preview Card Styling */
-    .upcoming-preview-card {
-      background-color: var(--card-bg);
-      border: 1px solid rgba(255, 176, 32, 0.3);
-      border-radius: 12px;
-      padding: 1.5rem 1.25rem;
-      margin-top: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 0 20px rgba(255, 176, 32, 0.12), 0 4px 12px -2px rgba(0,0,0,0.4);
-      text-align: center;
-    }
-    .upcoming-preview-header {
-      font-family: var(--font-display);
-      font-size: 1.3rem;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-      color: var(--text);
-    }
-    .upcoming-pending {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-    .upcoming-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      text-align: left;
-    }
-    .upcoming-item {
-      background-color: var(--card-inner);
-      border: 1px solid var(--border);
+    /* Compact Delete Button restricted strictly to Table Rows */
+    table tbody .delete-btn { 
+      width: 28px; 
+      height: 28px; 
+      padding: 0; 
+      font-size: 0.75rem; 
       border-radius: 6px;
-      padding: 0.65rem 0.85rem;
+    }
+
+    /* Compact Parlay Checkbox inside Table Rows */
+    table input[type="checkbox"].row-parlay {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    
+    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.4rem; transition: all 0.3s ease; }
+    
+    .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+    
+    .btn-row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 0.5rem; 
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+    .btn-row button {
+      width: 100%;
+      padding: 0.6rem 0.5rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .btn-row button:first-child {
+      grid-column: span 2;
+    }
+
+    .btn-batch { background-color: var(--success); }
+    .btn-batch:hover { background-color: #16a34a; }
+    .btn-autograde { background-color: #d97706; }
+    .btn-autograde:hover { background-color: #b45309; }
+    .btn-autoselect { background-color: #8b5cf6; }
+    .btn-autoselect:hover { background-color: #7c3aed; }
+
+    .week-section-banner {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      margin: 1.25rem 0 0.5rem 0;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--gold);
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.85rem;
     }
-    .upcoming-rank {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--accent);
-      min-width: 18px;
+
+    .filter-input {
+      margin-bottom: 1.1rem;
     }
-    .upcoming-body {
-      flex-grow: 1;
-      min-width: 0;
+
+    .live-score-tag {
+      font-size: 0.75rem;
+      color: var(--gold);
+      margin-top: 0.2rem;
+      display: block;
+    }
+
+    .sticky-action-bar {
+      position: fixed;
+      bottom: -80px;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(5px);
+      border-top: 1px solid var(--border);
+      padding: 1rem;
       display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
+      justify-content: center;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
+      transition: bottom 0.3s ease;
+      z-index: 100;
     }
-    .upcoming-player {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+
+    .sticky-action-bar.visible {
+      bottom: 0;
     }
-    .upcoming-pick {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text);
-      word-break: break-word;
+
+    .sticky-action-bar button {
+      max-width: 300px;
     }
-    .upcoming-badge {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.2rem 0.5rem;
-      border-radius: 3px;
-    }
-    .upcoming-badge.res-W { background-color: rgba(52, 214, 122, 0.15); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
-    .upcoming-badge.res-L { background-color: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
-    .upcoming-badge.res-D { background-color: rgba(79, 184, 255, 0.15); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
-    </style>
+  </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <div class="eyebrow">Week Results</div>
-      <h1 class="main-title">BBBCWSCLP</h1>
+      <h1>BBBC Admin Panel</h1>
+      <p>Manage Weeks, Picks, and Results</p>
     </header>
 
-    <nav> 
-      <a href="testindex.html" class="active">Weekly</a>
-      <a href="teststandings.html">Standings</a>
-      <a href="testseason.html">Season</a>
-      <a href="testhalloffame.html">HOF</a>
-      <a href="testscores.html">Scores</a>
+    <nav>
+      <a href="index.html">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="scores.html">Scores</a>
+      <a href="admin.html" class="active">Admin</a>
+      <a href="halloffame.html">HOF</a>
     </nav>
 
-    <div class="ticker-wrap" id="ticker-wrap" style="display: none;">
-      <div class="ticker-track" id="ticker-track"></div>
+    <div class="card">
+      <h2>1. Open or Close a Week</h2>
+      <form id="week-form">
+        <div class="form-group">
+          <label for="week-number-select">Week Number to Create/Update</label>
+          <select id="week-number-select" required>
+            <option value="0">Week 0</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+            <option value="5">Week 5</option>
+            <option value="6">Week 6</option>
+            <option value="7">Week 7</option>
+            <option value="8">Week 8</option>
+            <option value="9">Week 9</option>
+            <option value="10">Week 10</option>
+            <option value="11">Week 11</option>
+            <option value="12">Week 12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="week-status">Week Status</label>
+          <select id="week-status">
+            <option value="open">Open (Active on Main Page)</option>
+            <option value="closed">Closed / Finished</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Featured Week Video</label>
+          <video width="100%" controls style="border-radius: 8px; border: 1px solid var(--border);">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        <div class="form-group">
+          <label for="week-slip-link">Courtside Slip Link URL</label>
+          <div class="input-with-action">
+            <input type="text" id="week-slip-link" autocomplete="off" placeholder="https://courtside.app/...">
+            <button type="button" class="delete-btn" onclick="clearWeekLink('slip')" title="Clear Slip Link">✕</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="week-gambly-link">Gambly Link URL</label>
+          <div class="input-with-action">
+            <input type="text" id="week-gambly-link" autocomplete="off" placeholder="https://gambly.com...">
+            <button type="button" class="delete-btn" onclick="clearWeekLink('gambly')" title="Clear Gambly Link">✕</button>
+          </div>
+        </div>
+        <button type="submit">Save Week Details</button>
+        <div id="week-msg" class="msg"></div>
+      </form>
     </div>
 
-    <div id="content-container">
-      <!-- Current Week Card Container -->
-      <div class="current-week-card">
-        <div class="week-section">
-          <div class="week-title" id="week-title-display"></div>
-          <div id="picks-group-container"></div>
-          <div id="action-buttons-container"></div>
-          <div class="compact-scores-grid" id="compact-scores-grid"></div>
-          <div id="others-container"></div>
+    <div class="card">
+      <h2>2. Add a Member Pick</h2>
+      <form id="pick-form">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-header-action">
+        <h2>3. Manage & Grade Active Week Picks</h2>
+        <div class="btn-row">
+          <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
+          <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
+          <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
         </div>
       </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
+      <div id="active-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
+      </div>
+      <div id="active-msg" class="msg"></div>
     </div>
 
-    <!-- Always-On Upcoming Week / Top 5 Box Container -->
-    <div id="upcoming-preview-container"></div>
+    <div class="card">
+      <div class="table-header-action">
+        <h2>4. Finalized & Closed Week Picks</h2>
+        <div class="btn-row">
+          <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
+          <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
+          <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
+        </div>
+      </div>
+      <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
+      <div id="finalized-container">
+        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">No finalized picks found.</div>
+      </div>
+      <div id="finalized-msg" class="msg"></div>
+    </div>
+  </div>
+
+  <div id="sticky-save-bar" class="sticky-action-bar">
+    <button class="btn-batch btn-success" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
   </div>
 
   <script>
@@ -477,444 +378,91 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let hasLoadedOnce = false;
+    let allWeeksCache = [];
+    let hasUnsavedChanges = false;
 
-    function getTeamSearchTerms(selection) {
-      if (!selection) return [];
-      let clean = selection.trim();
-      clean = clean.replace(/\b(team total|tt)\b/gi, '');
-      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+    const weekSelect = document.getElementById('week-number-select');
+    const statusSelect = document.getElementById('week-status');
+    const slipLinkInput = document.getElementById('week-slip-link');
+    const gamblyLinkInput = document.getElementById('week-gambly-link');
 
-      if (clean.includes('/')) {
-        return clean.split('/').map(t => t.trim().toLowerCase());
-      }
-      return [clean.toLowerCase()];
+    async function initAdmin() {
+      await loadDropdowns();
+      await loadAdminPicks();
     }
 
-    function evaluatePicksWithScores(picks, espnEvents) {
-      return picks.map(pick => {
-        let computedResult = pick.result || null;
-        let computedMargin = 0;
-
-        const searchTerms = getTeamSearchTerms(pick.selection);
-        const selLower = (pick.selection || '').trim().toLowerCase();
-        const isTeamTotal = /\b(team total|tt)\b/.test(selLower);
-
-        const matchedEvent = espnEvents.find(ev => {
-          const comp = ev.competitions[0];
-          return comp.competitors.some(c => {
-            const name = (c.team.name || '').toLowerCase();
-            const shortName = (c.team.shortDisplayName || '').toLowerCase();
-            const displayName = (c.team.displayName || '').toLowerCase();
-            const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term => 
-              term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
-            );
-          });
-        });
-
-        if (matchedEvent) {
-          const competition = matchedEvent.competitions[0];
-          const isFinal = competition.status.type.state === 'post';
-
-          if (isFinal) {
-            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-            
-            const homeScore = parseInt(homeTeam.score || '0', 10);
-            const awayScore = parseInt(awayTeam.score || '0', 10);
-
-            const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
-            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
-            const isHomePick = searchTerms.some(term => homeName.includes(term) || term.includes(homeName) || homeAbbr === term);
-            
-            const pickedTeamScore = isHomePick ? homeScore : awayScore;
-
-            if (isTeamTotal) {
-              let line = 0;
-              const lineMatch = selLower.match(/[ou]\s*(\d+(\.\d+)?)/);
-              if (lineMatch) {
-                line = parseFloat(lineMatch[1]);
-              }
-              const isOver = /\bo\b/.test(selLower) || /\bover\b/.test(selLower);
-              
-              if (isOver) {
-                computedMargin = pickedTeamScore - line;
-                if (pickedTeamScore > line) computedResult = 'W';
-                else if (pickedTeamScore < line) computedResult = 'L';
-                else computedResult = 'D';
-              } else {
-                computedMargin = line - pickedTeamScore;
-                if (pickedTeamScore < line) computedResult = 'W';
-                else if (pickedTeamScore > line) computedResult = 'L';
-                else computedResult = 'D';
-              }
-            } else {
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
-              let spread = 0;
-              const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) {
-                spread = parseFloat(spreadMatch[1]);
-              }
-
-              const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
-              computedMargin = adjustedMargin;
-
-              if (adjustedMargin > 0) {
-                computedResult = 'W';
-              } else if (adjustedMargin < 0) {
-                computedResult = 'L';
-              } else {
-                computedResult = 'D';
-              }
-            }
-          }
-        }
-
-        return { ...pick, computedResult, margin: computedMargin };
-      });
-    }
-
-    function renderTicker(espnEvents) {
-      const wrap = document.getElementById('ticker-wrap');
-      const track = document.getElementById('ticker-track');
-      if (!espnEvents || espnEvents.length === 0) {
-        wrap.style.display = 'none';
-        return;
-      }
-
-      const esc = (s) => String(s).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
-
-      const items = espnEvents.map(ev => {
-        const comp = ev.competitions?.[0];
-        if (!comp) return null;
-        const competitors = comp.competitors || [];
-        const home = competitors.find(c => c.homeAway === 'home');
-        const away = competitors.find(c => c.homeAway === 'away');
-        if (!home || !away) return null;
-
-        const state = comp.status?.type?.state;
-        const isLive = state === 'in';
-        const statusText = state === 'pre'
-          ? (comp.status?.type?.shortDetail || 'Upcoming')
-          : state === 'post'
-            ? 'Final'
-            : (comp.status?.type?.shortDetail || 'Live');
-
-        const homeAbbr = esc(home.team?.abbreviation || home.team?.shortDisplayName || '');
-        const awayAbbr = esc(away.team?.abbreviation || away.team?.shortDisplayName || '');
-        const homeScore = state === 'pre' ? '' : esc(home.score ?? '0');
-        const awayScore = state === 'pre' ? '' : esc(away.score ?? '0');
-        const scoreText = state === 'pre' ? 'vs' : `${awayScore}\u2013${homeScore}`;
-
-        return `
-          <div class="ticker-item ${isLive ? 'tk-live' : ''}">
-            ${isLive ? '<span class="tk-dot"></span>' : ''}
-            <span>${awayAbbr} ${scoreText} ${homeAbbr}</span>
-            <span class="tk-status">${esc(statusText)}</span>
-          </div>
-        `;
-      }).filter(Boolean);
-
-      if (items.length === 0) {
-        wrap.style.display = 'none';
-        return;
-      }
-
-      track.innerHTML = items.join('') + items.join('');
-      wrap.style.display = 'block';
-
-      requestAnimationFrame(() => {
-        const singleSetWidth = track.scrollWidth / 2;
-        const PIXELS_PER_SECOND = 27;
-        const MIN_DURATION = 18;
-        const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
-        track.style.animationDuration = `${duration}s`;
-      });
-    }
-
-    async function loadActiveWeek(isBackgroundRefresh = false) {
-      const container = document.getElementById('content-container');
-      const previewContainer = document.getElementById('upcoming-preview-container');
-
-      if (!isBackgroundRefresh && !hasLoadedOnce) {
-        container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
-      }
-
-      const { data: weeks, error: weeksError } = await _supabase
+    async function loadDropdowns() {
+      const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
-        .eq('status', 'open')
-        .limit(1);
+        .order('week_number', { ascending: false });
 
-      if (weeksError || !weeks || weeks.length === 0) {
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
-        previewContainer.innerHTML = '';
-        hasLoadedOnce = true;
-        return;
-      }
+      allWeeksCache = weeks || [];
 
-      const currentWeek = weeks[0];
+      const pickWeekSelect = document.getElementById('pick-week');
+      pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+      
+      let openWeekNum = null;
+      let openWeekId = '';
 
-      const [picksRes, espnRes] = await Promise.all([
-        _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
-      ]);
-
-      const picks = picksRes.data;
-      let espnEvents = [];
-      if (espnRes && espnRes.ok) {
-        const espnData = await espnRes.json();
-        espnEvents = espnData.events || [];
-      }
-      renderTicker(espnEvents);
-
-      if (picksRes.error) {
-        console.error('Supabase picks query failed:', picksRes.error);
-        container.innerHTML = `
-          <div class="current-week-card">
-            <div style="color: var(--danger);">Couldn't load this week's picks (connection error). Try refreshing.</div>
-          </div>
-        `;
-        hasLoadedOnce = true;
-        return;
-      }
-
-      if (!picks || picks.length === 0) {
-        container.innerHTML = `
-          <div class="current-week-card">
-            <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
-              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
-            </div>
-          </div>
-        `;
-        previewContainer.innerHTML = '';
-        hasLoadedOnce = true;
-        return;
-      }
-
-      const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
-      const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
-      const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
-
-      let html = `<div class="current-week-card"><div class="week-section">`;
-      html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
-
-      if (parlayPicks.length > 0) {
-        html += `<div class="picks-group">`;
-        parlayPicks.forEach(p => {
-          const evaluatedResult = p.computedResult || p.result;
-          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+      if (weeks) {
+        weeks.forEach(w => {
+          if (w.status === 'open' && openWeekNum === null) {
+            openWeekNum = w.week_number;
+            openWeekId = w.id;
+          }
+          pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
         });
-        html += `</div>`;
+      }
+
+      if (openWeekId) {
+        pickWeekSelect.value = openWeekId;
+      }
+
+      if (openWeekNum !== null) {
+        weekSelect.value = openWeekNum;
+        loadWeekDetails(openWeekNum);
       } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
+        loadWeekDetails(parseInt(weekSelect.value, 10));
       }
 
-      if (otherPicks.length > 0) {
-        html += `<div class="category-title" style="margin-top: 2rem;">Others:</div>`;
-        html += `<div class="picks-group">`;
-        otherPicks.forEach(p => {
-          const evaluatedResult = p.computedResult || p.result;
-          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
-          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+      const playerSelect = document.getElementById('pick-player');
+      const { data: players } = await _supabase
+        .from('players')
+        .select('*')
+        .order('initials', { ascending: true });
+
+      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
+      if (players) {
+        players.forEach(p => {
+          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
         });
-        html += `</div>`;
       }
-
-      if (currentWeek.slip_link || currentWeek.gambly_link) {
-        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
-        if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">📲 Open Slip in Courtside</a>`;
-        }
-        if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">🎲 Open Gambly Link</a>`;
-        }
-        html += `</div>`;
-      }
-
-      if (parlayPicks.length > 0 && espnEvents.length > 0) {
-        html += `<div class="compact-scores-grid">`;
-
-        const gameEventMap = {};
-
-        parlayPicks.forEach(p => {
-          const searchTerms = getTeamSearchTerms(p.selection);
-          const initials = p.players?.initials || '??';
-          const trimmedSelection = p.selection.trim();
-
-          const matchedEvent = espnEvents.find(ev => {
-            const comp = ev.competitions[0];
-            return comp.competitors.some(c => {
-              const name = (c.team.name || '').toLowerCase();
-              const shortName = (c.team.shortDisplayName || '').toLowerCase();
-              const displayName = (c.team.displayName || '').toLowerCase();
-              const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term => 
-                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
-              );
-            });
-          });
-
-          if (matchedEvent) {
-            const eventId = matchedEvent.id;
-            if (!gameEventMap[eventId]) {
-              gameEventMap[eventId] = {
-                event: matchedEvent,
-                dateObj: new Date(matchedEvent.date),
-                entries: []
-              };
-            }
-            
-            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
-            if (existingEntry) {
-              existingEntry.initialsList.push(initials);
-            } else {
-              gameEventMap[eventId].entries.push({
-                selection: trimmedSelection,
-                initialsList: [initials]
-              });
-            }
-          } else {
-            const unmatchedKey = `unmatched_${p.id}`;
-            gameEventMap[unmatchedKey] = {
-              event: null,
-              dateObj: new Date('9999-12-31'),
-              entries: [{ selection: trimmedSelection, initialsList: [initials] }]
-            };
-          }
-        });
-
-        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
-
-        sortedGames.forEach(item => {
-          if (item.event) {
-            const competition = item.event.competitions[0];
-            const statusType = competition.status.type.state;
-            const statusDetail = competition.status.type.detail;
-            
-            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
-            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
-            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
-            
-            const homeLogo = homeTeam.team.logo || '';
-            const awayLogo = awayTeam.team.logo || '';
-            
-            const homeScore = homeTeam.score || '0';
-            const awayScore = awayTeam.score || '0';
-
-            let statusText = statusDetail;
-            let statusClass = '';
-            if (statusType === 'in') {
-              statusText = `LIVE • ${statusDetail}`;
-              statusClass = 'live';
-            } else if (statusType === 'post') {
-              statusText = 'FINAL';
-            }
-
-            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
-            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
-
-            let picksStackHtml = `<div class="compact-picks-stack">`;
-            item.entries.forEach(entry => {
-              const combinedInitials = entry.initialsList.join(', ');
-              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
-            });
-            picksStackHtml += `</div>`;
-
-            html += `
-              <div class="compact-card">
-                <div class="compact-left">
-                  ${picksStackHtml}
-                  <div class="compact-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="compact-teams">
-                  <div class="compact-team-row">
-                    <img src="${awayLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="compact-team-abbr">${awayAbbr}</span>
-                    <span class="compact-score ${isAwayWinner ? 'winner' : ''}">${awayScore}</span>
-                  </div>
-                  <div class="compact-team-row">
-                    <img src="${homeLogo}" class="compact-logo" onerror="this.style.display='none'">
-                    <span class="compact-team-abbr">${homeAbbr}</span>
-                    <span class="compact-score ${isHomeWinner ? 'winner' : ''}">${homeScore}</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-        });
-
-        html += `</div>`;
-      }
-
-      html += `</div></div>`;
-      container.innerHTML = html;
-
-      // --- RENDER UPCOMING WEEK TOP 5 PARLAY BOX ---
-      let previewHtml = `
-        <div class="upcoming-preview-card">
-          <div class="upcoming-preview-header">
-            <span>Next Week's Parlay Pickers</span>
-          </div>
-      `;
-
-      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.computedResult === 'W' || p.computedResult === 'L' || p.computedResult === 'D');
-
-      if (!allFinalized) {
-        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
-      } else {
-        const winners = evaluatedPicks.filter(p => p.computedResult === 'W');
-        const losses = evaluatedPicks.filter(p => p.computedResult === 'L');
-        const pushes = evaluatedPicks.filter(p => p.computedResult === 'D');
-
-        winners.sort((a, b) => b.margin - a.margin);
-        losses.sort((a, b) => b.margin - a.margin);
-
-        let top5 = [];
-        if (winners.length >= 5) {
-          top5 = winners.slice(0, 5);
-        } else {
-          top5 = [...winners];
-          const needed = 5 - top5.length;
-          top5 = top5.concat(losses.slice(0, needed));
-          
-          if (top5.length < 5) {
-            const stillNeeded = 5 - top5.length;
-            top5 = top5.concat(pushes.slice(0, stillNeeded));
-          }
-        }
-
-        previewHtml += `<div class="upcoming-list">`;
-        top5.forEach((p, idx) => {
-          previewHtml += `
-            <div class="upcoming-item">
-              <div class="upcoming-rank">${idx + 1}</div>
-              <div class="upcoming-body">
-                <span class="upcoming-player">${p.players?.initials || '??'}</span>
-                <div class="upcoming-pick">${p.selection}</div>
-              </div>
-              <div class="upcoming-badge res-${p.computedResult}">${p.computedResult}</div>
-            </div>
-          `;
-        });
-        previewHtml += `</div>`;
-      }
-
-      previewHtml += `</div>`;
-      previewContainer.innerHTML = previewHtml;
-
-      hasLoadedOnce = true;
     }
 
-    loadActiveWeek();
-  </script>
-</body>
-</html>
+    async function loadWeekDetails(weekNum) {
+      const found = allWeeksCache.find(w => w.week_number === weekNum);
+      if (found) {
+        statusSelect.value = found.status || 'open';
+        slipLinkInput.value = found.slip_link || '';
+        gamblyLinkInput.value = found.gambly_link || '';
+      } else {
+        statusSelect.value = 'open';
+        slipLinkInput.value = '';
+        gamblyLinkInput.value = '';
+      }
+    }
+
+    weekSelect.addEventListener('change', (e) => {
+      loadWeekDetails(parseInt(e.target.value, 10));
+    });
+
+    async function clearWeekLink(linkType) {
+      const weekNum = parseInt(weekSelect.value, 10);
+      const fieldToClear = linkType === 'slip' ? 'slip_link' : 'gambly_link';
+      const msg = document.getElementById('week-msg');
+
+      if (!confirm(`Are you sure you want to clear the ${linkType === 'slip' ? 'Courtside Slip' : 'Gambly'} link for Week ${weekNum}?`)) return;
+
+      const updatePayload = {};
+      updatePayload[fieldTo
