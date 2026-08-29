@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Season History</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
+    }
+
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    nav a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Section & Card Styling */
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .stat-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 0.75rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 110px;
+    }
+    .stat-card h3 {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      white-space: nowrap;
+    }
+    .stat-card .stat-value {
+      font-family: var(--font-label);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .stat-card .stat-sub {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* Overall Performance Box */
+    .overall-card {
+      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .overall-card h3 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.6rem;
+    }
+    .overall-card .overall-value {
+      font-family: var(--font-mono);
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+    }
+    .overall-sub { font-family: var(--font-label); font-size: 0.9rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* History Feed */
+    .week-history-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+    .history-week-header {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.3rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-category {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 0.9rem;
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    /* Matches the picks grid treatment on the weekly page: one layer of
+       framing (fill, no stroke) laid out in a real grid, badge chip carries
+       the W/L/D/pending state instead of plain colored text. */
+    .history-picks-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.5rem;
+    }
+    .history-pick-item {
+      font-family: var(--font-label);
+      font-weight: 600;
+      font-size: 0.9rem;
+      background-color: var(--card-inner);
+      border-radius: 6px;
+      padding: 0.5rem 0.65rem;
+      display: flex;
+      align-items: center;
+    }
+    .history-pick-item::before {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.66rem;
+      margin-right: 0.5rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .history-pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
+    .history-pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
+    .history-pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
+    .history-pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">Season History</div>
+      <h1 class="main-title">Performance</h1>
+    </header>
+
+    <nav>
+      <a href="testindex.html">Weekly</a>
+      <a href="teststandings.html">Standings</a>
+      <a href="testseason.html" class="active">Season</a>
+      <a href="testhalloffame.html">HOF</a>
+      <a href="testscores.html">Scores</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading season history...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadSeasonHistory() {
+      const { data: weeks, error: weeksErr } = await _supabase
+        .from('weeks')
+        .select('*')
+        .order('week_number', { ascending: false });
+
+      const { data: picks, error: picksErr } = await _supabase
+        .from('picks')
+        .select('*, players(initials)');
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+
+      if (weeksErr || picksErr) {
+        console.error('Failed to load season history:', weeksErr || picksErr);
+        container.innerHTML = `<div style="color: var(--danger);">Couldn't load season history (connection error). Try refreshing.</div>`;
+        return;
+      }
+
+      if (!weeks || weeks.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted);">No season history recorded yet.</div>';
+        return;
+      }
+
+      // Compute Overall Group Stats & Breakdown Metrics
+      let totalW = 0;
+      let totalL = 0;
+      let totalD = 0;
+
+      let spreadW = 0, spreadL = 0, spreadD = 0;
+      let ouW = 0, ouL = 0, ouD = 0;
+
+      // Bucketed case-insensitively (key = lowercase team) so "Alabama -7.5"
+      // and "alabama -7" from different admins/entries count as the same
+      // team instead of silently splitting that team's tally in two. The
+      // display name keeps whichever casing was seen first.
+      const teamCorrectCounts = {};
+      const teamCorrectDisplay = {};
+      const teamLossCounts = {};
+      const teamLossDisplay = {};
+
+      if (picks) {
+        picks.forEach(p => {
+          const res = p.result;
+          const selection = (p.selection || '').trim();
+          const lowerSel = selection.toLowerCase();
+
+          const isOU = /\bover\b/.test(lowerSel) || /\bunder\b/.test(lowerSel) || /\b[ou]\d+(\.\d+)?\b/.test(lowerSel);
+
+          if (res === 'W') {
+            totalW++;
+            if (isOU) ouW++;
+            else spreadW++;
+
+            if (!isOU) {
+              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
+              if (cleanTeam) {
+                const key = cleanTeam.toLowerCase();
+                teamCorrectCounts[key] = (teamCorrectCounts[key] || 0) + 1;
+                if (!teamCorrectDisplay[key]) teamCorrectDisplay[key] = cleanTeam;
+              }
+            }
+          } else if (res === 'L') {
+            totalL++;
+            if (isOU) ouL++;
+            else spreadL++;
+
+            if (!isOU) {
+              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
+              if (cleanTeam) {
+                const key = cleanTeam.toLowerCase();
+                teamLossCounts[key] = (teamLossCounts[key] || 0) + 1;
+                if (!teamLossDisplay[key]) teamLossDisplay[key] = cleanTeam;
+              }
+            }
+          } else if (res === 'D') {
+            totalD++;
+            if (isOU) ouD++;
+            else spreadD++;
+          }
+        });
+      }
+
+      const totalDecided = totalW + totalL;
+      const groupWinPct = totalDecided > 0 ? ((totalW / totalDecided) * 100).toFixed(1) + '%' : '0.0%';
+
+      // Find top predicted team
+      let topTeam = 'None';
+      let maxTeamCount = 0;
+      for (const [key, count] of Object.entries(teamCorrectCounts)) {
+        if (count > maxTeamCount) {
+          maxTeamCount = count;
+          topTeam = teamCorrectDisplay[key];
+        }
+      }
+
+      // Find most losing team
+      let worstTeam = 'None';
+      let maxLossCount = 0;
+      for (const [key, count] of Object.entries(teamLossCounts)) {
+        if (count > maxLossCount) {
+          maxLossCount = count;
+          worstTeam = teamLossDisplay[key];
+        }
+      }
+
+      // Compute Hot/Cold Streaks
+      let hottestPlayers = [];
+      let maxHotStreak = 0;
+
+      let coldestPlayers = [];
+      let maxColdStreak = 0;
+
+      // Reuse the picks we already fetched instead of hitting the database
+      // a second time just to get them chronologically — same rows, just
+      // sorted client-side, saving a full network round-trip.
+      const allPicksChronological = [...(picks || [])].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+
+      const { data: players, error: playersErr } = await _supabase
+        .from('players')
+        .select('*');
+
+      if (playersErr) {
+        console.error('Failed to load players for streak calculation:', playersErr);
+      }
+
+      if (players && allPicksChronological) {
+        players.forEach(player => {
+          const playerPicks = allPicksChronological.filter(p => p.player_id === player.id && p.result);
+          if (playerPicks.length === 0) return;
+
+          let currentStreakType = null;
+          let currentStreakCount = 0;
+
+          for (let i = playerPicks.length - 1; i >= 0; i--) {
+            const res = playerPicks[i].result;
+            if (res === 'D') continue;
+
+            if (currentStreakType === null) {
+              currentStreakType = res;
+              currentStreakCount = 1;
+            } else if (res === currentStreakType) {
+              currentStreakCount++;
+            } else {
+              break;
+            }
+          }
+
+          if (currentStreakType === 'W' && currentStreakCount > 0) {
+            if (currentStreakCount > maxHotStreak) {
+              maxHotStreak = currentStreakCount;
+              hottestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxHotStreak) {
+              hottestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
+          }
+
+          if (currentStreakType === 'L' && currentStreakCount > 0) {
+            if (currentStreakCount > maxColdStreak) {
+              maxColdStreak = currentStreakCount;
+              coldestPlayers = [{ name: player.initials, streak: currentStreakCount }];
+            } else if (currentStreakCount === maxColdStreak) {
+              coldestPlayers.push({ name: player.initials, streak: currentStreakCount });
+            }
+          }
+        });
+      }
+
+      const hotNames = hottestPlayers.length > 0 ? hottestPlayers.map(p => p.name).join(', ') : 'None';
+      const hotSub = hottestPlayers.length > 0 ? `(${maxHotStreak} W)` : '';
+
+      const coldNames = coldestPlayers.length > 0 ? coldestPlayers.map(p => p.name).join(', ') : 'None';
+      const coldSub = coldestPlayers.length > 0 ? `(${maxColdStreak} L)` : '';
+
+      const topTeamName = topTeam;
+      const topTeamSub = maxTeamCount > 0 ? `(${maxTeamCount}W)` : '';
+
+      const worstTeamName = worstTeam;
+      const worstTeamSub = maxLossCount > 0 ? `(${maxLossCount}L)` : '';
+
+      // --- RENDER SELECTION ---
+      let html = `<div class="section-title">Team Metrics</div>`;
+
+      // Streak Cards Grid
+      html += `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>🔥 Hot Streak</h3>
+            <div class="stat-value">${hotNames}</div>
+            ${hotSub ? `<div class="stat-sub">${hotSub}</div>` : ''}
+          </div>
+          <div class="stat-card">
+            <h3>❄️ Cold Streak</h3>
+            <div class="stat-value">${coldNames}</div>
+            ${coldSub ? `<div class="stat-sub">${coldSub}</div>` : ''}
+          </div>
+        </div>
+      `;
+
+      // Team Metrics Cards Grid
+      html += `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Best Bet Team</h3>
+            <div class="stat-value">${topTeamName}</div>
+            ${topTeamSub ? `<div class="stat-sub">${topTeamSub}</div>` : ''}
+          </div>
+          <div class="stat-card">
+            <h3>Worst Bet Team</h3>
+            <div class="stat-value" style="color: var(--danger);">${worstTeamName}</div>
+            ${worstTeamSub ? `<div class="stat-sub" style="color: var(--danger);">${worstTeamSub}</div>` : ''}
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Spread W-L-D</h3>
+            <div class="stat-value">${spreadW}-${spreadL}-${spreadD}</div>
+          </div>
+          <div class="stat-card">
+            <h3>O/U W-L-D</h3>
+            <div class="stat-value">${ouW}-${ouL}-${ouD}</div>
+          </div>
+        </div>
+      `;
+
+      // Overall Performance Box
+      html += `
+        <div class="overall-card" style="margin-top: 0.5rem;">
+          <h3>Overall Group Performance</h3>
+          <div class="overall-value">${totalW} - ${totalL} - ${totalD}</div>
+          <div class="overall-sub">Win Rate: ${groupWinPct}</div>
+        </div>
+      `;
+
+      html += `<div class="section-title" style="margin-top: 1.5rem;">Week-by-Week Breakdown</div>`;
+
+      // Render Past Weeks
+      weeks.forEach(week => {
+        const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
+        const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
+        const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
+        const weekStatus = (week.status || 'open').toUpperCase();
+
+        html += `
+          <div class="week-history-card">
+            <div class="history-week-header" style="justify-content: center;">
+              <span>Week ${week.week_number} (${weekStatus})</span>
+            </div>
+        `;
+
+        if (weekPicks.length === 0) {
+          html += `<div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">No picks recorded for this week.</div>`;
+        } else {
+          if (parlayPicks.length > 0) {
+            html += `<div class="history-category">Parlay</div><div class="history-picks-list">`;
+            parlayPicks.forEach(p => {
+              const resClass = p.result ? `res-${p.result}` : 'res-pending';
+              html += `<div class="history-pick-item ${resClass}"><strong>${p.players?.initials || '??'}:</strong>&nbsp;${p.selection}</div>`;
+            });
+            html += `</div>`;
+          }
+
+          if (otherPicks.length > 0) {
+            html += `<div class="history-category">Others</div><div class="history-picks-list">`;
+            otherPicks.forEach(p => {
+              const resClass = p.result ? `res-${p.result}` : 'res-pending';
+              html += `<div class="history-pick-item ${resClass}"><strong>${p.players?.initials || '??'}:</strong>&nbsp;${p.selection}</div>`;
+            });
+            html += `</div>`;
+          }
+        }
+
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    loadSeasonHistory();
+  </script>
+</body>
+</html>
