@@ -205,10 +205,10 @@
     .week-section { margin-bottom: 0; text-align: center; }
     .week-title {
       font-family: var(--font-display);
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       font-weight: 400;
       text-transform: uppercase;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
       color: var(--text);
       letter-spacing: 0.5px;
     }
@@ -216,66 +216,49 @@
       font-family: var(--font-label);
       font-size: 1rem;
       font-weight: 700;
-      margin-top: 1.5rem;
+      margin-top: 1.75rem;
       margin-bottom: 0.75rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 1.5px;
     }
 
-    /* Fixed 2-Column Grid for Even Layout */
+    /* Clean 2-Column Text Layout matching Image #3 */
     .picks-group { 
       display: grid; 
       grid-template-columns: repeat(2, minmax(0, 1fr)); 
-      gap: 0.6rem 0.75rem; 
-      margin-bottom: 1rem; 
+      gap: 0.85rem 1.25rem; 
+      margin-bottom: 1.25rem; 
+      justify-items: center;
     }
     
     @media (max-width: 480px) {
-      .picks-group { grid-template-columns: 1fr; }
+      .picks-group { grid-template-columns: 1fr; justify-items: center; }
     }
 
     .pick-item {
       font-family: var(--font-label);
-      font-weight: 600;
-      font-size: 0.95rem;
-      background-color: var(--card-inner);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.5rem 0.75rem;
-      display: flex;
-      align-items: center;
-      width: 100%;
-      text-align: left;
-    }
-    .pick-item::before {
-      font-family: var(--font-mono);
       font-weight: 700;
-      font-size: 0.72rem;
-      margin-right: 0.5rem;
-      padding: 0.1rem 0.35rem;
-      border-radius: 3px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      flex-shrink: 0;
+      font-size: 1.15rem;
+      letter-spacing: 0.3px;
+      background: none;
+      border: none;
+      padding: 0.2rem 0;
+      display: inline-block;
+      width: auto;
+      text-align: center;
     }
-    .pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
-    .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
-    .pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
-    .pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
 
-    .res-W { color: var(--success); }
-    .res-L { color: var(--danger); }
-    .res-D { color: var(--warning); }
-    .res-pending { color: var(--text); }
+    .pick-item.res-W { color: var(--success); }
+    .pick-item.res-L { color: var(--danger); }
+    .pick-item.res-D { color: var(--warning); }
+    .pick-item.res-pending { color: var(--text); }
 
     .btn-gambly {
       display: block;
       width: 100%;
       max-width: 400px;
-      margin: 1.25rem auto 0 auto;
+      margin: 1.5rem auto 0 auto;
       background-color: var(--accent);
       color: var(--bg);
       text-align: center;
@@ -299,7 +282,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       text-align: left;
     }
 
@@ -392,7 +375,6 @@
       letter-spacing: 0.3px;
     }
     
-    /* Perfectly Centered Score Badge Fix */
     .compact-score {
       font-family: var(--font-mono);
       font-weight: 700;
