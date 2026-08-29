@@ -1,3 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Weekly</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1a2638;
+      --card-inner: #0b1120;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+      --accent: #3b82f6;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+
+    /* Navigation Bar */
+    nav { 
+      display: flex; 
+      justify-content: center; 
+      gap: 0.35rem; 
+      margin-bottom: 2.5rem; 
+      width: 100%; 
+    }
+    
+    nav a { 
+      color: var(--text-muted); 
+      text-decoration: none; 
+      transition: all 0.2s ease;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 600; 
+      font-size: 0.82rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      white-space: nowrap;
+    }
+    
+    nav a:hover { 
+      color: var(--text); 
+      border-color: var(--accent);
+      background-color: #273548;
+    }
+
+    nav a.active { 
+      color: white; 
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Current Week Card Container */
+    .current-week-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    /* Week Section Styling */
+    .week-section { margin-bottom: 0; text-align: center; }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
+
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+
+    /* Action Link Button Styling */
+    .btn-gambly {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 1.25rem auto 0 auto;
+      background-color: var(--accent);
+      color: white;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    .btn-gambly:hover {
+      background-color: #2563eb;
+    }
+
+    /* Clean Compact Parlay Scoreboard Ticker */
+    .compact-scores-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .compact-card {
+      background-color: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .compact-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    /* Multi-line pick container inside the scorecard */
+    .compact-picks-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .compact-pick-info {
+      font-weight: 700;
+      color: #93c5fd;
+      font-size: 0.88rem;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .compact-status {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+    .compact-status.live {
+      background-color: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .compact-teams {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .compact-team-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
+    .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
+    .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
+    .winner { color: var(--gold); }
+
+    /* Upcoming Week Top 5 Box Styling */
+    .upcoming-preview-card {
+      background: linear-gradient(135deg, #1a2638 0%, #0f172a 100%);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+      width: 100%;
+    }
+    .upcoming-preview-header {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .upcoming-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .upcoming-player { font-weight: 700; color: var(--text); }
+    .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
+    .upcoming-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .upcoming-pending {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1rem 0;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <h1 class="main-title">BBBCWSCLP</h1>
+    </header>
+
+    <nav>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
+    </div>
+
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
+    <div id="upcoming-preview-container"></div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
@@ -23,9 +310,6 @@
 
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
-        // Intentionally NOT checking pick.result here so the main weekly display 
-        // relies strictly on live ESPN outcomes or stays pending, while the Top 5 
-        // box below can still leverage grading data if needed.
         let computedResult = null;
         let computedMargin = -999;
 
@@ -104,7 +388,7 @@
           }
         }
 
-        // Fallback to admin manual grade for the Top 5 calculation if ESPN hasn't marked it final yet
+        // Final result specifically used for Top 5 Box automatic ranking calculations
         const finalResultForScoring = computedResult || pick.result || null;
 
         return { ...pick, computedResult, finalResultForScoring, margin: computedMargin };
@@ -171,15 +455,15 @@
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
 
-      // --- RENDER CURRENT WEEK IN BOX (Uses ONLY live ESPN computedResult or stays pending) ---
+      // --- RENDER CURRENT WEEK IN BOX (Relies strictly on admin input: pick.result) ---
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const displayResult = p.computedResult; // Ignores manual pick.result for main UI
-          const resClass = displayResult ? `res-${displayResult}` : 'res-pending';
+          const adminResult = p.result; // Directly uses admin panel grading input
+          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -187,21 +471,21 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- OTHERS SECTION ---
+      // --- OTHERS SECTION (Relies strictly on admin input: pick.result) ---
       if (otherPicks.length > 0) {
         html += `
           <div class="category-title" style="margin-top: 1rem;">Others:</div>
           <div class="picks-group">
         `;
         otherPicks.forEach(p => {
-          const displayResult = p.computedResult; // Ignores manual pick.result for main UI
-          const resClass = displayResult ? `res-${displayResult}` : 'res-pending';
+          const adminResult = p.result; // Directly uses admin panel grading input
+          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
-      // --- VIDEO PLAYER ---
+      // --- VIDEO PLAYER WITH THUMBNAIL & PLAY OVERLAY ---
       html += `
         <div style="margin: 1.25rem 0; position: relative; display: inline-block; width: 100%; cursor: pointer;" onclick="
           const vid = this.querySelector('video');
@@ -225,7 +509,7 @@
         </div>
       `;
 
-      // --- BUTTONS ---
+      // --- DYNAMIC STACKED BUTTONS ---
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
@@ -237,7 +521,7 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD ---
+      // --- COMPACT PARLAY SCOREBOARD (GROUPED BY GAME EVENT, STACKING DIFFERENT LINES) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
@@ -439,3 +723,5 @@
       loadActiveWeek(true);
     }, 10000);
   </script>
+</body>
+</html>
