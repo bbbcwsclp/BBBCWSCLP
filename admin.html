@@ -94,7 +94,7 @@
     }
 
     input:focus, select:focus {
-      outline: none;
+      outline: nil;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
@@ -126,20 +126,26 @@
     .row-selection { width: 100%; padding: 0.35rem; font-size: 0.85rem; }
     .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
     
-    /* Compact Delete Button inside Table Rows */
-    table .delete-btn { 
-      width: 28px; 
-      height: 28px; 
-      padding: 0; 
-      font-size: 0.75rem; 
+    /* Standard/Form Delete Button (Keeps red background & proper size for form link clearing) */
+    .delete-btn { 
+      width: 48px;
       background-color: var(--danger); 
-      border-radius: 6px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    table .delete-btn:hover { background-color: #dc2626; }
+    .delete-btn:hover { background-color: #dc2626; }
+
+    /* Compact Delete Button restricted strictly to Table Rows */
+    table tbody .delete-btn { 
+      width: 28px; 
+      height: 28px; 
+      padding: 0; 
+      font-size: 0.75rem; 
+      border-radius: 6px;
+    }
 
     /* Compact Parlay Checkbox inside Table Rows */
     table input[type="checkbox"].row-parlay {
