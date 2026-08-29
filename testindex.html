@@ -468,10 +468,10 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- EMBEDDED VIDEO ADDED HERE ABOVE THE LINK BUTTONS ---
+      // --- STANDARD VIDEO PLAYER (NO AUTOPLAY) ---
       html += `
         <div style="margin: 1.25rem 0;">
-          <video width="100%" controls style="border-radius: 8px; border: 1px solid var(--border);">
+          <video width="100%" controls preload="metadata" playsinline style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
