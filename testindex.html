@@ -354,7 +354,83 @@
     }
     .winner { color: var(--accent); }
     .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
-  </style>
+
+    /* Upcoming Preview Card Styling */
+    .upcoming-preview-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    .upcoming-preview-header {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .upcoming-pending {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .upcoming-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      text-align: left;
+    }
+    .upcoming-item {
+      background-color: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .upcoming-rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--accent);
+      min-width: 18px;
+    }
+    .upcoming-body {
+      flex-grow: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .upcoming-player {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .upcoming-pick {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .upcoming-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+    }
+    .upcoming-badge.res-W { background-color: rgba(52, 214, 122, 0.15); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .upcoming-badge.res-L { background-color: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+    .upcoming-badge.res-D { background-color: rgba(79, 184, 255, 0.15); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+    </style>
 </head>
 <body>
 
@@ -378,9 +454,19 @@
     </div>
 
     <div id="content-container">
-      <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
+      <!-- Current Week Card Container -->
+      <div class="current-week-card">
+        <div class="week-section">
+          <div class="week-title" id="week-title-display"></div>
+          <div id="picks-group-container"></div>
+          <div id="action-buttons-container"></div>
+          <div class="compact-scores-grid" id="compact-scores-grid"></div>
+          <div id="others-container"></div>
+        </div>
+      </div>
     </div>
 
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
     <div id="upcoming-preview-container"></div>
   </div>
 
@@ -606,6 +692,7 @@
             </div>
           </div>
         `;
+        previewContainer.innerHTML = '';
         hasLoadedOnce = true;
         return;
       }
@@ -770,6 +857,60 @@
 
       html += `</div></div>`;
       container.innerHTML = html;
+
+      // --- RENDER UPCOMING WEEK TOP 5 PARLAY BOX ---
+      let previewHtml = `
+        <div class="upcoming-preview-card">
+          <div class="upcoming-preview-header">
+            <span>Next Week's Parlay Pickers</span>
+          </div>
+      `;
+
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.computedResult === 'W' || p.computedResult === 'L' || p.computedResult === 'D');
+
+      if (!allFinalized) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+      } else {
+        const winners = evaluatedPicks.filter(p => p.computedResult === 'W');
+        const losses = evaluatedPicks.filter(p => p.computedResult === 'L');
+        const pushes = evaluatedPicks.filter(p => p.computedResult === 'D');
+
+        winners.sort((a, b) => b.margin - a.margin);
+        losses.sort((a, b) => b.margin - a.margin);
+
+        let top5 = [];
+        if (winners.length >= 5) {
+          top5 = winners.slice(0, 5);
+        } else {
+          top5 = [...winners];
+          const needed = 5 - top5.length;
+          top5 = top5.concat(losses.slice(0, needed));
+          
+          if (top5.length < 5) {
+            const stillNeeded = 5 - top5.length;
+            top5 = top5.concat(pushes.slice(0, stillNeeded));
+          }
+        }
+
+        previewHtml += `<div class="upcoming-list">`;
+        top5.forEach((p, idx) => {
+          previewHtml += `
+            <div class="upcoming-item">
+              <div class="upcoming-rank">${idx + 1}</div>
+              <div class="upcoming-body">
+                <span class="upcoming-player">${p.players?.initials || '??'}</span>
+                <div class="upcoming-pick">${p.selection}</div>
+              </div>
+              <div class="upcoming-badge res-${p.computedResult}">${p.computedResult}</div>
+            </div>
+          `;
+        });
+        previewHtml += `</div>`;
+      }
+
+      previewHtml += `</div>`;
+      previewContainer.innerHTML = previewHtml;
+
       hasLoadedOnce = true;
     }
 
