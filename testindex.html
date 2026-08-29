@@ -192,75 +192,25 @@
       .tk-dot { animation: none; }
     }
 
+    /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 12px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
       text-align: center;
     }
 
+    /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title {
-      font-family: var(--font-display);
-      font-size: 1.8rem;
-      font-weight: 400;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-      color: var(--text);
-      letter-spacing: 0.5px;
-    }
-    .category-title {
-      font-family: var(--font-label);
-      font-size: 1rem;
-      font-weight: 700;
-      margin-top: 1.75rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
-    /* Clean 2-Column Grid Layout */
-    .picks-group { 
-      display: grid; 
-      grid-template-columns: repeat(2, minmax(0, 1fr)); 
-      gap: 0.85rem 2rem; 
-      margin-bottom: 1.25rem; 
-      width: 100%;
-    }
-    
-    @media (max-width: 480px) {
-      .picks-group { grid-template-columns: 1fr; gap: 0.75rem; }
-    }
-
-    .pick-item {
-      font-family: var(--font-label);
-      font-weight: 700;
-      font-size: 1.15rem;
-      letter-spacing: 0.3px;
-      background: none;
-      border: none;
-      padding: 0;
-      width: 100%;
-    }
-
-    /* Clean alternating alignment to mirror your layout */
-    .picks-group .pick-item:nth-child(odd) {
-      text-align: right;
-    }
-    .picks-group .pick-item:nth-child(even) {
-      text-align: left;
-    }
-
-    @media (max-width: 480px) {
-      .picks-group .pick-item:nth-child(odd),
-      .picks-group .pick-item:nth-child(even) {
-        text-align: center;
-      }
-    }
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
 
     .pick-item.res-W { color: var(--success); }
     .pick-item.res-L { color: var(--danger); }
@@ -404,91 +354,6 @@
     }
     .winner { color: var(--accent); }
     .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
-
-    .upcoming-preview-card {
-      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
-      border: 1px solid rgba(255, 176, 32, 0.3);
-      border-radius: 6px;
-      padding: 1.25rem;
-      margin-top: 2rem;
-      text-align: left;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
-      width: 100%;
-    }
-    .upcoming-preview-header {
-      font-family: var(--font-label);
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-    .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .upcoming-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      background: rgba(6, 10, 12, 0.6);
-      padding: 0.5rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      border: 1px solid var(--border);
-    }
-    .upcoming-rank {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.78rem;
-      color: var(--accent);
-      background: rgba(255, 176, 32, 0.1);
-      border: 1px solid rgba(255, 176, 32, 0.35);
-      border-radius: 3px;
-      min-width: 1.6rem;
-      text-align: center;
-      padding: 0.15rem 0;
-      flex-shrink: 0;
-    }
-    .upcoming-body { min-width: 0; flex-grow: 1; }
-    .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
-    .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
-    .upcoming-badge {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 0.2rem 0.5rem;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-    .upcoming-badge.res-W {
-      background: rgba(52, 214, 122, 0.12);
-      color: var(--success);
-      border: 1px solid rgba(52, 214, 122, 0.3);
-    }
-    .upcoming-badge.res-L {
-      background: rgba(255, 77, 77, 0.12);
-      color: var(--danger);
-      border: 1px solid rgba(255, 77, 77, 0.3);
-    }
-    .upcoming-badge.res-D {
-      background: rgba(79, 184, 255, 0.12);
-      color: var(--warning);
-      border: 1px solid rgba(79, 184, 255, 0.3);
-    }
-    .upcoming-pending {
-      font-family: var(--font-label);
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 1rem 0;
-      font-style: italic;
-    }
   </style>
 </head>
 <body>
@@ -500,7 +365,7 @@
       <h1 class="main-title">BBBCWSCLP</h1>
     </header>
 
-    <nav>
+    <nav> 
       <a href="index.html" class="active">Weekly</a>
       <a href="standings.html">Standings</a>
       <a href="season.html">Season</a>
@@ -741,14 +606,6 @@
             </div>
           </div>
         `;
-        previewContainer.innerHTML = `
-          <div class="upcoming-preview-card">
-            <div class="upcoming-preview-header">
-              <span>Next Week's Parlay Pickers</span>
-            </div>
-            <div class="upcoming-pending">Results pending until the winners are decided.</div>
-          </div>
-        `;
         hasLoadedOnce = true;
         return;
       }
@@ -773,7 +630,7 @@
       }
 
       if (otherPicks.length > 0) {
-        html += `<div class="category-title">Other Picks</div>`;
+        html += `<div class="category-title" style="margin-top: 2rem;">Others:</div>`;
         html += `<div class="picks-group">`;
         otherPicks.forEach(p => {
           const evaluatedResult = p.computedResult || p.result;
