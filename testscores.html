@@ -3,349 +3,481 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Live Scores</title>
+  <title>BBBCWSCLP — FBS Scores</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --accent: #3b82f6;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --gold: #f59e0b;
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { 
-      background-color: var(--bg); 
-      color: var(--text); 
-      padding: 2rem 1rem 5rem 1rem; 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 680px; margin: 0 auto; }
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
-    header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
-    header p { color: var(--text-muted); margin-top: 0.3rem; }
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
 
-    nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 0.5rem; 
-      margin-bottom: 2.5rem; 
-      width: 100%; 
-      max-width: 380px; 
-      margin-left: auto;
-      margin-right: auto;
-      flex-wrap: wrap; 
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
     }
-    
-    nav a { 
-      color: var(--text-muted); 
-      text-decoration: none; 
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
       transition: all 0.2s ease;
-      background-color: var(--card-bg);
+      background-color: transparent;
       border: 1px solid var(--border);
-      padding: 0.5rem 0.8rem;
-      border-radius: 6px;
-      font-weight: 600; 
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
       font-size: 0.85rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       white-space: nowrap;
     }
-    
-    nav a:hover { 
-      color: var(--text); 
-      border-color: var(--accent);
-      background-color: #273548;
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
     }
 
-    nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
     }
 
-    .controls-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
+    nav a:focus-visible, .filter-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Conference Filter Bar */
+    .filter-bar {
       display: flex;
-      gap: 1rem;
-      align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
     }
 
-    .controls-card input, .controls-card select {
-      background: #0f172a;
+    .filter-btn {
+      background-color: var(--card-bg);
       border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.6rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
+      color: var(--text-muted);
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      font-family: var(--font-label);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .controls-card input:focus, .controls-card select:focus {
+    .filter-btn:hover, .filter-btn.active {
+      background-color: var(--accent);
+      color: var(--bg);
       border-color: var(--accent);
     }
 
-    .scores-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .score-card {
+    /* Game Card Styling (Static & Non-clickable) */
+    .game-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      text-align: left;
+    }
+
+    .game-header-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: border-color 0.2s;
-    }
-
-    .score-card:hover {
-      border-color: var(--text-muted);
-    }
-
-    .teams-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      flex-grow: 1;
-    }
-
-    .team-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-right: 1.5rem;
-    }
-
-    .team-info {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .team-logo {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
-
-    .team-name {
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .team-name.winner {
-      color: var(--success);
-    }
-
-    .team-score {
-      font-size: 1.1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
       font-weight: 700;
-      min-width: 30px;
-      text-align: right;
-    }
-
-    .game-status-col {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      min-width: 100px;
-      gap: 0.2rem;
-      border-left: 1px solid var(--border);
-      padding-left: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .status-badge {
-      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 0.2rem 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .status-live { background-color: rgba(52, 214, 122, 0.15); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .status-live::before {
+      content: '';
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--success);
+      animation: status-pulse 1.4s ease-in-out infinite;
+    }
+    .status-final { background-color: rgba(124, 138, 144, 0.15); color: var(--text-muted); border: 1px solid var(--border); }
+    .status-sched { background-color: rgba(79, 184, 255, 0.15); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+
+    @keyframes status-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .status-live::before { animation: none; }
+    }
+
+    .situation-text {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .team-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-label);
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin: 0.6rem 0;
+    }
+
+    .team-details { display: flex; align-items: center; gap: 0.75rem; }
+    .team-logo { width: 28px; height: 28px; object-fit: contain; }
+    .team-rank { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-right: 0.2rem; }
+    .team-score {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      background: var(--card-inner);
+      border: 1px solid var(--border);
       border-radius: 4px;
-      text-transform: uppercase;
+      padding: 0.1rem 0.5rem;
+      min-width: 2.2rem;
+      text-align: center;
     }
+    .winner { color: var(--accent); }
+    .winner.team-score { border-color: rgba(255, 176, 32, 0.4); }
 
-    .status-badge.live {
-      background-color: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-    }
-
-    .status-badge.final {
-      background-color: rgba(34, 197, 94, 0.15);
-      color: var(--success);
-    }
-
-    .status-badge.upcoming {
-      background-color: rgba(148, 163, 184, 0.15);
-      color: var(--text-muted);
-    }
-
-    .detail-time {
+    .odds-line {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed var(--border);
+      font-family: var(--font-mono);
       font-size: 0.75rem;
       color: var(--text-muted);
+      font-weight: 700;
     }
 
-    .msg-center {
-      text-align: center;
-      color: var(--text-muted);
-      padding: 2rem;
-      font-size: 0.95rem;
-    }
+    .loading-msg, .error-msg { color: var(--text-muted); padding: 2rem; font-size: 0.95rem; }
+    .error-msg { color: var(--danger); }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>BBBC Live Scores</h1>
-      <p>Real-Time FCS Game Tracker & Scores</p>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">Live Scoreboard</div>
+      <h1 class="main-title">Scores</h1>
     </header>
 
     <nav>
-      <a href="testindex.html">Weekly</a>
+      <a href="index.html">Weekly</a>
       <a href="standings.html">Standings</a>
       <a href="season.html">Season</a>
-      <a href="testscores.html" class="active">Scores</a>
-      <a href="admin.html">Admin</a>
       <a href="halloffame.html">HOF</a>
+      <a href="scores.html" class="active">Scores</a>
     </nav>
 
-    <div class="controls-card">
-      <input type="text" id="search-filter" placeholder="🔍 Search team..." oninput="filterGames()">
-      <select id="status-filter" onchange="filterGames()">
-        <option value="all">All Games</option>
-        <option value="live">Live / In-Progress</option>
-        <option value="final">Final</option>
-        <option value="upcoming">Upcoming</option>
-      </select>
+    <!-- Optional Quick Filter for Major FBS Conferences -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterGames('all', event)">All FBS</button>
+      <button class="filter-btn" onclick="filterGames('sec', event)">SEC</button>
+      <button class="filter-btn" onclick="filterGames('big10', event)">Big Ten</button>
+      <button class="filter-btn" onclick="filterGames('acc', event)">ACC</button>
+      <button class="filter-btn" onclick="filterGames('big12', event)">Big 12</button>
     </div>
 
-    <div id="scores-container" class="scores-grid">
-      <div class="msg-center">Loading FCS scoreboard feed...</div>
+    <div id="scores-container">
+      <div class="loading-msg">Fetching matchups...</div>
     </div>
   </div>
 
   <script>
-    let allGamesCache = [];
+    let rawEvents = [];
+    let currentFilter = 'all';
 
-    async function fetchLiveScores() {
+    async function fetchScores(isBackgroundRefresh = false) {
       const container = document.getElementById('scores-container');
+      const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300';
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=81&limit=400');
+        // Only show the loading message on the initial load, not background polls
+        if (!isBackgroundRefresh && rawEvents.length === 0) {
+          container.innerHTML = '<div class="loading-msg">Fetching matchups...</div>';
+        }
+
+        const response = await fetch(apiURL);
         const data = await response.json();
 
         if (!data.events || data.events.length === 0) {
-          container.innerHTML = '<div class="msg-center">No FCS games found for this schedule.</div>';
+          if (!isBackgroundRefresh) {
+            container.innerHTML = '<div class="loading-msg">No games scheduled.</div>';
+          }
           return;
         }
 
-        allGamesCache = data.events;
-        renderGames(allGamesCache);
+        // No artificial date cutoff here — the ESPN scoreboard endpoint
+        // already returns the current week's slate on its own (same as the
+        // other pages on this site that hit this endpoint), so we just take
+        // whatever it gives us instead of hardcoding a window that expires.
+        rawEvents = data.events;
+
+        renderGames();
 
       } catch (err) {
-        console.error('Error fetching scores:', err);
-        container.innerHTML = '<div class="msg-center" style="color: var(--danger);">Error connecting to ESPN score feed.</div>';
+        console.error('Error loading scores:', err);
+        // Only show error message if we don't already have rendered games
+        if (rawEvents.length === 0) {
+          container.innerHTML = '<div class="error-msg">Could not load live FBS scores. Please try again later.</div>';
+        }
       }
     }
 
-    function renderGames(events) {
+    function filterGames(conf, clickEvent) {
+      currentFilter = conf;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      if (clickEvent && clickEvent.target) {
+        clickEvent.target.classList.add('active');
+      }
+      renderGames();
+    }
+
+    function renderGames() {
       const container = document.getElementById('scores-container');
-      const searchTerm = document.getElementById('search-filter').value.toLowerCase().trim();
-      const statusFilter = document.getElementById('status-filter').value;
 
-      container.innerHTML = '';
+      let filteredEvents = rawEvents;
 
-      let displayedCount = 0;
+      // Group/Conference Filtering Logic
+      if (currentFilter !== 'all') {
+        filteredEvents = rawEvents.filter(event => {
+          const comp = event.competitions[0];
+          const homeConf = comp.competitors[0]?.team?.conferenceId;
+          const awayConf = comp.competitors[1]?.team?.conferenceId;
 
-      events.forEach(event => {
-        const comp = event.competitions[0];
-        const home = comp.competitors.find(c => c.homeAway === 'home');
-        const away = comp.competitors.find(c => c.homeAway === 'away');
+          if (currentFilter === 'sec') return homeConf === '8' || awayConf === '8';
+          if (currentFilter === 'big10') return homeConf === '5' || awayConf === '5';
+          if (currentFilter === 'acc') return homeConf === '1' || awayConf === '1';
+          if (currentFilter === 'big12') return homeConf === '4' || awayConf === '4';
+          return true;
+        });
+      }
 
-        const homeName = home.team.displayName || home.team.name;
-        const awayName = away.team.displayName || away.team.name;
-        const homeAbbr = home.team.abbreviation;
-        const awayAbbr = away.team.abbreviation;
-        const homeLogo = home.team.logo || '';
-        const awayLogo = away.team.logo || '';
-        const homeScore = parseInt(home.score || '0', 10);
-        const awayScore = parseInt(away.score || '0', 10);
+      if (filteredEvents.length === 0) {
+        container.innerHTML = '<div class="loading-msg">No games found for this filter.</div>';
+        return;
+      }
 
-        const gameState = comp.status.type.state; // pre, in, post
-        const isCompleted = comp.status.type.completed;
-        const statusDetail = comp.status.type.shortDetail;
+      // Sort criteria: Live ('in') games first, then upcoming ('pre'), then finalized ('post') at the bottom
+      filteredEvents.sort((a, b) => {
+        const stateA = a.competitions[0].status.type.state;
+        const stateB = b.competitions[0].status.type.state;
 
-        let statusCategory = 'upcoming';
-        if (gameState === 'in') statusCategory = 'live';
-        else if (gameState === 'post' || isCompleted) statusCategory = 'final';
+        const getPriority = (state) => {
+          if (state === 'in') return 1;
+          if (state === 'pre') return 2;
+          if (state === 'post') return 3;
+          return 4;
+        };
 
-        // Apply filters
-        if (statusFilter !== 'all' && statusCategory !== statusFilter) return;
-        if (searchTerm && !homeName.toLowerCase().includes(searchTerm) && !awayName.toLowerCase().includes(searchTerm) && !homeAbbr.toLowerCase().includes(searchTerm) && !awayAbbr.toLowerCase().includes(searchTerm)) return;
-
-        displayedCount++;
-
-        const isHomeWinner = isCompleted && homeScore > awayScore;
-        const isAwayWinner = isCompleted && awayScore > homeScore;
-
-        const card = document.createElement('div');
-        card.className = 'score-card';
-        card.innerHTML = `
-          <div class="teams-col">
-            <div class="team-row">
-              <div class="team-info">
-                ${awayLogo ? `<img src="${awayLogo}" class="team-logo" alt="">` : ''}
-                <span class="team-name ${isAwayWinner ? 'winner' : ''}">${awayName}</span>
-              </div>
-              <span class="team-score">${gameState === 'pre' ? '-' : awayScore}</span>
-            </div>
-            <div class="team-row">
-              <div class="team-info">
-                ${homeLogo ? `<img src="${homeLogo}" class="team-logo" alt="">` : ''}
-                <span class="team-name ${isHomeWinner ? 'winner' : ''}">${homeName}</span>
-              </div>
-              <span class="team-score">${gameState === 'pre' ? '-' : homeScore}</span>
-            </div>
-          </div>
-          <div class="game-status-col">
-            <span class="status-badge ${statusCategory}">${gameState === 'in' ? 'LIVE' : (statusCategory === 'final' ? 'Final' : 'Upcoming')}</span>
-            <span class="detail-time">${statusDetail}</span>
-          </div>
-        `;
-        container.appendChild(card);
+        return getPriority(stateA) - getPriority(stateB);
       });
 
-      if (displayedCount === 0) {
-        container.innerHTML = '<div class="msg-center">No games match your current filter.</div>';
-      }
+      // Build HTML string to update DOM cleanly all at once
+      let html = '';
+
+      filteredEvents.forEach(event => {
+        const competition = event.competitions[0];
+        const statusType = competition.status.type.state; // 'pre', 'in', 'post'
+        const statusDetail = competition.status.type.detail; // e.g. "Final", "3rd 4:12"
+
+        const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+        const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+        const homeRank = homeTeam.curatedRank?.current <= 25 ? `#${homeTeam.curatedRank.current} ` : '';
+        const awayRank = awayTeam.curatedRank?.current <= 25 ? `#${awayTeam.curatedRank.current} ` : '';
+
+        const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
+        const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+
+        const homeLogo = homeTeam.team.logo || '';
+        const awayLogo = awayTeam.team.logo || '';
+
+        const homeScore = homeTeam.score || '0';
+        const awayScore = awayTeam.score || '0';
+
+        // Live Situational Data (Down & Distance, Ball on yard line)
+        let situationHTML = '';
+        if (statusType === 'in' && competition.situation) {
+          const sit = competition.situation;
+          if (sit.downText && sit.shortDisplayName) {
+            situationHTML = `<span class="situation-text">🏈 ${sit.downText} &bull; ${sit.shortDisplayName}</span>`;
+          }
+        }
+
+        // Broadcast info
+        const broadcast = competition.broadcasts && competition.broadcasts.length > 0
+          ? competition.broadcasts[0].names.join(', ')
+          : '';
+
+        // Odds Info
+        const oddsObj = competition.odds && competition.odds.length > 0 ? competition.odds[0] : null;
+        const spreadText = oddsObj?.details ? `Spread: ${oddsObj.details}` : '';
+        const ouText = oddsObj?.overUnder ? `O/U: ${oddsObj.overUnder}` : '';
+
+        // Status badge logic
+        let badgeClass = 'status-sched';
+        let statusLabel = statusDetail;
+        if (statusType === 'in') {
+          badgeClass = 'status-live';
+          statusLabel = `LIVE • ${statusDetail}`;
+        } else if (statusType === 'post') {
+          badgeClass = 'status-final';
+          statusLabel = 'FINAL';
+        }
+
+        const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
+        const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
+
+        html += `
+          <div class="game-card">
+            <div class="game-header-info">
+              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              ${situationHTML}
+              <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
+            </div>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${isAwayWinner ? 'winner' : ''}"><span class="team-rank">${awayRank}</span>${awayName}</span>
+              </div>
+              <span class="team-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
+            </div>
+            <div class="team-line">
+              <div class="team-details">
+                <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
+                <span class="${isHomeWinner ? 'winner' : ''}"><span class="team-rank">${homeRank}</span>${homeName}</span>
+              </div>
+              <span class="team-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
+            </div>
+            ${(spreadText || ouText) ? `
+              <div class="odds-line">
+                <span>${spreadText}</span>
+                <span>${ouText}</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
     }
 
-    function filterGames() {
-      renderGames(allGamesCache);
-    }
+    // Initial load
+    fetchScores(false);
 
-    // Initial load and auto-refresh every 60 seconds for live updates
-    fetchLiveScores();
-    setInterval(fetchLiveScores, 60000);
+    // Auto-refresh every 10 seconds in the background
+    setInterval(() => {
+      fetchScores(true);
+    }, 10000);
   </script>
 </body>
 </html>
