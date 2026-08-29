@@ -15,7 +15,6 @@
 
   <style>
     :root {
-      /* Graphite stadium-night base, not a generic navy */
       --bg: #0a0e10;
       --card-bg: #14191d;
       --card-inner: #060a0c;
@@ -23,12 +22,10 @@
       --text-muted: #7c8a90;
       --border: #223038;
 
-      /* Scoreboard result colors: kept visually distinct from the hero accent */
       --success: #34d67a;
       --danger: #ff4d4d;
       --warning: #4fb8ff;
 
-      /* Tote-board amber: the one hero/signature color, used for live + accents */
       --accent: #ffb020;
       --gold: #ffb020;
 
@@ -84,7 +81,6 @@
       line-height: 1;
     }
 
-    /* Navigation Bar — broadcast channel tabs */
     nav { 
       display: flex; 
       justify-content: center; 
@@ -128,7 +124,6 @@
       outline-offset: 2px;
     }
 
-    /* Live Ticker — the signature broadcast element */
     .ticker-wrap {
       width: 100%;
       background-color: var(--card-inner);
@@ -197,7 +192,6 @@
       .tk-dot { animation: none; }
     }
 
-    /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
@@ -208,7 +202,6 @@
       text-align: center;
     }
 
-    /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
     .week-title {
       font-family: var(--font-display);
@@ -230,8 +223,18 @@
       letter-spacing: 1.5px;
     }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem 0.75rem; margin-bottom: 1rem; }
+    /* Fixed 2-Column Grid for Even Layout */
+    .picks-group { 
+      display: grid; 
+      grid-template-columns: repeat(2, minmax(0, 1fr)); 
+      gap: 0.6rem 0.75rem; 
+      margin-bottom: 1rem; 
+    }
+    
+    @media (max-width: 480px) {
+      .picks-group { grid-template-columns: 1fr; }
+    }
+
     .pick-item {
       font-family: var(--font-label);
       font-weight: 600;
@@ -239,21 +242,24 @@
       background-color: var(--card-inner);
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 0.35rem 0.6rem 0.35rem 0.5rem;
+      padding: 0.5rem 0.75rem;
       display: flex;
       align-items: center;
+      width: 100%;
+      text-align: left;
     }
     .pick-item::before {
       font-family: var(--font-mono);
       font-weight: 700;
       font-size: 0.72rem;
-      margin-right: 0.4rem;
+      margin-right: 0.5rem;
       padding: 0.1rem 0.35rem;
       border-radius: 3px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
+      flex-shrink: 0;
     }
     .pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
     .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
@@ -265,7 +271,6 @@
     .res-D { color: var(--warning); }
     .res-pending { color: var(--text); }
 
-    /* Action Link Button Styling */
     .btn-gambly {
       display: block;
       width: 100%;
@@ -290,7 +295,6 @@
       transform: translateY(-1px);
     }
 
-    /* Clean Compact Parlay Scoreboard Ticker */
     .compact-scores-grid {
       display: flex;
       flex-direction: column;
@@ -387,21 +391,25 @@
       text-align: left;
       letter-spacing: 0.3px;
     }
+    
+    /* Perfectly Centered Score Badge Fix */
     .compact-score {
       font-family: var(--font-mono);
       font-weight: 700;
-      min-width: 26px;
-      text-align: right;
+      width: 30px; 
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       color: var(--text);
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 3px;
-      padding: 0.05rem 0.3rem;
     }
     .winner { color: var(--accent); }
     .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
 
-    /* Upcoming Week Top 5 Box Styling */
     .upcoming-preview-card {
       background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
       border: 1px solid rgba(255, 176, 32, 0.3);
@@ -513,7 +521,6 @@
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
     </div>
 
-    <!-- Always-On Upcoming Week / Top 5 Box Container -->
     <div id="upcoming-preview-container"></div>
   </div>
 
@@ -676,7 +683,7 @@
 
       requestAnimationFrame(() => {
         const singleSetWidth = track.scrollWidth / 2;
-        const PIXELS_PER_SECOND = 27; // Slowed down reading pace
+        const PIXELS_PER_SECOND = 27;
         const MIN_DURATION = 18;
         const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
         track.style.animationDuration = `${duration}s`;
@@ -755,7 +762,6 @@
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
 
-      // --- RENDER CURRENT WEEK IN BOX ---
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
 
@@ -771,7 +777,6 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- OTHER / NON-PARLAY PICKS SECTION (PLACED RIGHT BELOW PARLAY PICKS) ---
       if (otherPicks.length > 0) {
         html += `<div class="category-title">Other Picks</div>`;
         html += `<div class="picks-group">`;
@@ -783,7 +788,6 @@
         html += `</div>`;
       }
 
-      // --- DYNAMIC STACKED BUTTONS ---
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
@@ -795,7 +799,6 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
