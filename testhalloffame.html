@@ -1,1 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Hall of Fame</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Favicon / Browser Tab Icon -->
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
+    }
+
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    nav a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Section & Card Styling */
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      color: var(--text);
+      text-align: left;
+    }
+
+    /* Featured Legacy Blocks (Top Section Stacked) */
+    .featured-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .featured-card {
+      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      text-align: left;
+    }
+
+    .featured-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--accent);
+      background-color: var(--card-inner);
+      flex-shrink: 0;
+    }
+
+    .featured-info h3 {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+    }
+
+    .featured-name {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.6rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+      line-height: 1.1;
+    }
+
+    .featured-sub {
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Chronological Champion Blocks Grid */
+    .champs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .champ-block {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      text-align: left;
+    }
+
+    .champ-year {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 56px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.4rem;
+      text-align: center;
+    }
+
+    .champ-avatar {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+      background-color: var(--card-inner);
+      flex-shrink: 0;
+    }
+
+    .champ-info h4 {
+      font-family: var(--font-label);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.15rem;
+    }
+
+    .champ-info p {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">Legacy & Legends</div>
+      <h1 class="main-title">Hall of Fame</h1>
+    </header>
+
+    <nav>
+      <a href="testindex.html">Weekly</a>
+      <a href="teststandings.html">Standings</a>
+      <a href="testseason.html">Season</a>
+      <a href="testhalloffame.html" class="active">HOF</a>
+      <a href="testscores.html">Scores</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted);">Loading Hall of Fame...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Called via onerror on avatar <img> tags — if the stored avatar URL is
+    // broken or 404s, swap the image out for the same initials placeholder
+    // used when there's no avatar at all, instead of a broken-image icon.
+    function avatarFallback(imgEl, initialsText, cssClass) {
+      const div = document.createElement('div');
+      div.className = cssClass;
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.justifyContent = 'center';
+      div.style.fontFamily = "var(--font-display)";
+      div.style.fontWeight = '400';
+      div.style.letterSpacing = '0.5px';
+      div.style.color = 'var(--accent)';
+      div.textContent = initialsText;
+      imgEl.replaceWith(div);
+    }
+
+    async function loadHallOfFame() {
+      const { data: players, error } = await _supabase.from('players').select('*');
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+
+      if (error) {
+        console.error('Failed to load players for Hall of Fame:', error);
+        container.innerHTML = `<div style="color: var(--danger);">Couldn't load Hall of Fame data (connection error). Try refreshing.</div>`;
+        return;
+      }
+
+      // Helper map to look up player avatars by their database initials key
+      const playerAvatarMap = {};
+      if (players) {
+        players.forEach(p => {
+          if (p.initials) {
+            playerAvatarMap[p.initials.trim().toLowerCase()] = p.avatar_url;
+          }
+        });
+      }
+
+      // Map display names directly to their database initials
+      const nameOverrides = {
+        'dylan turner': 'dt',
+        'austin turner': 'at',
+        'caleb': 'ck',
+        'harler': 'ah'
+      };
+
+      function getAvatarHTML(displayName, cssClass) {
+        const lowerName = displayName.trim().toLowerCase();
+        const dbKey = nameOverrides[lowerName] || lowerName;
+
+        const avatarUrl = playerAvatarMap[dbKey] || playerAvatarMap[lowerName];
+        const initialsText = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+
+        if (avatarUrl) {
+          return `<img src="${avatarUrl}" alt="${displayName}" class="${cssClass}" onerror="avatarFallback(this, '${initialsText}', '${cssClass}')">`;
+        } else {
+          return `<div class="${cssClass}" style="display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 400; letter-spacing: 0.5px; color: var(--accent);">${initialsText}</div>`;
+        }
+      }
+
+      let html = '';
+
+      // Top Stacked Featured Blocks
+      html += `<div class="featured-stack">`;
+
+      // 1. Reigning Defending Champion (Dylan Turner)
+      html += `
+        <div class="featured-card">
+          ${getAvatarHTML('Dylan Turner', 'featured-avatar')}
+          <div class="featured-info">
+            <h3>🏆 Reigning & Defending Champion</h3>
+            <div class="featured-name">Dylan Turner</div>
+            <div class="featured-sub">2025 Season Belt Holder</div>
+          </div>
+        </div>
+      `;
+
+      // 2. Most Wins / All-Time Great (Austin Turner)
+      html += `
+        <div class="featured-card">
+          ${getAvatarHTML('Austin Turner', 'featured-avatar')}
+          <div class="featured-info">
+            <h3>👑 Most Wins</h3>
+            <div class="featured-name">Austin Turner</div>
+            <div class="featured-sub">2x Champion (2021 & 2022)</div>
+          </div>
+        </div>
+      `;
+
+      html += `</div>`; // Close featured-stack
+
+      // Chronological Belt History Blocks
+      const champions = [
+        { year: '2025', name: 'Dylan Turner', role: 'Defending Champion' },
+        { year: '2024', name: 'Caleb', role: 'Belt Champion' },
+        { year: '2023', name: 'Harler', role: 'Belt Champion' },
+        { year: '2022', name: 'Austin Turner', role: 'Belt Champion' },
+        { year: '2021', name: 'Austin Turner', role: 'Belt Champion' }
+      ];
+
+      html += `<div class="section-title">Championship Belt History</div>`;
+      html += `<div class="champs-grid">`;
+
+      champions.forEach(c => {
+        html += `
+          <div class="champ-block">
+            <div class="champ-year">${c.year}</div>
+            ${getAvatarHTML(c.name, 'champ-avatar')}
+            <div class="champ-info">
+              <h4>${c.name}</h4>
+              <p>${c.role}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+
+      container.innerHTML = html;
+    }
+
+    loadHallOfFame();
+  </script>
+</body>
+</html>
