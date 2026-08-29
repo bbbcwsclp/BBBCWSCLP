@@ -3,18 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBBCWSCLP — Admin Panel</title>
+  <title>BBBCWSCLP — Weekly</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
   <style>
     :root {
       --bg: #0f172a;
-      --card-bg: #1e293b;
+      --card-bg: #1a2638;
+      --card-inner: #0b1120;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
-      --accent: #3b82f6;
       --success: #22c55e;
       --danger: #ef4444;
+      --warning: #eab308;
+      --accent: #3b82f6;
       --gold: #f59e0b;
     }
 
@@ -23,30 +29,27 @@
     body { 
       background-color: var(--bg); 
       color: var(--text); 
-      padding: 2rem 1rem 5rem 1rem; 
+      padding: 2rem 1rem 4rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow-y: scroll;
     }
 
-    .container { width: 100%; max-width: 680px; margin: 0 auto; }
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
-    header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 2.25rem; font-weight: 800; color: var(--text); }
-    header p { color: var(--text-muted); margin-top: 0.3rem; }
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
+    /* Navigation Bar */
     nav { 
       display: flex; 
       justify-content: center; 
-      gap: 0.5rem; 
+      gap: 0.35rem; 
       margin-bottom: 2.5rem; 
       width: 100%; 
-      max-width: 380px; 
-      margin-left: auto;
-      margin-right: auto;
-      flex-wrap: wrap; 
     }
     
     nav a { 
@@ -55,10 +58,10 @@
       transition: all 0.2s ease;
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      padding: 0.5rem 0.8rem;
+      padding: 0.4rem 0.6rem;
       border-radius: 6px;
       font-weight: 600; 
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
       white-space: nowrap;
     }
@@ -74,395 +77,41 @@
       background-color: var(--accent);
       border-color: var(--accent);
     }
-    
-    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 2rem; position: relative; }
-    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-    .form-group { margin-bottom: 1.1rem; }
-    
-    label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
-    
-    input, select { 
-      width: 100%; 
-      padding: 0.7rem 0.85rem; 
-      background: #0f172a; 
-      border: 1px solid var(--border); 
-      border-radius: 8px;
-      color: var(--text); 
-      font-size: 0.95rem; 
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 0.75rem center;
-      background-size: 1rem;
-      padding-right: 2.5rem;
-    }
-
-    .input-with-action {
-      display: flex;
-      gap: 0.5rem;
-    }
-    
-    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
-    .checkbox-group input { width: auto; }
-
-    button { background-color: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
-    button:hover { background-color: #2563eb; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
-    th, td { text-align: left; padding: 0.35rem 0.2rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
-
-    .row-selection { width: 100%; padding: 0.35rem; font-size: 0.85rem; }
-    .row-result { width: 65px; padding: 0.35rem 0.1rem; font-size: 0.8rem; }
-    
-    /* Standard/Form Delete Button */
-    .delete-btn { 
-      width: 48px;
-      background-color: var(--danger); 
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .delete-btn:hover { background-color: #dc2626; }
-
-    /* Compact Delete Button restricted strictly to Table Rows */
-    table tbody .delete-btn { 
-      width: 28px; 
-      height: 28px; 
-      padding: 0; 
-      font-size: 0.75rem; 
-      border-radius: 6px;
-    }
-
-    /* Compact Parlay Checkbox inside Table Rows */
-    table input[type="checkbox"].row-parlay {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
-    
-    .msg { margin-top: 0.75rem; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.4rem; transition: all 0.3s ease; }
-    
-    .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
-    .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
-    
-    .btn-row { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 0.5rem; 
-      width: 100%;
-      margin-bottom: 0.5rem;
-    }
-    .btn-row button {
-      width: 100%;
-      padding: 0.6rem 0.5rem;
-      font-size: 0.8rem;
-      white-space: nowrap;
-    }
-    .btn-row button:first-child {
-      grid-column: span 2;
-    }
-
-    .btn-batch { background-color: var(--success); }
-    .btn-batch:hover { background-color: #16a34a; }
-    .btn-autograde { background-color: #d97706; }
-    .btn-autograde:hover { background-color: #b45309; }
-    .btn-autoselect { background-color: #8b5cf6; }
-    .btn-autoselect:hover { background-color: #7c3aed; }
-
-    .week-section-banner {
-      background: #0f172a;
+    /* Current Week Card Container */
+    .current-week-card {
+      background-color: var(--card-bg);
       border: 1px solid var(--border);
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      margin: 1.25rem 0 0.5rem 0;
-      font-weight: 800;
-      font-size: 1rem;
-      color: var(--gold);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      border-radius: 12px;
+      padding: 1.75rem 1.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      text-align: center;
     }
 
-    .filter-input {
-      margin-bottom: 1.1rem;
-    }
+    /* Week Section Styling */
+    .week-section { margin-bottom: 0; text-align: center; }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
-    .live-score-tag {
-      font-size: 0.75rem;
-      color: var(--gold);
-      margin-top: 0.2rem;
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
+
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+
+    /* Action Link Button Styling */
+    .btn-gambly {
       display: block;
-    }
-
-    .sticky-action-bar {
-      position: fixed;
-      bottom: -80px;
-      left: 0;
-      right: 0;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(5px);
-      border-top: 1px solid var(--border);
-      padding: 1rem;
-      display: flex;
-      justify-content: center;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
-      transition: bottom 0.3s ease;
-      z-index: 100;
-    }
-
-    .sticky-action-bar.visible {
-      bottom: 0;
-    }
-
-    .sticky-action-bar button {
-      max-width: 300px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <header>
-      <h1>BBBC Admin Panel</h1>
-      <p>Manage Weeks, Picks, and Results</p>
-    </header>
-
-    <nav>
-      <a href="index.html">Weekly</a>
-      <a href="standings.html">Standings</a>
-      <a href="season.html">Season</a>
-      <a href="scores.html">Scores</a>
-      <a href="admin.html" class="active">Admin</a>
-      <a href="halloffame.html">HOF</a>
-    </nav>
-
-    <div class="card">
-      <h2>1. Open or Close a Week</h2>
-      <form id="week-form">
-        <div class="form-group">
-          <label for="week-number-select">Week Number to Create/Update</label>
-          <select id="week-number-select" required>
-            <option value="0">Week 0</option>
-            <option value="1">Week 1</option>
-            <option value="2">Week 2</option>
-            <option value="3">Week 3</option>
-            <option value="4">Week 4</option>
-            <option value="5">Week 5</option>
-            <option value="6">Week 6</option>
-            <option value="7">Week 7</option>
-            <option value="8">Week 8</option>
-            <option value="9">Week 9</option>
-            <option value="10">Week 10</option>
-            <option value="11">Week 11</option>
-            <option value="12">Week 12</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="week-status">Week Status</label>
-          <select id="week-status">
-            <option value="open">Open (Active on Main Page)</option>
-            <option value="closed">Closed / Finished</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Featured Week Video</label>
-          <video width="100%" controls style="border-radius: 8px; border: 1px solid var(--border);">
-            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
-        <div class="form-group">
-          <label for="week-slip-link">Courtside Slip Link URL</label>
-          <div class="input-with-action">
-            <input type="text" id="week-slip-link" autocomplete="off" placeholder="https://courtside.app/...">
-            <button type="button" class="delete-btn" onclick="clearWeekLink('slip')" title="Clear Slip Link">✕</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="week-gambly-link">Gambly Link URL</label>
-          <div class="input-with-action">
-            <input type="text" id="week-gambly-link" autocomplete="off" placeholder="https://gambly.com...">
-            <button type="button" class="delete-btn" onclick="clearWeekLink('gambly')" title="Clear Gambly Link">✕</button>
-          </div>
-        </div>
-        <button type="submit">Save Week Details</button>
-        <div id="week-msg" class="msg"></div>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>2. Add a Member Pick</h2>
-      <form id="pick-form">
-        <div class="form-group">
-          <label for="pick-week">Select Week</label>
-          <select id="pick-week" required>
-            <option value="">Loading weeks...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="pick-player">Select Player</label>
-          <select id="pick-player" required>
-            <option value="">Loading players...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
-          <input type="text" id="pick-selection" required placeholder="Enter pick details">
-        </div>
-        <div class="form-group checkbox-group">
-          <input type="checkbox" id="pick-is-parlay">
-          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text);">Include in Week's Top Parlay</label>
-        </div>
-        <button type="submit">Submit Pick</button>
-        <div id="pick-msg" class="msg"></div>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="table-header-action">
-        <h2>3. Manage & Grade Active Week Picks</h2>
-        <div class="btn-row">
-          <button class="btn-autoselect" onclick="autoSelectTop5('active')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
-          <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
-          <button class="btn-batch btn-success" onclick="saveAllPicks('active')">💾 Save All Active</button>
-        </div>
-      </div>
-      <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
-      <div id="active-container">
-        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
-      </div>
-      <div id="active-msg" class="msg"></div>
-    </div>
-
-    <div class="card">
-      <div class="table-header-action">
-        <h2>4. Finalized & Closed Week Picks</h2>
-        <div class="btn-row">
-          <button class="btn-autoselect" onclick="autoSelectTop5('finalized')" title="Auto-select top 5 parlay picks based on margin">⭐ Auto-Select Top 5</button>
-          <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
-          <button class="btn-batch btn-success" onclick="saveAllPicks('finalized')">💾 Save All Closed</button>
-        </div>
-      </div>
-      <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
-      <div id="finalized-container">
-        <div style="color: var(--text-muted); text-align: center; padding: 1rem;">No finalized picks found.</div>
-      </div>
-      <div id="finalized-msg" class="msg"></div>
-    </div>
-  </div>
-
-  <div id="sticky-save-bar" class="sticky-action-bar">
-    <button class="btn-batch btn-success" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
-  </div>
-
-  <script>
-    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
-
-    const { createClient } = window.supabase;
-    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let allWeeksCache = [];
-    let hasUnsavedChanges = false;
-
-    const weekSelect = document.getElementById('week-number-select');
-    const statusSelect = document.getElementById('week-status');
-    const slipLinkInput = document.getElementById('week-slip-link');
-    const gamblyLinkInput = document.getElementById('week-gambly-link');
-
-    async function initAdmin() {
-      await loadDropdowns();
-      await loadAdminPicks();
-    }
-
-    async function loadDropdowns() {
-      const { data: weeks } = await _supabase
-        .from('weeks')
-        .select('*')
-        .order('week_number', { ascending: false });
-
-      allWeeksCache = weeks || [];
-
-      const pickWeekSelect = document.getElementById('pick-week');
-      pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
-      
-      let openWeekNum = null;
-      let openWeekId = '';
-
-      if (weeks) {
-        weeks.forEach(w => {
-          if (w.status === 'open' && openWeekNum === null) {
-            openWeekNum = w.week_number;
-            openWeekId = w.id;
-          }
-          pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
-        });
-      }
-
-      if (openWeekId) {
-        pickWeekSelect.value = openWeekId;
-      }
-
-      if (openWeekNum !== null) {
-        weekSelect.value = openWeekNum;
-        loadWeekDetails(openWeekNum);
-      } else {
-        loadWeekDetails(parseInt(weekSelect.value, 10));
-      }
-
-      const playerSelect = document.getElementById('pick-player');
-      const { data: players } = await _supabase
-        .from('players')
-        .select('*')
-        .order('initials', { ascending: true });
-
-      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
-      if (players) {
-        players.forEach(p => {
-          playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
-        });
-      }
-    }
-
-    async function loadWeekDetails(weekNum) {
-      const found = allWeeksCache.find(w => w.week_number === weekNum);
-      if (found) {
-        statusSelect.value = found.status || 'open';
-        slipLinkInput.value = found.slip_link || '';
-        gamblyLinkInput.value = found.gambly_link || '';
-      } else {
-        statusSelect.value = 'open';
-        slipLinkInput.value = '';
-        gamblyLinkInput.value = '';
-      }
-    }
-
-    weekSelect.addEventListener('change', (e) => {
-      loadWeekDetails(parseInt(e.target.value, 10));
-    });
-
-    async function clearWeekLink(linkType) {
-      const weekNum = parseInt(weekSelect.value, 10);
-      const fieldToClear = linkType === 'slip' ? 'slip_link' : 'gambly_link';
-      const msg = document.getElementById('week-msg');
-
-      if (!confirm(`Are you sure you want to clear the ${linkType === 'slip' ? 'Courtside Slip' : 'Gambly'} link for Week ${weekNum}?`)) return;
-
-      const updatePayload = {};
-      updatePayload[fieldTo
+      width: 100%;
+      max-width: 400px;
+      margin: 1.25rem auto 0 auto;
+      background-color: var(--accent);
+      color: white;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
