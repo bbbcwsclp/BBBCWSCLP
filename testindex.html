@@ -250,6 +250,16 @@
       color: var(--success);
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
+    .upcoming-badge.neg {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .upcoming-badge.even {
+      background: rgba(234, 179, 8, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
     .upcoming-pending {
       font-size: 0.88rem;
       color: var(--text-muted);
@@ -410,13 +420,11 @@
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
       
-      // 1. Output Top 5 parlay picker initials with a colon
       cachedData.top5.forEach(p => {
         const initials = p.players?.initials || '??';
         text += `${initials}:\n`;
       });
 
-      // 2. Output non-parlay picks from allPicks (anything not marked as is_parlay === true)
       const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
       
@@ -744,13 +752,24 @@
       } else {
         previewHtml += `<div class="upcoming-list">`;
         cachedData.top5.forEach((p, idx) => {
+          let marginDisplay = 'Even';
+          let badgeClass = 'even';
+
+          if (p.margin > 0) {
+            marginDisplay = `+${p.margin}`;
+            badgeClass = '';
+          } else if (p.margin < 0 && p.margin !== -999) {
+            marginDisplay = `${p.margin}`;
+            badgeClass = 'neg';
+          }
+
           previewHtml += `
             <div class="upcoming-item">
               <div>
                 <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
                 <div class="upcoming-pick">${p.selection}</div>
               </div>
-              <div class="upcoming-badge">Result: ${p.finalResultForScoring}</div>
+              <div class="upcoming-badge ${badgeClass}">${marginDisplay}</div>
             </div>
           `;
         });
