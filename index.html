@@ -154,7 +154,6 @@
       min-width: 0;
     }
 
-    /* Multi-line pick container inside the scorecard */
     .compact-picks-stack {
       display: flex;
       flex-direction: column;
@@ -310,12 +309,13 @@
 
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
-        let computedResult = null;
+        let computedResult = pick.result || null;
         let computedMargin = -999;
 
-        const searchTerms = getTeamSearchTerms(pick.selection);
-        const selLower = (pick.selection || '').toLowerCase();
-        const isTeamTotal = /\b(team total|tt)\b/.test(selLower);
+        const selText = (pick.selection || '').trim().toLowerCase();
+        const searchTerms = getTeamSearchTerms(selText);
+        const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
+        const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
         const matchedEvent = espnEvents.find(ev => {
           const comp = ev.competitions[0];
@@ -341,56 +341,47 @@
             const homeScore = parseInt(homeTeam.score || '0', 10);
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
-            const homeName = (homeTeam.team.shortDisplayName || homeTeam.team.name || '').toLowerCase();
+            const homeName = (homeTeam.team.name || '').toLowerCase();
+            const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
             const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
-            const isHomePick = searchTerms.some(term => homeName.includes(term) || term.includes(homeName) || homeAbbr === term);
-            
-            const pickedTeamScore = isHomePick ? homeScore : awayScore;
-            const oppTeamScore = isHomePick ? awayScore : homeScore;
 
-            if (isTeamTotal) {
-              const lineMatch = selLower.match(/\b([ou])\s*(\d+(\.\d+)?)\b/);
-              let line = 0;
-              let isOver = true;
+            const awayName = (awayTeam.team.name || '').toLowerCase();
+            const awayShort = (awayTeam.team.shortDisplayName || '').toLowerCase();
+            const awayAbbr = (awayTeam.team.abbreviation || '').toLowerCase();
 
+            const isHomePick = searchTerms.some(term => 
+              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
+            );
+
+            if (isTotalOrTT) {
+              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
               if (lineMatch) {
-                isOver = lineMatch[1] === 'o';
-                line = parseFloat(lineMatch[2]);
-              }
-              
-              if (isOver) {
-                computedMargin = pickedTeamScore - line;
-                if (pickedTeamScore > line) computedResult = 'W';
-                else if (pickedTeamScore < line) computedResult = 'L';
-                else computedResult = 'D';
-              } else {
-                computedMargin = line - pickedTeamScore;
-                if (pickedTeamScore < line) computedResult = 'W';
-                else if (pickedTeamScore > line) computedResult = 'L';
-                else computedResult = 'D';
+                const direction = lineMatch[1];
+                const line = parseFloat(lineMatch[2]);
+                const isOver = direction === 'o' || direction === 'over';
+
+                if (isTeamTotal) {
+                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
+                  computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
+                } else {
+                  const totalScore = homeScore + awayScore;
+                  computedMargin = isOver ? (totalScore - line) : (line - totalScore);
+                }
+                computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
               }
             } else {
+              const pickedTeamScore = isHomePick ? homeScore : awayScore;
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
               let spread = 0;
-              const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) {
-                spread = parseFloat(spreadMatch[1]);
-              }
+              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
 
-              const adjustedMargin = (pickedTeamScore + spread) - oppTeamScore;
-              computedMargin = adjustedMargin;
-
-              if (adjustedMargin > 0) {
-                computedResult = 'W';
-              } else if (adjustedMargin < 0) {
-                computedResult = 'L';
-              } else {
-                computedResult = 'D';
-              }
+              computedMargin = (pickedTeamScore + spread) - oppTeamScore;
+              computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
             }
           }
         }
 
-        // Final result specifically used for Top 5 Box automatic ranking calculations
         const finalResultForScoring = computedResult || pick.result || null;
 
         return { ...pick, computedResult, finalResultForScoring, margin: computedMargin };
@@ -457,14 +448,13 @@
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
 
-      // --- RENDER CURRENT WEEK IN BOX (Relies strictly on admin input: pick.result) ---
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const adminResult = p.result; // Directly uses admin panel grading input
+          const adminResult = p.result; 
           const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
@@ -473,21 +463,19 @@
         html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
-      // --- OTHERS SECTION (Relies strictly on admin input: pick.result) ---
       if (otherPicks.length > 0) {
         html += `
           <div class="category-title" style="margin-top: 1rem;">Others:</div>
           <div class="picks-group">
         `;
         otherPicks.forEach(p => {
-          const adminResult = p.result; // Directly uses admin panel grading input
+          const adminResult = p.result; 
           const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
-      // --- VIDEO PLAYER WITH THUMBNAIL & PLAY OVERLAY ---
       html += `
         <div style="margin: 1.25rem 0; position: relative; display: inline-block; width: 100%; cursor: pointer;" onclick="
           const vid = this.querySelector('video');
@@ -511,7 +499,6 @@
         </div>
       `;
 
-      // --- DYNAMIC STACKED BUTTONS ---
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
@@ -523,7 +510,6 @@
         html += `</div>`;
       }
 
-      // --- COMPACT PARLAY SCOREBOARD (GROUPED BY GAME EVENT, STACKING DIFFERENT LINES) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
 
@@ -663,7 +649,6 @@
       html += `</div></div>`;
       container.innerHTML = html;
 
-      // --- RENDER UPCOMING WEEK TOP 5 PARLAY BOX BELOW (Uses automatic scoring / finalResultForScoring) ---
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
@@ -676,12 +661,9 @@
       if (!allFinalized) {
         previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
       } else {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W');
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L');
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D');
-
-        winners.sort((a, b) => b.margin - a.margin);
-        losses.sort((a, b) => b.margin - a.margin);
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.margin - a.margin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.margin - a.margin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.margin - a.margin);
 
         let top5 = [];
         if (winners.length >= 5) {
@@ -692,8 +674,7 @@
           top5 = top5.concat(losses.slice(0, needed));
           
           if (top5.length < 5) {
-            const stillNeeded = 5 - top5.length;
-            top5 = top5.concat(pushes.slice(0, stillNeeded));
+            top5 = top5.concat(pushes.slice(0, 5 - top5.length));
           }
         }
 
@@ -717,10 +698,8 @@
       hasLoadedOnce = true;
     }
 
-    // Initial load
     loadActiveWeek(false);
 
-    // Auto-refresh every 10 seconds in the background
     setInterval(() => {
       loadActiveWeek(true);
     }, 10000);
