@@ -305,7 +305,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], otherPicks: [] };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
@@ -416,10 +416,11 @@
         text += `${initials}:\n`;
       });
 
-      // Drop down a line, then list other non-parlay people's initials with a colon
-      if (cachedData.otherPicks && cachedData.otherPicks.length > 0) {
+      // Filter non-parlay picks directly from allPicks and output their initials with a colon
+      const otherPicksList = cachedData.allPicks.filter(p => p.is_parlay !== true);
+      if (otherPicksList.length > 0) {
         text += `\n`;
-        cachedData.otherPicks.forEach(p => {
+        otherPicksList.forEach(p => {
           const initials = p.players?.initials || '??';
           text += `${initials}:\n`;
         });
@@ -469,6 +470,8 @@
       ]);
 
       const picks = picksRes.data;
+      cachedData.allPicks = picks || [];
+
       let espnEvents = [];
       if (espnRes && espnRes.ok) {
         const espnData = await espnRes.json();
@@ -499,7 +502,6 @@
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
-      cachedData.otherPicks = otherPicks;
 
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
@@ -542,7 +544,7 @@
           }
         ">
           <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
-            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.mov" type="video/quicktime">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
           
