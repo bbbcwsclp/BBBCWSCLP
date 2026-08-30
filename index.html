@@ -346,14 +346,17 @@
             const isHomePick = searchTerms.some(term => homeName.includes(term) || term.includes(homeName) || homeAbbr === term);
             
             const pickedTeamScore = isHomePick ? homeScore : awayScore;
+            const oppTeamScore = isHomePick ? awayScore : homeScore;
 
             if (isTeamTotal) {
+              const lineMatch = selLower.match(/\b([ou])\s*(\d+(\.\d+)?)\b/);
               let line = 0;
-              const lineMatch = selLower.match(/[ou]\s*(\d+(\.\d+)?)/);
+              let isOver = true;
+
               if (lineMatch) {
-                line = parseFloat(lineMatch[1]);
+                isOver = lineMatch[1] === 'o';
+                line = parseFloat(lineMatch[2]);
               }
-              const isOver = /\bo\b/.test(selLower) || /\bover\b/.test(selLower);
               
               if (isOver) {
                 computedMargin = pickedTeamScore - line;
@@ -367,7 +370,6 @@
                 else computedResult = 'D';
               }
             } else {
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
               let spread = 0;
               const spreadMatch = selLower.match(/([+-]?\d+(\.\d+)?)$/);
               if (spreadMatch) {
