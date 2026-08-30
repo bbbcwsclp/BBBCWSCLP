@@ -410,16 +410,15 @@
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
       
-      // Top 5 parlay picker initials with a colon
+      // 1. Output Top 5 parlay picker initials with a colon
       cachedData.top5.forEach(p => {
         const initials = p.players?.initials || '??';
         text += `${initials}:\n`;
       });
 
-      // Filter non-parlay picks directly from allPicks and output their initials with a colon
-      const otherPicksList = cachedData.allPicks.filter(p => p.is_parlay !== true);
+      // 2. Output non-parlay picks (where is_parlay is false, null, or undefined)
+      const otherPicksList = cachedData.allPicks.filter(p => !p.is_parlay);
       if (otherPicksList.length > 0) {
-        text += `\n`;
         otherPicksList.forEach(p => {
           const initials = p.players?.initials || '??';
           text += `${initials}:\n`;
@@ -501,7 +500,7 @@
 
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
-      const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
+      const otherPicks = evaluatedPicks.filter(p => !p.is_parlay);
 
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
