@@ -305,7 +305,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedTop5Data = { weekNum: 1, top5: [] };
+    let cachedTop5Data = { weekNum: 1, top5: [], otherPicks: [] };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
@@ -409,10 +409,21 @@
       }
 
       let text = `Week ${cachedTop5Data.weekNum}\n`;
+      
+      // Top 5 parlay picker initials with a colon
       cachedTop5Data.top5.forEach(p => {
         const initials = p.players?.initials || '??';
-        text += `${initials}: ${p.selection}\n`;
+        text += `${initials}:\n`;
       });
+
+      // Drop down a line, then list other non-parlay people's initials with a colon
+      if (cachedTop5Data.otherPicks && cachedTop5Data.otherPicks.length > 0) {
+        text += `\n`;
+        cachedTop5Data.otherPicks.forEach(p => {
+          const initials = p.players?.initials || '??';
+          text += `${initials}:\n`;
+        });
+      }
 
       navigator.clipboard.writeText(text.trim()).then(() => {
         const btn = document.getElementById('copy-btn-el');
@@ -487,6 +498,7 @@
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
+      cachedTop5Data.otherPicks = otherPicks;
 
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
