@@ -305,7 +305,7 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedTop5Data = { weekNum: 1, top5: [], otherPicks: [] };
+    let cachedData = { nextWeekNum: 1, top5: [], otherPicks: [] };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
@@ -403,23 +403,23 @@
     }
 
     function copyTop5ForText() {
-      if (!cachedTop5Data.top5 || cachedTop5Data.top5.length === 0) {
+      if (!cachedData.top5 || cachedData.top5.length === 0) {
         alert('Top 5 picks are not finalized yet!');
         return;
       }
 
-      let text = `Week ${cachedTop5Data.weekNum}\n`;
+      let text = `Week ${cachedData.nextWeekNum}\n`;
       
       // Top 5 parlay picker initials with a colon
-      cachedTop5Data.top5.forEach(p => {
+      cachedData.top5.forEach(p => {
         const initials = p.players?.initials || '??';
         text += `${initials}:\n`;
       });
 
       // Drop down a line, then list other non-parlay people's initials with a colon
-      if (cachedTop5Data.otherPicks && cachedTop5Data.otherPicks.length > 0) {
+      if (cachedData.otherPicks && cachedData.otherPicks.length > 0) {
         text += `\n`;
-        cachedTop5Data.otherPicks.forEach(p => {
+        cachedData.otherPicks.forEach(p => {
           const initials = p.players?.initials || '??';
           text += `${initials}:\n`;
         });
@@ -460,7 +460,8 @@
       }
 
       const currentWeek = weeks[0];
-      cachedTop5Data.weekNum = currentWeek.week_number;
+      const nextWeekNum = currentWeek.week_number + 1;
+      cachedData.nextWeekNum = nextWeekNum;
 
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
@@ -486,7 +487,7 @@
         previewContainer.innerHTML = `
           <div class="upcoming-preview-card">
             <div class="upcoming-preview-header">
-              <span>Next Week's Parlay Pickers</span>
+              <span>Week ${nextWeekNum} Pickers</span>
             </div>
             <div class="upcoming-pending">Results pending until the winners are decided.</div>
           </div>
@@ -498,7 +499,7 @@
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => p.is_parlay !== true);
-      cachedTop5Data.otherPicks = otherPicks;
+      cachedData.otherPicks = otherPicks;
 
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
@@ -704,7 +705,7 @@
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
-            <span>Next Week's Parlay Pickers</span>
+            <span>Week ${nextWeekNum} Pickers</span>
       `;
 
       const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.finalResultForScoring === 'W' || p.finalResultForScoring === 'L' || p.finalResultForScoring === 'D');
@@ -727,10 +728,10 @@
           }
         }
 
-        cachedTop5Data.top5 = top5;
+        cachedData.top5 = top5;
         previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
       } else {
-        cachedTop5Data.top5 = [];
+        cachedData.top5 = [];
       }
 
       previewHtml += `</div>`;
@@ -739,7 +740,7 @@
         previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
       } else {
         previewHtml += `<div class="upcoming-list">`;
-        cachedTop5Data.top5.forEach((p, idx) => {
+        cachedData.top5.forEach((p, idx) => {
           previewHtml += `
             <div class="upcoming-item">
               <div>
