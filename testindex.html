@@ -416,8 +416,10 @@
         text += `${initials}:\n`;
       });
 
-      // 2. Output non-parlay picks (where is_parlay is false, null, or undefined)
-      const otherPicksList = cachedData.allPicks.filter(p => !p.is_parlay);
+      // 2. Output non-parlay picks from allPicks (anything not marked as is_parlay === true)
+      const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
+      const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
+      
       if (otherPicksList.length > 0) {
         otherPicksList.forEach(p => {
           const initials = p.players?.initials || '??';
