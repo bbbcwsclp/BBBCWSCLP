@@ -825,9 +825,22 @@
         html += `</div>`;
       }
 
+      if (otherPicks.length > 0) {
+        html += `
+          <div class="category-title" style="margin-top: 2rem;">Others:</div>
+          <div class="picks-group">
+        `;
+        otherPicks.forEach(p => {
+          const evaluatedResult = p.computedResult || p.result;
+          const resClass = evaluatedResult ? `res-${evaluatedResult}` : 'res-pending';
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+        });
+        html += `</div>`;
+      }
+
       html += `</div></div>`;
       container.innerHTML = html;
-
+      
       // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
