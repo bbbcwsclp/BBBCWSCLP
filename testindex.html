@@ -158,17 +158,18 @@
       letter-spacing: 1.5px;
     }
 
-    /* Grid Layout matching your exact layout sketch */
+    /* Grid Layout matching spreadsheet sketch */
     .picks-group {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.6rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 1.5rem;
       margin-bottom: 1rem;
       text-align: left;
     }
     .picks-group .pick-item:nth-child(5):last-child {
       grid-column: 1 / -1;
-      width: 100%;
+      justify-self: center;
+      width: calc(50% - 0.75rem);
     }
 
     .pick-item {
@@ -915,7 +916,7 @@
     loadActiveWeek(true);
 
     setInterval(() => {
-      backgroundRefreshScores();
+      loadActiveWeek(false);
     }, 10000);
   </script>
 </body>
