@@ -129,7 +129,7 @@
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 12px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
@@ -138,59 +138,19 @@
 
     /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 400;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      color: var(--text);
-      letter-spacing: 0.5px;
-    }
-    .category-title {
-      font-family: var(--font-label);
-      font-size: 1rem;
-      font-weight: 700;
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
-    /* Two-column tight grid layout with centered single items */
-    .picks-group {
-      display: grid;
-      grid-template-columns: repeat(2, max-content);
-      justify-content: center;
-      gap: 0.35rem 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .picks-group .pick-item:only-child,
-    .picks-group .pick-item:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-      justify-self: center;
-    }
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
 
-    .pick-item {
-      font-family: var(--font-label);
-      font-weight: 700;
-      font-size: 1.5rem;
-      background: transparent;
-      border: none;
-      padding: 0.35rem 0.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    /* Win/Loss/Push Text Color States (No cells/backgrounds) */
-    .pick-item.res-W { color: var(--success); }
-    .pick-item.res-L { color: var(--danger); }
-    .pick-item.res-D { color: var(--warning); }
-    .pick-item.res-pending { color: var(--text-muted); }
-
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+    
     /* Action Link Button Styling */
     .btn-gambly {
       display: block;
