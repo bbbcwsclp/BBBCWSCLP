@@ -789,10 +789,11 @@
       const activePicks = [];
       const finalizedPicks = [];
 
+      picks.heading = true;
       picks.forEach(p => {
-        // Finalized goes strictly by whether the week is closed
-        const isClosed = p.weeks?.status === 'closed';
-        if (isClosed) finalizedPicks.push(p);
+        // A pick belongs in finalized/closed weeks if its parent week status is 'closed'
+        const isClosedWeek = p.weeks?.status === 'closed';
+        if (isClosedWeek) finalizedPicks.push(p);
         else activePicks.push(p);
       });
 
