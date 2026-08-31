@@ -43,18 +43,28 @@
       height: 100%;
       overflow-x: hidden;
       background-color: var(--bg);
-      background-image:
-        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
-        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
-        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
-      background-size: auto, auto, 56px 56px, 56px 56px;
-      background-position: center top, center top, center top, center top;
-      background-attachment: fixed;
     }
 
     body {
+      position: relative;
       font-family: var(--font-label);
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      isolation: isolate;
+    }
+
+    /* Fixed background layer — avoids iOS Safari's background-attachment:fixed
+       bug, which leaves the overscroll/pull-to-refresh area black. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
       background-color: var(--bg);
       background-image:
         radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
@@ -63,13 +73,6 @@
         linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
       background-size: auto, auto, 56px 56px, 56px 56px;
       background-position: center top, center top, center top, center top;
-      background-attachment: fixed;
-      color: var(--text);
-      padding: 2rem 1rem 4rem 1rem;
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
 
     .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
