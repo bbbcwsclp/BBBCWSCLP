@@ -37,7 +37,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html {
+    html {
       background-color: var(--bg);
       background-image:
         radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
@@ -47,7 +47,9 @@
       background-size: auto, auto, 56px 56px, 56px 56px;
       background-position: center top, center top, center top, center top;
       background-attachment: fixed;
+      height: 100%;
       min-height: 100%;
+      overflow-x: hidden;
     }
 
     body {
