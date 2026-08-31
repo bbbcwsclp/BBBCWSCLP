@@ -287,13 +287,23 @@
     .btn-autograde { background-color: var(--warning); color: var(--bg); }
     .btn-autograde:hover { background-color: #72c8ff; }
 
-    .week-section-banner {
+    /* Collapsible Week Accordions styling */
+    details.week-accordion {
       background: var(--card-inner);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      padding: 0.6rem 1rem;
       border-radius: 6px;
       margin: 1.25rem 0 0.5rem 0;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    details.week-accordion[open] {
+      border-color: rgba(255, 176, 32, 0.4);
+    }
+
+    summary.week-section-banner {
+      background: var(--card-inner);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1rem;
       font-family: var(--font-label);
       font-weight: 700;
       font-size: 1rem;
@@ -303,14 +313,38 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
+      user-select: none;
+      list-style: none; /* Hide default arrow marker */
     }
-    .week-section-banner span:last-child {
+    
+    /* Custom clean toggle indicator */
+    summary.week-section-banner::-webkit-details-marker { display: none; }
+    summary.week-section-banner::after {
+      content: '▼';
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+    details.week-accordion[open] summary.week-section-banner::after {
+      transform: rotate(180deg);
+    }
+
+    summary.week-section-banner span:nth-child(2) {
       font-family: var(--font-mono);
       font-size: 0.75rem;
       color: var(--text-muted);
       font-weight: 700;
       text-transform: none;
       letter-spacing: 0;
+      margin-left: auto;
+      margin-right: 1rem;
+    }
+
+    .accordion-content {
+      padding: 0.75rem 1rem 1rem 1rem;
+      border-top: 1px solid var(--border);
+      background-color: rgba(6, 10, 12, 0.4);
     }
 
     .filter-input {
@@ -506,7 +540,6 @@
     async function initAdmin() {
       await loadDropdowns();
       await loadAdminPicks();
-      // Feature 3: Automatically run auto-grading on page load/refresh
       await autoGradePicksSilently('active');
       await autoGradePicksSilently('finalized');
     }
@@ -574,20 +607,14 @@
       allPlayersCache = players || [];
 
       updatePlayerDropdownOptions();
-      // Feature 2: Auto-select parlay status from the current week's configured pickers box list
       applyDesignatedParlayPickers();
     }
 
-    // Feature 1: Filter out already selected players from add-pick dropdown
     function updatePlayerDropdownOptions() {
       const playerSelect = document.getElementById('pick-player');
-      const selectedWeekId = document.getElementById('pick-week').value;
-      
-      // Get players already picked in the currently selected week dropdown
       const activeRows = document.querySelectorAll('#active-container tr[data-pick-id]');
       const alreadyChosenPlayerIds = new Set();
       
-      // We can also query current DOM or cache elements associated with the pick week
       activeRows.forEach(row => {
         const playerId = row.dataset.playerId;
         if (playerId) alreadyChosenPlayerIds.add(playerId);
@@ -609,7 +636,6 @@
       applyDesignatedParlayPickers();
     });
 
-    // Feature 2: Auto-check is_parlay for players defined in the week's designated pickers array/list
     async function applyDesignatedParlayPickers() {
       const selectedWeekId = document.getElementById('pick-week').value;
       if (!selectedWeekId) return;
@@ -617,7 +643,6 @@
       const currentWeekObj = allWeeksCache.find(w => w.id === selectedWeekId);
       if (!currentWeekObj) return;
 
-      // Matches your index page field for pickers (parlay_pickers or similar array on weeks table)
       const designatedPickers = currentWeekObj.parlay_pickers || currentWeekObj.pickers || [];
       const playerSelect = document.getElementById('pick-player');
       const parlayCheckbox = document.getElementById('pick-is-parlay');
@@ -747,8 +772,18 @@
     async function loadAdminPicks() {
       const { data: picks, error } = await _supabase
         .from('picks')
-        .select('*, weeks(week_number, status), players(id, initials)')
+        .select('*, weeks(week_number, status), players(id, initialss || id, initials)')
         .order('created_at', { ascending: false });
+
+      // Fallback query if initials select needs adjustment
+      let picksData = picks;
+      if (error) {
+        const fallback = await _supabase
+          .from('picks')
+          .select('*, weeks(week_number, status), players(id, initials)')
+          .order('created_at', { ascending: false });
+        picksData = fallback.data;
+      }
 
       const activeContainer = document.getElementById('active-container');
       const finalizedContainer = document.getElementById('finalized-container');
@@ -756,15 +791,7 @@
       activeContainer.innerHTML = '';
       finalizedContainer.innerHTML = '';
 
-      if (error) {
-        console.error('Failed to load picks:', error);
-        const errHtml = `<div style="color: var(--danger); text-align: center; padding: 1rem;">Couldn't load picks (connection error). Try refreshing.</div>`;
-        activeContainer.innerHTML = errHtml;
-        finalizedContainer.innerHTML = errHtml;
-        return;
-      }
-
-      if (!picks || picks.length === 0) {
+      if (!picksData || picksData.length === 0) {
         activeContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No picks found.</div>';
         finalizedContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No finalized picks found.</div>';
         return;
@@ -773,20 +800,20 @@
       const activePicks = [];
       const finalizedPicks = [];
 
-      picks.forEach(p => {
-        // Feature 4: Check if week is closed OR if individual pick is explicitly graded/finalized
+      picksData.forEach(p => {
         const isClosed = p.weeks?.status === 'closed' || p.is_finalized === true || (p.result && p.result !== '');
         if (isClosed) finalizedPicks.push(p);
         else activePicks.push(p);
       });
 
-      renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.');
-      renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.');
+      // Active weeks open by default, Finalized collapsed by default
+      renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.', true);
+      renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.', false);
       attachRowChangeListeners();
       updatePlayerDropdownOptions();
     }
 
-    function renderPicksByWeek(picksArray, containerElement, emptyMessage) {
+    function renderPicksByWeek(picksArray, containerElement, emptyMessage, defaultOpen = true) {
       if (picksArray.length === 0) {
         containerElement.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1rem;">${emptyMessage}</div>`;
         return;
@@ -804,10 +831,18 @@
       sortedWeeks.forEach(wkNum => {
         const weekPicks = grouped[wkNum];
 
-        const banner = document.createElement('div');
-        banner.className = 'week-section-banner';
-        banner.innerHTML = `<span>Week ${wkNum}</span><span>${weekPicks.length} Picks</span>`;
-        containerElement.appendChild(banner);
+        // Converted to HTML <details> and <summary> accordion elements
+        const details = document.createElement('details');
+        details.className = 'week-accordion';
+        if (defaultOpen) details.open = true;
+
+        const summary = document.createElement('summary');
+        summary.className = 'week-section-banner';
+        summary.innerHTML = `<span>Week ${wkNum}</span><span>${weekPicks.length} Picks</span>`;
+        details.appendChild(summary);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'accordion-content';
 
         const tableWrapper = document.createElement('div');
         tableWrapper.style.overflowX = 'auto';
@@ -857,7 +892,9 @@
         });
 
         tableWrapper.appendChild(table);
-        containerElement.appendChild(tableWrapper);
+        contentDiv.appendChild(tableWrapper);
+        details.appendChild(contentDiv);
+        containerElement.appendChild(details);
       });
     }
 
@@ -866,7 +903,6 @@
       if (select.value) select.classList.add(`res-select-${select.value}`);
     }
 
-    // Automatically shift pick to finalized section when a result is set, without closing the full week
     async function handleResultChange(pickId, selectElem) {
       updateResultSelectColor(selectElem);
       const isGraded = selectElem.value !== '';
@@ -913,15 +949,29 @@
     function filterPicksTable(sectionType, query) {
       const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
       const container = document.getElementById(containerId);
-      const rows = container.querySelectorAll('tr[data-pick-id]');
+      const detailsElements = container.querySelectorAll('details.week-accordion');
       const term = query.toLowerCase().trim();
 
-      rows.forEach(row => {
-        const searchKey = row.dataset.searchKey || '';
-        if (!term || searchKey.includes(term)) {
-          row.style.display = '';
+      detailsElements.forEach(details => {
+        const rows = details.querySelectorAll('tr[data-pick-id]');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+          const searchKey = row.dataset.searchKey || '';
+          if (!term || searchKey.includes(term)) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        // Hide the whole week accordion if none of its picks match the filter
+        if (term && visibleCount === 0) {
+          details.style.display = 'none';
         } else {
-          row.style.display = 'none';
+          details.style.display = '';
+          if (term && visibleCount > 0) details.open = true; // Auto-expand when searching
         }
       });
     }
@@ -944,11 +994,7 @@
     }
 
     async function autoGradePicks(sectionType, silent = false) {
-      // GUARD: Ensure auto-grading is strictly restricted to active picks only
-      if (sectionType === 'finalized') {
-        if (!silent) console.log("Auto-grading is restricted to active picks only.");
-        return;
-      }
+      if (sectionType === 'finalized') return;
 
       const containerId = 'active-container';
       const msgId = 'active-msg';
