@@ -446,7 +446,7 @@
     <div id="upcoming-preview-container"></div>
   </div>
 
-    <script>
+      <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
@@ -481,7 +481,6 @@
         terms = [clean];
       }
 
-      // Expand using aliases if available
       let expanded = [];
       terms.forEach(t => {
         expanded.push(t);
@@ -711,8 +710,8 @@
         html += `</div>`;
       }
 
-      // Compact Scores Grid - Evaluates BOTH parlay picks and other picks if they match ESPN events
-      const allDisplayPicks = evaluatedPicks; 
+      // Compact Scores Grid - includes both parlay picks and other picks mapped against ESPN
+      const allDisplayPicks = evaluatedPicks;
       if (allDisplayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
         const gameEventMap = {};
@@ -855,4 +854,52 @@
 
       if (allFinalized) {
         const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPick...
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
+
+        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...losses.slice(0, 5 - winners.length)];
+        if (top5.length < 5) top5 = [...top5, ...pushes.slice(0, 5 - top5.length)];
+
+        cachedData.top5 = top5;
+        previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
+      } else {
+        cachedData.top5 = [];
+      }
+
+      previewHtml += `</div>`;
+
+      if (!allFinalized) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+      } else {
+        previewHtml += `<div class="upcoming-list">`;
+        cachedData.top5.forEach((p, idx) => {
+          let marginDisplay = p.margin === -999 ? '—' : (p.margin > 0 ? `+${p.margin}` : `${p.margin}`);
+          let marginClass = p.margin === -999 ? 'margin-unknown' : (p.margin > 0 ? 'margin-pos' : (p.margin < 0 ? 'margin-neg' : 'margin-even'));
+
+          previewHtml += `
+            <div class="upcoming-item">
+              <div class="upcoming-rank">${idx + 1}</div>
+              <div class="upcoming-body">
+                <span class="upcoming-player">${p.players?.initials || '??'}</span>
+                <div class="upcoming-pick">${p.selection}</div>
+              </div>
+              <div class="upcoming-badge ${marginClass}">${marginDisplay}</div>
+            </div>
+          `;
+        });
+        previewHtml += `</div>`;
+      }
+
+      previewHtml += `</div>`;
+      previewContainer.innerHTML = previewHtml;
+      hasLoadedOnce = true;
+    }
+
+    loadActiveWeek(true);
+
+    setInterval(() => {
+      loadActiveWeek(false);
+    }, 10000);
+  </script>
+</body>
+</html>
