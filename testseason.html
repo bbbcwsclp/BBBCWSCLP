@@ -489,12 +489,12 @@
         <div class="stats-grid">
           <div class="stat-card">
             <h3>🔥 Hot Streak</h3>
-            <div class="stat-value">${hotNames}</div>
+            <div class="stat-value" style="color: var(--success);">${hotNames}</div>
             ${hotSub ? `<div class="stat-sub" style="color: var(--success);">${hotSub}</div>` : ''}
           </div>
           <div class="stat-card">
             <h3>❄️ Cold Streak</h3>
-            <div class="stat-value">${coldNames}</div>
+            <div class="stat-value" style="color: var(--danger);">${coldNames}</div>
             ${coldSub ? `<div class="stat-sub" style="color: var(--danger);">${coldSub}</div>` : ''}
           </div>
         </div>
@@ -506,7 +506,7 @@
           <div class="stat-card">
             <h3>Best Bet Team</h3>
             <div class="stat-value" style="color: var(--success);">${topTeamName}</div>
-            ${topTeamSub ? `<div class="stat-sub">${topTeamSub}</div>` : ''}
+            ${topTeamSub ? `<div class="stat-sub" style="color: var(--success);">${topTeamSub}</div>` : ''}
           </div>
           <div class="stat-card">
             <h3>Worst Bet Team</h3>
