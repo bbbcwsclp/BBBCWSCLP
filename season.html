@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0a0e10">
   <title>BBBCWSCLP — Season History</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
   <!-- Favicon / Browser Tab Icon -->
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
@@ -38,16 +38,19 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-   html {
-     height: 100%;
-     overflow-x: hidden;
-     background-color: var(--bg);
-     background-image:
-       radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
-       radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%);
-     background-attachment: fixed;
-     background-position: center top;
-   }
+    html {
+      height: 100%;
+      overflow-x: hidden;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+    }
 
     body {
       font-family: var(--font-label);
@@ -301,8 +304,7 @@
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
-    const { createClient } = window.supabase;
-    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let _supabase;
 
     // Helper function to extract team names properly from pick strings (handling spreads, totals, team totals, and matchups)
     function extractTeamNamesFromSelection(selectionText) {
@@ -591,7 +593,11 @@
       container.innerHTML = html;
     }
 
-    loadSeasonHistory();
+    document.addEventListener('DOMContentLoaded', () => {
+      const { createClient } = window.supabase;
+      _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      loadSeasonHistory();
+    });
   </script>
 </body>
 </html>
