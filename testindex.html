@@ -158,13 +158,18 @@
       letter-spacing: 1.5px;
     }
 
-    /* Tight single-column flex layout to eliminate middle gaps */
+    /* Two-column tight grid layout with centered single items */
     .picks-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      justify-content: center;
+      gap: 0.35rem 1.5rem;
       margin-bottom: 1rem;
-      align-items: center;
+    }
+    .picks-group .pick-item:only-child,
+    .picks-group .pick-item:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
     }
 
     .pick-item {
