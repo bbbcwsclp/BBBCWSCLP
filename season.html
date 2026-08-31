@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0e10">
   <title>BBBCWSCLP — Season History</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Favicon / Browser Tab Icon -->
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
@@ -13,8 +12,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -39,32 +37,8 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
-      height: 100%;
-      overflow-x: hidden;
-      background-color: var(--bg);
-    }
-
     body {
-      position: relative;
       font-family: var(--font-label);
-      background-color: var(--bg);
-      color: var(--text);
-      padding: 2rem 1rem 4rem 1rem;
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      isolation: isolate;
-    }
-
-    /* Fixed background layer — avoids iOS Safari's background-attachment:fixed
-       bug, which leaves the overscroll/pull-to-refresh area black. */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
       background-color: var(--bg);
       background-image:
         radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
@@ -73,6 +47,13 @@
         linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
       background-size: auto, auto, 56px 56px, 56px 56px;
       background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
@@ -308,7 +289,8 @@
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
-    let _supabase;
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Helper function to extract team names properly from pick strings (handling spreads, totals, team totals, and matchups)
     function extractTeamNamesFromSelection(selectionText) {
@@ -597,11 +579,7 @@
       container.innerHTML = html;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const { createClient } = window.supabase;
-      _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      loadSeasonHistory();
-    });
+    loadSeasonHistory();
   </script>
 </body>
 </html>
