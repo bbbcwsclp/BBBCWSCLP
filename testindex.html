@@ -5,31 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BBBCWSCLP — Weekly</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
   <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1a2638;
-      --card-inner: #0b1120;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --warning: #eab308;
-      --accent: #3b82f6;
-      --gold: #f59e0b;
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff4d4d;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { 
-      background-color: var(--bg); 
-      color: var(--text); 
-      padding: 2rem 1rem 4rem 1rem; 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -40,49 +59,143 @@
 
     header { margin-bottom: 1rem; width: 100%; }
     header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
-    /* Navigation Bar */
-    nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 0.35rem; 
-      margin-bottom: 2.5rem; 
-      width: 100%; 
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
     }
-    
-    nav a { 
-      color: var(--text-muted); 
-      text-decoration: none; 
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
       transition: all 0.2s ease;
-      background-color: var(--card-bg);
+      background-color: transparent;
       border: 1px solid var(--border);
-      padding: 0.4rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 600; 
-      font-size: 0.82rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       white-space: nowrap;
     }
-    
-    nav a:hover { 
-      color: var(--text); 
-      border-color: var(--accent);
-      background-color: #273548;
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
     }
 
-    nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    nav a:focus-visible, .btn-gambly:focus-visible, .btn-copy-text:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Live Ticker — the signature broadcast element, shared with the other weekly page */
+    .ticker-wrap {
+      width: 100%;
+      background-color: var(--card-inner);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .ticker-wrap::before, .ticker-wrap::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 24px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--card-inner), transparent); }
+    .ticker-wrap::after { right: 0; background: linear-gradient(270deg, var(--card-inner), transparent); }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation-name: ticker-scroll;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 0.55rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-right: 1px solid var(--border);
+    }
+    .ticker-item .tk-status { color: var(--text-muted); font-size: 0.7rem; }
+    .ticker-item.tk-live .tk-status { color: var(--success); }
+    .ticker-item .tk-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+      animation: tk-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tk-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker-track { animation: none; }
+      .tk-dot { animation: none; }
     }
 
     /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
@@ -91,14 +204,65 @@
 
     /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
-    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .week-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 400;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+    .category-title {
+      font-family: var(--font-label);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
-    .pick-item { font-weight: 700; }
+    /* Picks Grid — one layer of framing (fill only), real CSS grid so columns
+       line up cleanly instead of wrapping raggedly. */
+    .picks-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .pick-item {
+      font-family: var(--font-label);
+      font-weight: 600;
+      font-size: 0.95rem;
+      background-color: var(--card-inner);
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+      display: flex;
+      align-items: center;
+    }
+    .pick-item::before {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.68rem;
+      margin-right: 0.55rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
+    .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
+    .pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
+    .pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
 
-    /* Result Color Coding */
+    /* Result Color Coding (kept for compatibility with any other usage) */
     .res-W { color: var(--success); }
     .res-L { color: var(--danger); }
     .res-D { color: var(--warning); }
@@ -111,21 +275,62 @@
       max-width: 400px;
       margin: 1.25rem auto 0 auto;
       background-color: var(--accent);
-      color: white;
+      color: var(--bg);
       text-align: center;
       padding: 0.75rem 1rem;
-      border-radius: 8px;
+      border-radius: 4px;
+      font-family: var(--font-label);
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: background-color 0.2s;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(255, 176, 32, 0.25);
     }
     .btn-gambly:hover {
-      background-color: #2563eb;
+      background-color: #ffc457;
+      transform: translateY(-1px);
     }
 
-    /* Clean Compact Parlay Scoreboard Ticker */
+    /* Video promo block */
+    .promo-video-wrap {
+      margin: 1.25rem 0;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      cursor: pointer;
+    }
+    .promo-video-wrap video {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: block;
+      background: #000;
+      width: 100%;
+    }
+    .custom-play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px; height: 64px;
+      background: rgba(6, 10, 12, 0.75);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .custom-play-btn .play-triangle {
+      width: 0; height: 0;
+      border-top: 14px solid transparent;
+      border-bottom: 14px solid transparent;
+      border-left: 22px solid var(--accent);
+      margin-left: 4px;
+    }
+
+    /* Clean Compact Parlay Scoreboard */
     .compact-scores-grid {
       display: flex;
       flex-direction: column;
@@ -137,13 +342,16 @@
     .compact-card {
       background-color: var(--card-inner);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-left: 3px solid var(--border);
+      border-radius: 4px;
       padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .compact-card:has(.compact-status.live) {
+      border-left-color: var(--success);
     }
 
     .compact-left {
@@ -161,15 +369,17 @@
     }
 
     .compact-pick-info {
-      font-weight: 700;
-      color: #93c5fd;
+      font-family: var(--font-label);
+      font-weight: 600;
+      color: #ffd38a;
       font-size: 0.88rem;
       overflow-wrap: break-word;
       word-break: break-word;
     }
 
     .compact-status {
-      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -177,11 +387,20 @@
       width: fit-content;
     }
     .compact-status.live {
-      background-color: rgba(34, 197, 94, 0.15);
+      background-color: rgba(52, 214, 122, 0.12);
       color: var(--success);
       padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 3px;
+      border: 1px solid rgba(52, 214, 122, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .compact-status.live::before {
+      content: '';
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--success);
+      animation: tk-pulse 1.4s ease-in-out infinite;
     }
 
     .compact-teams {
@@ -200,27 +419,46 @@
     }
 
     .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
-    .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
-    .winner { color: var(--gold); }
+    .compact-team-abbr {
+      font-family: var(--font-label);
+      font-weight: 700;
+      color: var(--text);
+      min-width: 34px;
+      text-align: left;
+      letter-spacing: 0.3px;
+    }
+    .compact-score {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      min-width: 26px;
+      text-align: right;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.05rem 0.3rem;
+    }
+    .winner { color: var(--accent); }
+    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
 
-    /* Upcoming Week Top 5 Box Styling */
+    /* Upcoming Week Top 5 Box */
     .upcoming-preview-card {
-      background: linear-gradient(135deg, #1a2638 0%, #0f172a 100%);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      border-radius: 12px;
+      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid rgba(255, 176, 32, 0.3);
+      border-radius: 6px;
       padding: 1.25rem;
       margin-top: 2rem;
       text-align: left;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       width: 100%;
     }
     .upcoming-preview-header {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: var(--gold);
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1.5px;
       margin-bottom: 0.75rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
@@ -233,35 +471,44 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(15, 23, 42, 0.6);
+      gap: 0.75rem;
+      background: rgba(6, 10, 12, 0.6);
       padding: 0.5rem 0.75rem;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 0.9rem;
-      border: 1px solid rgba(51, 65, 85, 0.5);
+      border: 1px solid var(--border);
     }
-    .upcoming-player { font-weight: 700; color: var(--text); }
+    .upcoming-rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--accent);
+      background: rgba(255, 176, 32, 0.1);
+      border: 1px solid rgba(255, 176, 32, 0.35);
+      border-radius: 3px;
+      min-width: 1.6rem;
+      text-align: center;
+      padding: 0.15rem 0;
+      flex-shrink: 0;
+    }
+    .upcoming-body { min-width: 0; flex-grow: 1; }
+    .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
     .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
     .upcoming-badge {
+      font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+      flex-shrink: 0;
     }
-    .upcoming-badge.neg {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .upcoming-badge.even {
-      background: rgba(234, 179, 8, 0.15);
-      color: var(--warning);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-    }
+    .upcoming-badge.margin-pos { background: rgba(52, 214, 122, 0.12); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .upcoming-badge.margin-neg { background: rgba(255, 77, 77, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+    .upcoming-badge.margin-even { background: rgba(79, 184, 255, 0.12); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+    .upcoming-badge.margin-unknown { background: rgba(124, 138, 144, 0.12); color: var(--text-muted); border: 1px solid var(--border); }
     .upcoming-pending {
-      font-size: 0.88rem;
+      font-family: var(--font-label);
+      font-size: 0.9rem;
       color: var(--text-muted);
       text-align: center;
       padding: 1rem 0;
@@ -269,17 +516,20 @@
     }
     .btn-copy-text {
       background-color: var(--accent);
-      color: white;
+      color: var(--bg);
       border: none;
-      padding: 0.35rem 0.65rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-label);
+      font-size: 0.78rem;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
       cursor: pointer;
       transition: background-color 0.2s;
     }
     .btn-copy-text:hover {
-      background-color: #2563eb;
+      background-color: #ffc457;
     }
   </style>
 </head>
@@ -288,6 +538,7 @@
   <div class="container">
     <header>
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">Week Results</div>
       <h1 class="main-title">BBBCWSCLP</h1>
     </header>
 
@@ -298,6 +549,10 @@
       <a href="halloffame.html">HOF</a>
       <a href="scores.html">Scores</a>
     </nav>
+
+    <div class="ticker-wrap" id="ticker-wrap" style="display: none;">
+      <div class="ticker-track" id="ticker-track"></div>
+    </div>
 
     <div id="content-container">
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
@@ -320,10 +575,13 @@
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
+      // Strip "team total"/"tt" first, then the o##/u## total pattern, THEN
+      // the generic trailing spread number. Doing the generic strip before
+      // the o/u strip (the old order) chops the number off first and leaves
+      // a stray "o"/"u" character stuck to the team name.
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
-      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
 
       if (clean.includes('/')) {
         return clean.split('/').map(t => t.trim().toLowerCase());
@@ -334,6 +592,9 @@
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
+        // -999 is a sentinel meaning "no computed margin" (unmatched to a
+        // live event, or manually graded) — kept distinct from a real
+        // margin of 0 (an actual push) so the UI can tell them apart.
         let computedMargin = -999;
 
         const selText = (pick.selection || '').trim().toLowerCase();
@@ -348,7 +609,7 @@
             const shortName = (c.team.shortDisplayName || '').toLowerCase();
             const displayName = (c.team.displayName || '').toLowerCase();
             const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term => 
+            return searchTerms.some(term =>
               term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
             );
           });
@@ -361,7 +622,7 @@
           if (isFinal) {
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-            
+
             const homeScore = parseInt(homeTeam.score || '0', 10);
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
@@ -369,11 +630,7 @@
             const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
             const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
 
-            const awayName = (awayTeam.team.name || '').toLowerCase();
-            const awayShort = (awayTeam.team.shortDisplayName || '').toLowerCase();
-            const awayAbbr = (awayTeam.team.abbreviation || '').toLowerCase();
-
-            const isHomePick = searchTerms.some(term => 
+            const isHomePick = searchTerms.some(term =>
               term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
             );
 
@@ -407,8 +664,73 @@
         }
 
         const finalResultForScoring = computedResult || pick.result || null;
+        // Separate "sort" value from the real (possibly sentinel) margin —
+        // manually-graded/unmatched picks get a neutral sort position
+        // instead of being shoved to the bottom of the winners list as if
+        // they were the smallest possible win.
+        const sortMargin = computedMargin === -999 ? 0 : computedMargin;
 
-        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin };
+        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
+      });
+    }
+
+    function renderTicker(espnEvents) {
+      const wrap = document.getElementById('ticker-wrap');
+      const track = document.getElementById('ticker-track');
+      if (!espnEvents || espnEvents.length === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      const esc = (s) => String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+
+      const items = espnEvents.map(ev => {
+        const comp = ev.competitions?.[0];
+        if (!comp) return null;
+        const competitors = comp.competitors || [];
+        const home = competitors.find(c => c.homeAway === 'home');
+        const away = competitors.find(c => c.homeAway === 'away');
+        if (!home || !away) return null;
+
+        const state = comp.status?.type?.state;
+        const isLive = state === 'in';
+        const statusText = state === 'pre'
+          ? (comp.status?.type?.shortDetail || 'Upcoming')
+          : state === 'post'
+            ? 'Final'
+            : (comp.status?.type?.shortDetail || 'Live');
+
+        const homeAbbr = esc(home.team?.abbreviation || home.team?.shortDisplayName || '');
+        const awayAbbr = esc(away.team?.abbreviation || away.team?.shortDisplayName || '');
+        const homeScore = state === 'pre' ? '' : esc(home.score ?? '0');
+        const awayScore = state === 'pre' ? '' : esc(away.score ?? '0');
+        const scoreText = state === 'pre' ? 'vs' : `${awayScore}\u2013${homeScore}`;
+
+        return `
+          <div class="ticker-item ${isLive ? 'tk-live' : ''}">
+            ${isLive ? '<span class="tk-dot"></span>' : ''}
+            <span>${awayAbbr} ${scoreText} ${homeAbbr}</span>
+            <span class="tk-status">${esc(statusText)}</span>
+          </div>
+        `;
+      }).filter(Boolean);
+
+      if (items.length === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      track.innerHTML = items.join('') + items.join('');
+      wrap.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        const singleSetWidth = track.scrollWidth / 2;
+        const PIXELS_PER_SECOND = 55;
+        const MIN_DURATION = 18;
+        const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
+        track.style.animationDuration = `${duration}s`;
       });
     }
 
@@ -419,7 +741,7 @@
       }
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
-      
+
       cachedData.top5.forEach(p => {
         const initials = p.players?.initials || '??';
         text += `${initials}:\n`;
@@ -427,7 +749,7 @@
 
       const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
-      
+
       if (otherPicksList.length > 0) {
         otherPicksList.forEach(p => {
           const initials = p.players?.initials || '??';
@@ -456,15 +778,23 @@
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
-      const { data: weeks } = await _supabase
+      const { data: weeks, error: weeksError } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
+      if (weeksError) {
+        console.error('Failed to load current week:', weeksError);
+        container.innerHTML = '<div class="current-week-card"><div style="color: var(--danger);">Couldn\'t load this week (connection error). Try refreshing.</div></div>';
+        hasLoadedOnce = true;
+        return;
+      }
+
       if (!weeks || weeks.length === 0) {
         container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
         previewContainer.innerHTML = '';
+        document.getElementById('ticker-wrap').style.display = 'none';
         hasLoadedOnce = true;
         return;
       }
@@ -478,14 +808,26 @@
         fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
       ]);
 
-      const picks = picksRes.data;
-      cachedData.allPicks = picks || [];
-
       let espnEvents = [];
       if (espnRes && espnRes.ok) {
         const espnData = await espnRes.json();
         espnEvents = espnData.events || [];
       }
+      renderTicker(espnEvents);
+
+      if (picksRes.error) {
+        console.error('Failed to load picks:', picksRes.error);
+        container.innerHTML = `
+          <div class="current-week-card">
+            <div style="color: var(--danger);">Couldn't load this week's picks (connection error). Try refreshing.</div>
+          </div>
+        `;
+        hasLoadedOnce = true;
+        return;
+      }
+
+      const picks = picksRes.data;
+      cachedData.allPicks = picks || [];
 
       if (!picks || picks.length === 0) {
         container.innerHTML = `
@@ -518,13 +860,13 @@
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const adminResult = p.result; 
+          const adminResult = p.result;
           const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; max-width: none;">No consensus parlay picks designated yet.</div>`;
       }
 
       if (otherPicks.length > 0) {
@@ -533,7 +875,7 @@
           <div class="picks-group">
         `;
         otherPicks.forEach(p => {
-          const adminResult = p.result; 
+          const adminResult = p.result;
           const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
@@ -541,7 +883,7 @@
       }
 
       html += `
-        <div style="margin: 1.25rem 0; position: relative; display: inline-block; width: 100%; cursor: pointer;" onclick="
+        <div class="promo-video-wrap" onclick="
           const vid = this.querySelector('video');
           const btn = this.querySelector('.custom-play-btn');
           if (vid.paused) {
@@ -552,13 +894,13 @@
             btn.style.display = 'flex';
           }
         ">
-          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
-          
-          <div class="custom-play-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-            <div style="width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 22px solid white; margin-left: 4px;"></div>
+
+          <div class="custom-play-btn">
+            <div class="play-triangle"></div>
           </div>
         </div>
       `;
@@ -566,10 +908,10 @@
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">📲 Open Slip in Courtside</a>`;
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
         }
         if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">🎲 Open Gambly Link</a>`;
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
         }
         html += `</div>`;
       }
@@ -591,7 +933,7 @@
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
               const displayName = (c.team.displayName || '').toLowerCase();
               const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term => 
+              return searchTerms.some(term =>
                 term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
               );
             });
@@ -606,7 +948,7 @@
                 entries: []
               };
             }
-            
+
             let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
             if (existingEntry) {
               existingEntry.initialsList.push(initials);
@@ -633,16 +975,16 @@
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
-            
+
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
             const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
             const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
-            
+
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
-            
+
             const homeScore = homeTeam.score || '0';
             const awayScore = awayTeam.score || '0';
 
@@ -655,8 +997,8 @@
               statusText = 'FINAL';
             }
 
-            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
-            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
 
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
@@ -711,7 +1053,36 @@
       }
 
       html += `</div></div>`;
+
+      // Preserve the promo video's playback position/state across background
+      // refreshes — otherwise replacing innerHTML every 10 seconds destroys
+      // and recreates the <video>, restarting it from 0:00 mid-watch.
+      const existingVideo = container.querySelector('video');
+      let videoState = null;
+      if (existingVideo) {
+        videoState = { time: existingVideo.currentTime, wasPlaying: !existingVideo.paused };
+      }
+
       container.innerHTML = html;
+
+      if (videoState) {
+        const newVideo = container.querySelector('video');
+        if (newVideo) {
+          const restore = () => {
+            try { newVideo.currentTime = videoState.time; } catch (e) { /* metadata not ready */ }
+            if (videoState.wasPlaying) {
+              newVideo.play().catch(() => {});
+              const btn = container.querySelector('.custom-play-btn');
+              if (btn) btn.style.display = 'none';
+            }
+          };
+          if (newVideo.readyState >= 1) {
+            restore();
+          } else {
+            newVideo.addEventListener('loadedmetadata', restore, { once: true });
+          }
+        }
+      }
 
       let previewHtml = `
         <div class="upcoming-preview-card">
@@ -722,9 +1093,9 @@
       const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.finalResultForScoring === 'W' || p.finalResultForScoring === 'L' || p.finalResultForScoring === 'D');
 
       if (allFinalized) {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.margin - a.margin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.margin - a.margin);
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.margin - a.margin);
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
 
         let top5 = [];
         if (winners.length >= 5) {
@@ -733,7 +1104,7 @@
           top5 = [...winners];
           const needed = 5 - top5.length;
           top5 = top5.concat(losses.slice(0, needed));
-          
+
           if (top5.length < 5) {
             top5 = top5.concat(pushes.slice(0, 5 - top5.length));
           }
@@ -753,23 +1124,27 @@
         previewHtml += `<div class="upcoming-list">`;
         cachedData.top5.forEach((p, idx) => {
           let marginDisplay = 'Even';
-          let badgeClass = 'even';
+          let marginClass = 'margin-even';
 
-          if (p.margin > 0) {
+          if (p.margin === -999) {
+            marginDisplay = '—';
+            marginClass = 'margin-unknown';
+          } else if (p.margin > 0) {
             marginDisplay = `+${p.margin}`;
-            badgeClass = '';
-          } else if (p.margin < 0 && p.margin !== -999) {
+            marginClass = 'margin-pos';
+          } else if (p.margin < 0) {
             marginDisplay = `${p.margin}`;
-            badgeClass = 'neg';
+            marginClass = 'margin-neg';
           }
 
           previewHtml += `
             <div class="upcoming-item">
-              <div>
-                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
+              <div class="upcoming-rank">${idx + 1}</div>
+              <div class="upcoming-body">
+                <span class="upcoming-player">${p.players?.initials || '??'}</span>
                 <div class="upcoming-pick">${p.selection}</div>
               </div>
-              <div class="upcoming-badge ${badgeClass}">${marginDisplay}</div>
+              <div class="upcoming-badge ${marginClass}">${marginDisplay}</div>
             </div>
           `;
         });
