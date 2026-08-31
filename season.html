@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e10">
   <title>BBBCWSCLP — Season History</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -37,7 +38,14 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
+        html {
+      background-color: #0a0e10;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--font-label);
       background-color: var(--bg);
       background-image:
         radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
@@ -47,17 +55,9 @@
       background-size: auto, auto, 56px 56px, 56px 56px;
       background-position: center top, center top, center top, center top;
       background-attachment: fixed;
-      height: 100%;
-      min-height: 100%;
-      overflow-x: hidden;
-    }
-
-    body {
-      font-family: var(--font-label);
-      background-color: transparent;
       color: var(--text);
       padding: 2rem 1rem 4rem 1rem;
-      min-height: 100vh;
+      min-height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
