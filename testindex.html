@@ -176,7 +176,7 @@
       transform: translateY(-1px);
     }
 
-    //* Video promo block */
+    /* Video promo block */
     .promo-video-wrap {
       margin: 1.25rem 0;
       position: relative;
@@ -466,7 +466,7 @@
     <div id="upcoming-preview-container"></div>
   </div>
 
-      <script>
+  <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
@@ -700,7 +700,18 @@
         html += `</div>`;
       }
 
-            // Video promo block
+      if (currentWeek.slip_link || currentWeek.gambly_link) {
+        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
+        if (currentWeek.slip_link) {
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
+        }
+        if (currentWeek.gambly_link) {
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
+        }
+        html += `</div>`;
+      }
+
+      // Video promo block correctly positioned below picks and buttons
       html += `
         <div class="promo-video-wrap" onclick="
           const wrap = this;
@@ -730,17 +741,6 @@
           </div>
         </div>
       `;
-
-      if (currentWeek.slip_link || currentWeek.gambly_link) {
-        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
-        if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
-        }
-        if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
-        }
-        html += `</div>`;
-      }
 
       // Compact Scores Grid - includes both parlay picks and other picks mapped against ESPN
       const allDisplayPicks = evaluatedPicks;
