@@ -23,7 +23,7 @@
       --border: #223038;
 
       --success: #34d67a;
-      --danger: #ff4d4d;
+      --danger: #ff6b6b;
       --warning: #4fb8ff;
 
       --accent: #ffb020;
@@ -81,7 +81,7 @@
       line-height: 1;
     }
 
-    /* Navigation Bar — broadcast channel tabs */
+    /* Navigation Bar */
     nav {
       display: flex;
       justify-content: center;
@@ -155,103 +155,150 @@
       border-color: var(--accent);
     }
 
-    /* Game Card Styling (Static & Non-clickable) */
-    .game-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+    /* Game Card Styling Matching Index Scores Grid */
+    .compact-scores-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
       text-align: left;
     }
 
-    .game-header-info {
+    .compact-card {
+      background-color: var(--card-inner);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
+      gap: 1rem;
+    }
+    .compact-card:has(.compact-status.live) {
+      border-left-color: var(--success);
+    }
+
+    .compact-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .game-meta-row {
+      display: flex;
+      align-items: center;
       gap: 0.5rem;
       flex-wrap: wrap;
     }
 
-    .status-badge {
+    .compact-status {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+    .compact-status.live {
+      background-color: rgba(52, 214, 122, 0.12);
+      color: var(--success);
       padding: 0.15rem 0.5rem;
       border-radius: 3px;
-      font-size: 0.7rem;
-      font-weight: 700;
+      border: 1px solid rgba(52, 214, 122, 0.3);
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
     }
-    .status-live { background-color: rgba(52, 214, 122, 0.15); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
-    .status-live::before {
+    .compact-status.live::before {
       content: '';
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--success);
-      animation: status-pulse 1.4s ease-in-out infinite;
+      animation: tk-pulse 1.4s ease-in-out infinite;
     }
-    .status-final { background-color: rgba(124, 138, 144, 0.15); color: var(--text-muted); border: 1px solid var(--border); }
-    .status-sched { background-color: rgba(79, 184, 255, 0.15); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+    .compact-status.final {
+      color: var(--text-muted);
+    }
+    .compact-status.sched {
+      color: var(--warning);
+    }
 
-    @keyframes status-pulse {
+    @keyframes tk-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.25; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .status-live::before { animation: none; }
     }
 
     .situation-text {
       color: var(--accent);
       font-weight: 700;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
     }
 
-    .team-line {
+    .broadcast-text {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .compact-teams {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 0.3rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .compact-team-row {
+      display: flex;
       align-items: center;
+      gap: 0.6rem;
+    }
+
+    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
+    .compact-team-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .compact-team-abbr {
       font-family: var(--font-label);
       font-weight: 700;
-      font-size: 1.05rem;
-      margin: 0.6rem 0;
-    }
-
-    .team-details { display: flex; align-items: center; gap: 0.75rem; }
-    .team-logo { width: 28px; height: 28px; object-fit: contain; }
-    .team-rank { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-right: 0.2rem; }
-    .team-score {
-      font-family: var(--font-mono);
-      font-size: 1.15rem;
-      font-weight: 700;
       color: var(--text);
-      background: var(--card-inner);
+      min-width: 34px;
+      text-align: left;
+      letter-spacing: 0.3px;
+    }
+    .compact-team-rank {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .compact-score {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      min-width: 26px;
+      text-align: right;
+      color: var(--text);
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.1rem 0.5rem;
-      min-width: 2.2rem;
-      text-align: center;
+      border-radius: 3px;
+      padding: 0.05rem 0.3rem;
     }
     .winner { color: var(--accent); }
-    .winner.team-score { border-color: rgba(255, 176, 32, 0.4); }
+    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
 
     .odds-line {
       display: flex;
-      justify-content: space-between;
-      margin-top: 0.75rem;
-      padding-top: 0.5rem;
-      border-top: 1px dashed var(--border);
+      gap: 0.75rem;
+      margin-top: 0.15rem;
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       font-weight: 700;
     }
@@ -277,7 +324,6 @@
       <a href="testscores.html" class="active">Scores</a>
     </nav>
 
-    <!-- Optional Quick Filter for Major FBS Conferences -->
     <div class="filter-bar">
       <button class="filter-btn active" onclick="filterGames('all', event)">All FBS</button>
       <button class="filter-btn" onclick="filterGames('sec', event)">SEC</button>
@@ -300,7 +346,6 @@
       const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300';
 
       try {
-        // Only show the loading message on the initial load, not background polls
         if (!isBackgroundRefresh && rawEvents.length === 0) {
           container.innerHTML = '<div class="loading-msg">Fetching matchups...</div>';
         }
@@ -315,17 +360,11 @@
           return;
         }
 
-        // No artificial date cutoff here — the ESPN scoreboard endpoint
-        // already returns the current week's slate on its own (same as the
-        // other pages on this site that hit this endpoint), so we just take
-        // whatever it gives us instead of hardcoding a window that expires.
         rawEvents = data.events;
-
         renderGames();
 
       } catch (err) {
         console.error('Error loading scores:', err);
-        // Only show error message if we don't already have rendered games
         if (rawEvents.length === 0) {
           container.innerHTML = '<div class="error-msg">Could not load live FBS scores. Please try again later.</div>';
         }
@@ -343,10 +382,8 @@
 
     function renderGames() {
       const container = document.getElementById('scores-container');
-
       let filteredEvents = rawEvents;
 
-      // Group/Conference Filtering Logic
       if (currentFilter !== 'all') {
         filteredEvents = rawEvents.filter(event => {
           const comp = event.competitions[0];
@@ -366,7 +403,6 @@
         return;
       }
 
-      // Sort criteria: Live ('in') games first, then upcoming ('pre'), then finalized ('post') at the bottom
       filteredEvents.sort((a, b) => {
         const stateA = a.competitions[0].status.type.state;
         const stateB = b.competitions[0].status.type.state;
@@ -381,22 +417,21 @@
         return getPriority(stateA) - getPriority(stateB);
       });
 
-      // Build HTML string to update DOM cleanly all at once
-      let html = '';
+      let html = `<div class="compact-scores-grid">`;
 
       filteredEvents.forEach(event => {
         const competition = event.competitions[0];
-        const statusType = competition.status.type.state; // 'pre', 'in', 'post'
-        const statusDetail = competition.status.type.detail; // e.g. "Final", "3rd 4:12"
+        const statusType = competition.status.type.state;
+        const statusDetail = competition.status.type.detail;
 
         const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
         const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-        const homeRank = homeTeam.curatedRank?.current <= 25 ? `#${homeTeam.curatedRank.current} ` : '';
-        const awayRank = awayTeam.curatedRank?.current <= 25 ? `#${awayTeam.curatedRank.current} ` : '';
+        const homeRank = homeTeam.curatedRank?.current <= 25 ? `#${homeTeam.curatedRank.current}` : '';
+        const awayRank = awayTeam.curatedRank?.current <= 25 ? `#${awayTeam.curatedRank.current}` : '';
 
-        const homeName = homeTeam.team.shortDisplayName || homeTeam.team.name;
-        const awayName = awayTeam.team.shortDisplayName || awayTeam.team.name;
+        const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
+        const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
 
         const homeLogo = homeTeam.team.logo || '';
         const awayLogo = awayTeam.team.logo || '';
@@ -404,7 +439,6 @@
         const homeScore = homeTeam.score || '0';
         const awayScore = awayTeam.score || '0';
 
-        // Live Situational Data (Down & Distance, Ball on yard line)
         let situationHTML = '';
         if (statusType === 'in' && competition.situation) {
           const sit = competition.situation;
@@ -413,71 +447,19 @@
           }
         }
 
-        // Broadcast info
         const broadcast = competition.broadcasts && competition.broadcasts.length > 0
           ? competition.broadcasts[0].names.join(', ')
           : '';
 
-        // Odds Info
         const oddsObj = competition.odds && competition.odds.length > 0 ? competition.odds[0] : null;
         const spreadText = oddsObj?.details ? `Spread: ${oddsObj.details}` : '';
         const ouText = oddsObj?.overUnder ? `O/U: ${oddsObj.overUnder}` : '';
 
-        // Status badge logic
-        let badgeClass = 'status-sched';
+        let badgeClass = 'sched';
         let statusLabel = statusDetail;
         if (statusType === 'in') {
-          badgeClass = 'status-live';
+          badgeClass = 'live';
           statusLabel = `LIVE • ${statusDetail}`;
         } else if (statusType === 'post') {
-          badgeClass = 'status-final';
+          badgeClass = 'final';
           statusLabel = 'FINAL';
-        }
-
-        const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
-        const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
-
-        html += `
-          <div class="game-card">
-            <div class="game-header-info">
-              <span class="status-badge ${badgeClass}">${statusLabel}</span>
-              ${situationHTML}
-              <span>${broadcast ? `📺 ${broadcast}` : ''}</span>
-            </div>
-            <div class="team-line">
-              <div class="team-details">
-                <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'">
-                <span class="${isAwayWinner ? 'winner' : ''}"><span class="team-rank">${awayRank}</span>${awayName}</span>
-              </div>
-              <span class="team-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
-            </div>
-            <div class="team-line">
-              <div class="team-details">
-                <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">
-                <span class="${isHomeWinner ? 'winner' : ''}"><span class="team-rank">${homeRank}</span>${homeName}</span>
-              </div>
-              <span class="team-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
-            </div>
-            ${(spreadText || ouText) ? `
-              <div class="odds-line">
-                <span>${spreadText}</span>
-                <span>${ouText}</span>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    // Initial load
-    fetchScores(false);
-
-    // Auto-refresh every 10 seconds in the background
-    setInterval(() => {
-      fetchScores(true);
-    }, 10000);
-  </script>
-</body>
-</html>
