@@ -11,25 +11,25 @@
 
   <style>
     :root {
-      --bg: #070d1b;
-      --card-bg: rgba(26, 38, 56, 0.65);
-      --card-inner: rgba(11, 17, 32, 0.75);
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: rgba(51, 65, 85, 0.6);
+      --bg: #09090b;
+      --card-bg: #141417;
+      --card-inner: #0c0c0e;
+      --text: #f9fafb;
+      --text-muted: #a1a1aa;
+      --border: #27272a;
       --success: #22c55e;
       --danger: #ef4444;
       --warning: #eab308;
-      --accent: #06b6d4; /* Neon Cyan */
-      --accent-glow: rgba(6, 182, 212, 0.25);
-      --gold: #f59e0b;
+      --gold: #d4af37; /* Rich Vegas Gold */
+      --gold-border: rgba(212, 175, 55, 0.4);
+      --gold-glow: rgba(212, 175, 55, 0.15);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     
     body { 
       background-color: var(--bg); 
-      background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg) 60%);
+      background-image: linear-gradient(to bottom, #111115 0%, var(--bg) 100%);
       color: var(--text); 
       padding: 2rem 1rem 4rem 1rem; 
       min-height: 100vh;
@@ -41,7 +41,7 @@
     .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
     header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3)); }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.2)); }
     
     h1.main-title { 
       font-size: 2.5rem; 
@@ -49,7 +49,9 @@
       letter-spacing: -0.5px; 
       margin-bottom: 1.5rem; 
       color: var(--text);
-      text-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+      background: linear-gradient(135deg, #fff 0%, #d4af37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     /* Navigation Bar */
@@ -66,45 +68,43 @@
       text-decoration: none; 
       transition: all 0.2s ease;
       background-color: var(--card-bg);
-      backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       padding: 0.4rem 0.6rem;
-      border-radius: 8px;
+      border-radius: 6px;
       font-weight: 600; 
       font-size: 0.82rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
       white-space: nowrap;
     }
     
     nav a:hover { 
-      color: var(--text); 
-      border-color: var(--accent);
-      background-color: rgba(39, 53, 72, 0.8);
-      box-shadow: 0 0 12px var(--accent-glow);
+      color: var(--gold); 
+      border-color: var(--gold-border);
+      background-color: #1a1a1f;
     }
 
     nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
-      box-shadow: 0 0 15px var(--accent-glow);
+      color: #000; 
+      background-color: var(--gold);
+      border-color: var(--gold);
+      font-weight: 700;
+      box-shadow: 0 0 12px var(--gold-glow);
     }
 
     /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
-      backdrop-filter: blur(12px);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
       text-align: center;
     }
 
     /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--gold); letter-spacing: 0.3px; }
     .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
     /* Picks Inline Flow */
@@ -112,8 +112,8 @@
     .pick-item { font-weight: 700; }
 
     /* Result Color Coding */
-    .res-W { color: var(--success); text-shadow: 0 0 8px rgba(34, 197, 94, 0.3); }
-    .res-L { color: var(--danger); text-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
     .res-D { color: var(--warning); }
     .res-pending { color: var(--text); }
 
@@ -123,20 +123,19 @@
       width: 100%;
       max-width: 400px;
       margin: 1.25rem auto 0 auto;
-      background-color: var(--accent);
-      color: #070d1b;
+      background-color: var(--gold);
+      color: #000;
       text-align: center;
       padding: 0.75rem 1rem;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 800;
       text-decoration: none;
       font-size: 0.95rem;
-      transition: all 0.2s;
-      box-shadow: 0 0 15px var(--accent-glow);
+      transition: background-color 0.2s;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
     }
     .btn-gambly:hover {
-      background-color: #22d3ee;
-      box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+      background-color: #e5c158;
     }
 
     /* Clean Compact Parlay Scoreboard Ticker */
@@ -151,13 +150,13 @@
     .compact-card {
       background-color: var(--card-inner);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
     .compact-left {
@@ -176,7 +175,7 @@
 
     .compact-pick-info {
       font-weight: 700;
-      color: #67e8f9;
+      color: #fde68a;
       font-size: 0.88rem;
       overflow-wrap: break-word;
       word-break: break-word;
@@ -196,7 +195,6 @@
       padding: 0.15rem 0.5rem;
       border-radius: 4px;
       border: 1px solid rgba(34, 197, 94, 0.3);
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
     }
 
     .compact-teams {
@@ -217,24 +215,23 @@
     .compact-logo { width: 18px; height: 18px; object-fit: contain; }
     .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
     .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
-    .winner { color: var(--gold); text-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+    .winner { color: var(--gold); text-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
 
     /* Upcoming Week Top 5 Box Styling */
     .upcoming-preview-card {
-      background: linear-gradient(135deg, rgba(26, 38, 56, 0.8) 0%, rgba(11, 17, 32, 0.9) 100%);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(6, 182, 212, 0.4);
-      border-radius: 16px;
+      background: linear-gradient(135deg, #141417 0%, #0c0c0e 100%);
+      border: 1px solid var(--gold-border);
+      border-radius: 12px;
       padding: 1.25rem;
       margin-top: 2rem;
       text-align: left;
-      box-shadow: 0 8px 32px rgba(6, 182, 212, 0.15);
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.1);
       width: 100%;
     }
     .upcoming-preview-header {
       font-size: 0.95rem;
       font-weight: 800;
-      color: var(--accent);
+      color: var(--gold);
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-bottom: 0.75rem;
@@ -243,30 +240,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      text-shadow: 0 0 10px var(--accent-glow);
     }
     .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .upcoming-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(9, 9, 11, 0.7);
       padding: 0.5rem 0.75rem;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 0.9rem;
-      border: 1px solid rgba(51, 65, 85, 0.5);
+      border: 1px solid var(--border);
     }
     .upcoming-player { font-weight: 700; color: var(--text); }
     .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
     .upcoming-badge {
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.2rem 0.6rem;
-      border-radius: 6px;
-      background: rgba(6, 182, 212, 0.12);
-      color: var(--accent);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(212, 175, 55, 0.1);
+      color: var(--gold);
+      border: 1px solid var(--gold-border);
     }
     .upcoming-pending {
       font-size: 0.88rem;
@@ -276,20 +271,18 @@
       font-style: italic;
     }
     .btn-copy-text {
-      background-color: var(--accent);
-      color: #070d1b;
+      background-color: var(--gold);
+      color: #000;
       border: none;
-      padding: 0.35rem 0.7rem;
+      padding: 0.35rem 0.65rem;
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: 800;
       cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 0 10px var(--accent-glow);
+      transition: background-color 0.2s;
     }
     .btn-copy-text:hover {
-      background-color: #22d3ee;
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+      background-color: #e5c158;
     }
   </style>
 </head>
@@ -567,8 +560,8 @@
             Your browser does not support the video tag.
           </video>
           
-          <div class="custom-play-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(6, 182, 212, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">
-            <div style="width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 22px solid #06b6d4; margin-left: 4px;"></div>
+          <div class="custom-play-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(212, 175, 55, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+            <div style="width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 22px solid #d4af37; margin-left: 4px;"></div>
           </div>
         </div>
       `;
@@ -576,10 +569,10 @@
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent); color: #070d1b;">📲 Open Slip in Courtside</a>`;
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
         }
         if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: rgba(51, 65, 85, 0.8); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #27272a; color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
         }
         html += `</div>`;
       }
@@ -761,7 +754,7 @@
         previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
       } else {
         previewHtml += `<div class="upcoming-list">`;
-        cachedData.top5.apply = cachedData.top5.forEach((p, idx) => {
+        cachedData.top5.forEach((p, idx) => {
           let marginDisplay = 'Even';
 
           if (p.margin > 0) {
