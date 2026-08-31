@@ -81,7 +81,7 @@
       line-height: 1;
     }
 
-    /* Navigation Bar — broadcast channel tabs */
+    /* Navigation Bar */
     nav {
       display: flex;
       justify-content: center;
@@ -125,72 +125,6 @@
       outline-offset: 2px;
     }
 
-    /* Live Ticker — the signature broadcast element, shared with the other weekly page */
-    .ticker-wrap {
-      width: 100%;
-      background-color: var(--card-inner);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      overflow: hidden;
-      margin-bottom: 2rem;
-      position: relative;
-    }
-    .ticker-wrap::before, .ticker-wrap::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 24px;
-      z-index: 2;
-      pointer-events: none;
-    }
-    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--card-inner), transparent); }
-    .ticker-wrap::after { right: 0; background: linear-gradient(270deg, var(--card-inner), transparent); }
-
-    .ticker-track {
-      display: flex;
-      width: max-content;
-      animation-name: ticker-scroll;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
-    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
-
-    @keyframes ticker-scroll {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
-
-    .ticker-item {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      padding: 0.55rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-right: 1px solid var(--border);
-    }
-    .ticker-item .tk-status { color: var(--text-muted); font-size: 0.7rem; }
-    .ticker-item.tk-live .tk-status { color: var(--success); }
-    .ticker-item .tk-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--success);
-      display: inline-block;
-      animation: tk-pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes tk-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.25; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ticker-track { animation: none; }
-      .tk-dot { animation: none; }
-    }
-
     /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
@@ -224,8 +158,7 @@
       letter-spacing: 1.5px;
     }
 
-    /* Picks Grid — one layer of framing (fill only), real CSS grid so columns
-       line up cleanly instead of wrapping raggedly. */
+    /* Picks Grid */
     .picks-group {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -261,12 +194,6 @@
     .pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
     .pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
     .pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
-
-    /* Result Color Coding (kept for compatibility with any other usage) */
-    .res-W { color: var(--success); }
-    .res-L { color: var(--danger); }
-    .res-D { color: var(--warning); }
-    .res-pending { color: var(--text); }
 
     /* Action Link Button Styling */
     .btn-gambly {
@@ -401,6 +328,11 @@
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--success);
       animation: tk-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tk-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
     }
 
     .compact-teams {
@@ -550,10 +482,6 @@
       <a href="testscores.html">Scores</a>
     </nav>
 
-    <div class="ticker-wrap" id="ticker-wrap" style="display: none;">
-      <div class="ticker-track" id="ticker-track"></div>
-    </div>
-
     <div id="content-container">
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
     </div>
@@ -570,15 +498,11 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
-      // Strip "team total"/"tt" first, then the o##/u## total pattern, THEN
-      // the generic trailing spread number. Doing the generic strip before
-      // the o/u strip (the old order) chops the number off first and leaves
-      // a stray "o"/"u" character stuck to the team name.
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
       clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
@@ -592,9 +516,6 @@
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
-        // -999 is a sentinel meaning "no computed margin" (unmatched to a
-        // live event, or manually graded) — kept distinct from a real
-        // margin of 0 (an actual push) so the UI can tell them apart.
         let computedMargin = -999;
 
         const selText = (pick.selection || '').trim().toLowerCase();
@@ -631,7 +552,7 @@
             const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
 
             const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
+              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
             );
 
             if (isTotalOrTT) {
@@ -664,73 +585,9 @@
         }
 
         const finalResultForScoring = computedResult || pick.result || null;
-        // Separate "sort" value from the real (possibly sentinel) margin —
-        // manually-graded/unmatched picks get a neutral sort position
-        // instead of being shoved to the bottom of the winners list as if
-        // they were the smallest possible win.
         const sortMargin = computedMargin === -999 ? 0 : computedMargin;
 
         return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
-      });
-    }
-
-    function renderTicker(espnEvents) {
-      const wrap = document.getElementById('ticker-wrap');
-      const track = document.getElementById('ticker-track');
-      if (!espnEvents || espnEvents.length === 0) {
-        wrap.style.display = 'none';
-        return;
-      }
-
-      const esc = (s) => String(s).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
-
-      const items = espnEvents.map(ev => {
-        const comp = ev.competitions?.[0];
-        if (!comp) return null;
-        const competitors = comp.competitors || [];
-        const home = competitors.find(c => c.homeAway === 'home');
-        const away = competitors.find(c => c.homeAway === 'away');
-        if (!home || !away) return null;
-
-        const state = comp.status?.type?.state;
-        const isLive = state === 'in';
-        const statusText = state === 'pre'
-          ? (comp.status?.type?.shortDetail || 'Upcoming')
-          : state === 'post'
-            ? 'Final'
-            : (comp.status?.type?.shortDetail || 'Live');
-
-        const homeAbbr = esc(home.team?.abbreviation || home.team?.shortDisplayName || '');
-        const awayAbbr = esc(away.team?.abbreviation || away.team?.shortDisplayName || '');
-        const homeScore = state === 'pre' ? '' : esc(home.score ?? '0');
-        const awayScore = state === 'pre' ? '' : esc(away.score ?? '0');
-        const scoreText = state === 'pre' ? 'vs' : `${awayScore}\u2013${homeScore}`;
-
-        return `
-          <div class="ticker-item ${isLive ? 'tk-live' : ''}">
-            ${isLive ? '<span class="tk-dot"></span>' : ''}
-            <span>${awayAbbr} ${scoreText} ${homeAbbr}</span>
-            <span class="tk-status">${esc(statusText)}</span>
-          </div>
-        `;
-      }).filter(Boolean);
-
-      if (items.length === 0) {
-        wrap.style.display = 'none';
-        return;
-      }
-
-      track.innerHTML = items.join('') + items.join('');
-      wrap.style.display = 'block';
-
-      requestAnimationFrame(() => {
-        const singleSetWidth = track.scrollWidth / 2;
-        const PIXELS_PER_SECOND = 55;
-        const MIN_DURATION = 18;
-        const duration = Math.max(MIN_DURATION, singleSetWidth / PIXELS_PER_SECOND);
-        track.style.animationDuration = `${duration}s`;
       });
     }
 
@@ -741,10 +598,8 @@
       }
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
-
       cachedData.top5.forEach(p => {
-        const initials = p.players?.initials || '??';
-        text += `${initials}:\n`;
+        text += `${p.players?.initials || '??'}:\n`;
       });
 
       const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
@@ -752,8 +607,7 @@
 
       if (otherPicksList.length > 0) {
         otherPicksList.forEach(p => {
-          const initials = p.players?.initials || '??';
-          text += `${initials}:\n`;
+          text += `${p.players?.initials || '??'}:\n`;
         });
       }
 
@@ -764,17 +618,63 @@
           btn.innerText = 'Copied! ✅';
           setTimeout(() => { btn.innerText = originalText; }, 2000);
         }
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy to clipboard.');
       });
     }
 
-    async function loadActiveWeek(isBackgroundRefresh = false) {
+    async function backgroundRefreshScores() {
+      try {
+        const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
+        if (!espnRes.ok) return;
+        const espnData = await espnRes.json();
+        const espnEvents = espnData.events || [];
+
+        const scoresGrid = document.querySelector('.compact-scores-grid');
+        if (!scoresGrid || cachedData.allPicks.length === 0) return;
+
+        const evaluatedPicks = evaluatePicksWithScores(cachedData.allPicks, espnEvents);
+        const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
+
+        const gameEventMap = {};
+        parlayPicks.forEach(p => {
+          const searchTerms = getTeamSearchTerms(p.selection);
+          const initials = p.players?.initials || '??';
+          const trimmedSelection = p.selection.trim();
+
+          const matchedEvent = espnEvents.find(ev => {
+            const comp = ev.competitions[0];
+            return comp.competitors.some(c => {
+              const name = (c.team.name || '').toLowerCase();
+              const shortName = (c.team.shortDisplayName || '').toLowerCase();
+              const abbreviation = (c.team.abbreviation || '').toLowerCase();
+              return searchTerms.some(term =>
+                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
+              );
+            });
+          });
+
+          if (matchedEvent) {
+            const eventId = matchedEvent.id;
+            if (!gameEventMap[eventId]) {
+              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entries: [] };
+            }
+            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
+            if (existingEntry) {
+              existingEntry.initialsList.push(initials);
+            } else {
+              gameEventMap[eventId].entries.push({ selection: trimmedSelection, initialsList: [initials] });
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Background score sync error:', err);
+      }
+    }
+
+    async function loadActiveWeek(isInitialLoad = true) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
 
-      if (!isBackgroundRefresh && !hasLoadedOnce) {
+      if (isInitialLoad) {
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
@@ -784,24 +684,17 @@
         .eq('status', 'open')
         .limit(1);
 
-      if (weeksError) {
-        console.error('Failed to load current week:', weeksError);
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--danger);">Couldn\'t load this week (connection error). Try refreshing.</div></div>';
-        hasLoadedOnce = true;
-        return;
-      }
-
-      if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
-        previewContainer.innerHTML = '';
-        document.getElementById('ticker-wrap').style.display = 'none';
-        hasLoadedOnce = true;
+      if (weeksError || !weeks || weeks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
+          previewContainer.innerHTML = '';
+        }
         return;
       }
 
       const currentWeek = weeks[0];
-      const nextWeekNum = currentWeek.week_number + 1;
-      cachedData.nextWeekNum = nextWeekNum;
+      cachedData.currentWeekId = currentWeek.id;
+      cachedData.nextWeekNum = currentWeek.week_number + 1;
 
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
@@ -813,40 +706,21 @@
         const espnData = await espnRes.json();
         espnEvents = espnData.events || [];
       }
-      renderTicker(espnEvents);
 
-      if (picksRes.error) {
-        console.error('Failed to load picks:', picksRes.error);
-        container.innerHTML = `
-          <div class="current-week-card">
-            <div style="color: var(--danger);">Couldn't load this week's picks (connection error). Try refreshing.</div>
-          </div>
-        `;
-        hasLoadedOnce = true;
-        return;
-      }
+      const picks = picksRes.data || [];
+      cachedData.allPicks = picks;
 
-      const picks = picksRes.data;
-      cachedData.allPicks = picks || [];
-
-      if (!picks || picks.length === 0) {
-        container.innerHTML = `
-          <div class="current-week-card">
-            <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
-              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+      if (picks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = `
+            <div class="current-week-card">
+              <div class="week-section">
+                <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+                <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+              </div>
             </div>
-          </div>
-        `;
-        previewContainer.innerHTML = `
-          <div class="upcoming-preview-card">
-            <div class="upcoming-preview-header">
-              <span>Week ${nextWeekNum} Pickers</span>
-            </div>
-            <div class="upcoming-pending">Results pending until the winners are decided.</div>
-          </div>
-        `;
-        hasLoadedOnce = true;
+          `;
+        }
         return;
       }
 
@@ -860,8 +734,7 @@
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const adminResult = p.result;
-          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
@@ -870,35 +743,27 @@
       }
 
       if (otherPicks.length > 0) {
-        html += `
-          <div class="category-title" style="margin-top: 1rem;">Others:</div>
-          <div class="picks-group">
-        `;
+        html += `<div class="category-title" style="margin-top: 1rem;">Others:</div><div class="picks-group">`;
         otherPicks.forEach(p => {
-          const adminResult = p.result;
-          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
+      // Video promo block (with robust MP4/MOV fallback & attributes)
       html += `
         <div class="promo-video-wrap" onclick="
           const vid = this.querySelector('video');
           const btn = this.querySelector('.custom-play-btn');
-          if (vid.paused) {
-            vid.play();
-            btn.style.display = 'none';
-          } else {
-            vid.pause();
-            btn.style.display = 'flex';
-          }
+          if (vid.paused) { vid.play(); btn.style.display = 'none'; }
+          else { vid.pause(); btn.style.display = 'flex'; }
         ">
-          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+          <video width="100%" preload="metadata" playsinline webkit-playsinline muted poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mp4" type="video/mp4">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
-
           <div class="custom-play-btn">
             <div class="play-triangle"></div>
           </div>
@@ -916,9 +781,9 @@
         html += `</div>`;
       }
 
+      // Compact Scores Grid
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
-
         const gameEventMap = {};
 
         parlayPicks.forEach(p => {
@@ -931,10 +796,9 @@
             return comp.competitors.some(c => {
               const name = (c.team.name || '').toLowerCase();
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
-              const displayName = (c.team.displayName || '').toLowerCase();
               const abbreviation = (c.team.abbreviation || '').toLowerCase();
               return searchTerms.some(term =>
-                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
+                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
               );
             });
           });
@@ -942,25 +806,16 @@
           if (matchedEvent) {
             const eventId = matchedEvent.id;
             if (!gameEventMap[eventId]) {
-              gameEventMap[eventId] = {
-                event: matchedEvent,
-                dateObj: new Date(matchedEvent.date),
-                entries: []
-              };
+              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entries: [] };
             }
-
             let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
             if (existingEntry) {
               existingEntry.initialsList.push(initials);
             } else {
-              gameEventMap[eventId].entries.push({
-                selection: trimmedSelection,
-                initialsList: [initials]
-              });
+              gameEventMap[eventId].entries.push({ selection: trimmedSelection, initialsList: [initials] });
             }
           } else {
-            const unmatchedKey = `unmatched_${p.id}`;
-            gameEventMap[unmatchedKey] = {
+            gameEventMap[`unmatched_${p.id}`] = {
               event: null,
               dateObj: new Date('9999-12-31'),
               entries: [{ selection: trimmedSelection, initialsList: [initials] }]
@@ -975,16 +830,13 @@
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
-
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
-            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
-
+            const homeAbbr = homeTeam.team.abbreviation || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || 'AWAY';
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
-
             const homeScore = homeTeam.score || '0';
             const awayScore = awayTeam.score || '0';
 
@@ -1002,8 +854,7 @@
 
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
-              const combinedInitials = entry.initialsList.join(', ');
-              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -1030,8 +881,7 @@
           } else {
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
-              const combinedInitials = entry.initialsList.join(', ');
-              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -1041,74 +891,35 @@
                   ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
-                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
-                  No live feed found
-                </div>
+                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">No live feed</div>
               </div>
             `;
           }
         });
-
         html += `</div>`;
       }
-
       html += `</div></div>`;
 
-      // Preserve the promo video's playback position/state across background
-      // refreshes — otherwise replacing innerHTML every 10 seconds destroys
-      // and recreates the <video>, restarting it from 0:00 mid-watch.
-      const existingVideo = container.querySelector('video');
-      let videoState = null;
-      if (existingVideo) {
-        videoState = { time: existingVideo.currentTime, wasPlaying: !existingVideo.paused };
+      if (isInitialLoad || !container.querySelector('video')) {
+        container.innerHTML = html;
       }
 
-      container.innerHTML = html;
-
-      if (videoState) {
-        const newVideo = container.querySelector('video');
-        if (newVideo) {
-          const restore = () => {
-            try { newVideo.currentTime = videoState.time; } catch (e) { /* metadata not ready */ }
-            if (videoState.wasPlaying) {
-              newVideo.play().catch(() => {});
-              const btn = container.querySelector('.custom-play-btn');
-              if (btn) btn.style.display = 'none';
-            }
-          };
-          if (newVideo.readyState >= 1) {
-            restore();
-          } else {
-            newVideo.addEventListener('loadedmetadata', restore, { once: true });
-          }
-        }
-      }
-
+      // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
-            <span>Week ${nextWeekNum} Pickers</span>
+            <span>Week ${cachedData.nextWeekNum} Pickers</span>
       `;
 
-      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.finalResultForScoring === 'W' || p.finalResultForScoring === 'L' || p.finalResultForScoring === 'D');
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
 
       if (allFinalized) {
         const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
         const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
         const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
 
-        let top5 = [];
-        if (winners.length >= 5) {
-          top5 = winners.slice(0, 5);
-        } else {
-          top5 = [...winners];
-          const needed = 5 - top5.length;
-          top5 = top5.concat(losses.slice(0, needed));
-
-          if (top5.length < 5) {
-            top5 = top5.concat(pushes.slice(0, 5 - top5.length));
-          }
-        }
+        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...losses.slice(0, 5 - winners.length)];
+        if (top5.length < 5) top5 = [...top5, ...pushes.slice(0, 5 - top5.length)];
 
         cachedData.top5 = top5;
         previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
@@ -1123,19 +934,8 @@
       } else {
         previewHtml += `<div class="upcoming-list">`;
         cachedData.top5.forEach((p, idx) => {
-          let marginDisplay = 'Even';
-          let marginClass = 'margin-even';
-
-          if (p.margin === -999) {
-            marginDisplay = '—';
-            marginClass = 'margin-unknown';
-          } else if (p.margin > 0) {
-            marginDisplay = `+${p.margin}`;
-            marginClass = 'margin-pos';
-          } else if (p.margin < 0) {
-            marginDisplay = `${p.margin}`;
-            marginClass = 'margin-neg';
-          }
+          let marginDisplay = p.margin === -999 ? '—' : (p.margin > 0 ? `+${p.margin}` : `${p.margin}`);
+          let marginClass = p.margin === -999 ? 'margin-unknown' : (p.margin > 0 ? 'margin-pos' : (p.margin < 0 ? 'margin-neg' : 'margin-even'));
 
           previewHtml += `
             <div class="upcoming-item">
@@ -1156,10 +956,10 @@
       hasLoadedOnce = true;
     }
 
-    loadActiveWeek(false);
+    loadActiveWeek(true);
 
     setInterval(() => {
-      loadActiveWeek(true);
+      backgroundRefreshScores();
     }, 10000);
   </script>
 </body>
