@@ -94,9 +94,21 @@
     .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
     .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
-    /* Picks Inline Flow */
-    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
-    .pick-item { font-weight: 700; }
+    /* Picks Inline Flow - NO CELLS */
+    .picks-group { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      gap: 0.5rem 1.5rem; 
+      margin-bottom: 1rem; 
+      font-size: 1.05rem; 
+    }
+    .pick-item { 
+      font-weight: 700; 
+      background: transparent; 
+      border: none; 
+      padding: 0.2rem 0; 
+    }
 
     /* Result Color Coding */
     .res-W { color: var(--success); }
@@ -293,7 +305,6 @@
       <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
     </div>
 
-    <!-- Always-On Upcoming Week / Top 5 Box Container -->
     <div id="upcoming-preview-container"></div>
   </div>
 
