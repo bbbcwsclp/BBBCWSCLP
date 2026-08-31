@@ -209,7 +209,7 @@
       border-radius: 8px;
       padding: 1.25rem;
       margin-bottom: 1.25rem;
-      text-align: left;
+      text-align: center;
     }
     .history-week-header {
       font-family: var(--font-display);
@@ -220,7 +220,7 @@
       margin-bottom: 0.75rem;
       color: var(--text);
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
     }
 
@@ -233,16 +233,16 @@
       letter-spacing: 1px;
       margin-top: 0.9rem;
       margin-bottom: 0.5rem;
-      text-align: left;
+      text-align: center;
     }
 
-    /* Matches the picks grid treatment on the weekly page: one layer of
-       framing (fill, no stroke) laid out in a real grid, badge chip carries
-       the W/L/D/pending state instead of plain colored text. */
+    /* Centered picks grid layout matching index style */
     .history-picks-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 0.5rem;
+      justify-content: center;
+      justify-items: center;
     }
     .history-pick-item {
       font-family: var(--font-label);
@@ -253,6 +253,9 @@
       padding: 0.5rem 0.65rem;
       display: flex;
       align-items: center;
+      width: 100%;
+      justify-content: flex-start;
+      text-align: left;
     }
     .history-pick-item::before {
       font-family: var(--font-mono);
@@ -334,10 +337,6 @@
       let spreadW = 0, spreadL = 0, spreadD = 0;
       let ouW = 0, ouL = 0, ouD = 0;
 
-      // Bucketed case-insensitively (key = lowercase team) so "Alabama -7.5"
-      // and "alabama -7" from different admins/entries count as the same
-      // team instead of silently splitting that team's tally in two. The
-      // display name keeps whichever casing was seen first.
       const teamCorrectCounts = {};
       const teamCorrectDisplay = {};
       const teamLossCounts = {};
@@ -415,9 +414,6 @@
       let coldestPlayers = [];
       let maxColdStreak = 0;
 
-      // Reuse the picks we already fetched instead of hitting the database
-      // a second time just to get them chronologically — same rows, just
-      // sorted client-side, saving a full network round-trip.
       const allPicksChronological = [...(picks || [])].sort(
         (a, b) => new Date(a.created_at) - new Date(b.created_at)
       );
@@ -549,7 +545,7 @@
 
         html += `
           <div class="week-history-card">
-            <div class="history-week-header" style="justify-content: center;">
+            <div class="history-week-header">
               <span>Week ${week.week_number} (${weekStatus})</span>
             </div>
         `;
