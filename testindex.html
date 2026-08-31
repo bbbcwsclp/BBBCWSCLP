@@ -162,7 +162,7 @@
     .picks-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.6rem 1.5rem;
+      gap: 0.5rem 1.5rem;
       margin-bottom: 1rem;
       text-align: left;
     }
@@ -176,17 +176,16 @@
       font-family: var(--font-label);
       font-weight: 600;
       font-size: 0.95rem;
-      background-color: var(--card-inner);
+      background: transparent;
       border: none;
-      border-radius: 6px;
-      padding: 0.55rem 0.7rem;
+      padding: 0.35rem 0.2rem;
       display: flex;
       align-items: center;
-      justify-content: center; /* Centers the contents horizontally */
+      justify-content: center;
       text-align: center;
     }
 
-    /* Win/Loss/Push Text Color States (No badges) */
+    /* Win/Loss/Push Text Color States (No cells/backgrounds) */
     .pick-item.res-W { color: var(--success); }
     .pick-item.res-L { color: var(--danger); }
     .pick-item.res-D { color: var(--warning); }
