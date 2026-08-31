@@ -688,9 +688,10 @@
         html += `</div>`;
       }
 
-      // Compact Scores Grid - Fixed to group identical selections properly & include all parlay picks
+      // --- COMPACT PARLAY SCOREBOARD (GROUPED BY GAME EVENT, STACKING DIFFERENT LINES) ---
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
+
         const gameEventMap = {};
 
         parlayPicks.forEach(p => {
@@ -703,9 +704,10 @@
             return comp.competitors.some(c => {
               const name = (c.team.name || '').toLowerCase();
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
+              const displayName = (c.team.displayName || '').toLowerCase();
               const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term =>
-                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
+              return searchTerms.some(term => 
+                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
               );
             });
           });
@@ -713,20 +715,28 @@
           if (matchedEvent) {
             const eventId = matchedEvent.id;
             if (!gameEventMap[eventId]) {
-              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entriesMap: {} };
+              gameEventMap[eventId] = {
+                event: matchedEvent,
+                dateObj: new Date(matchedEvent.date),
+                entries: []
+              };
             }
-            if (!gameEventMap[eventId].entriesMap[trimmedSelection]) {
-              gameEventMap[eventId].entriesMap[trimmedSelection] = [];
-            }
-            if (!gameEventMap[eventId].entriesMap[trimmedSelection].includes(initials)) {
-              gameEventMap[eventId].entriesMap[trimmedSelection].push(initials);
+            
+            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
+            if (existingEntry) {
+              existingEntry.initialsList.push(initials);
+            } else {
+              gameEventMap[eventId].entries.push({
+                selection: trimmedSelection,
+                initialsList: [initials]
+              });
             }
           } else {
-            const fallbackKey = `unmatched_${p.id}`;
-            gameEventMap[fallbackKey] = {
+            const unmatchedKey = `unmatched_${p.id}`;
+            gameEventMap[unmatchedKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
-              entriesMap: { [trimmedSelection]: [initials] }
+              entries: [{ selection: trimmedSelection, initialsList: [initials] }]
             };
           }
         });
@@ -734,25 +744,20 @@
         const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
 
         sortedGames.forEach(item => {
-          let entriesArray = [];
-          if (item.entriesMap) {
-            entriesArray = Object.entries(item.entriesMap).map(([sel, initialsList]) => ({
-              selection: sel,
-              initialsList: initialsList
-            }));
-          }
-
           if (item.event) {
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
+            
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            const homeAbbr = homeTeam.team.abbreviation || 'HOME';
-            const awayAbbr = awayTeam.team.abbreviation || 'AWAY';
+            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
+            
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
+            
             const homeScore = homeTeam.score || '0';
             const awayScore = awayTeam.score || '0';
 
@@ -765,12 +770,13 @@
               statusText = 'FINAL';
             }
 
-            const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
-            const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
             let picksStackHtml = `<div class="compact-picks-stack">`;
-            entriesArray.forEach(entry => {
-              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -796,8 +802,9 @@
             `;
           } else {
             let picksStackHtml = `<div class="compact-picks-stack">`;
-            entriesArray.forEach(entry => {
-              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+            item.entries.forEach(entry => {
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -807,18 +814,19 @@
                   ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
-                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">No live feed</div>
+                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
+                  No live feed found
+                </div>
               </div>
             `;
           }
         });
+
         html += `</div>`;
       }
-      html += `</div></div>`;
 
-      if (isInitialLoad || !container.querySelector('video')) {
-        container.innerHTML = html;
-      }
+      html += `</div></div>`;
+      container.innerHTML = html;
 
       // Render Top 5 preview container
       let previewHtml = `
