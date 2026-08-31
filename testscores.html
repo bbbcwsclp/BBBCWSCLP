@@ -340,13 +340,14 @@
   <script>
     let rawEvents = [];
     let currentFilter = 'all';
+    let hasLoadedOnce = false;
 
     async function fetchScores(isBackgroundRefresh = false) {
       const container = document.getElementById('scores-container');
       const apiURL = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300';
 
       try {
-        if (!isBackgroundRefresh && rawEvents.length === 0) {
+        if (!isBackgroundRefresh && !hasLoadedOnce) {
           container.innerHTML = '<div class="loading-msg">Fetching matchups...</div>';
         }
 
@@ -354,18 +355,19 @@
         const data = await response.json();
 
         if (!data.events || data.events.length === 0) {
-          if (!isBackgroundRefresh) {
+          if (!hasLoadedOnce) {
             container.innerHTML = '<div class="loading-msg">No games scheduled.</div>';
           }
           return;
         }
 
         rawEvents = data.events;
+        hasLoadedOnce = true;
         renderGames();
 
       } catch (err) {
         console.error('Error loading scores:', err);
-        if (rawEvents.length === 0) {
+        if (!hasLoadedOnce) {
           container.innerHTML = '<div class="error-msg">Could not load live FBS scores. Please try again later.</div>';
         }
       }
@@ -463,3 +465,57 @@
         } else if (statusType === 'post') {
           badgeClass = 'final';
           statusLabel = 'FINAL';
+        }
+
+        const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
+        const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
+
+        html += `
+          <div class="compact-card">
+            <div class="compact-left">
+              <div class="game-meta-row">
+                <span class="compact-status ${badgeClass}">${statusLabel}</span>
+                ${situationHTML}
+                ${broadcast ? `<span class="broadcast-text">📺 ${broadcast}</span>` : ''}
+              </div>
+              ${(spreadText || ouText) ? `
+                <div class="odds-line">
+                  ${spreadText ? `<span>${spreadText}</span>` : ''}
+                  ${ouText ? `<span>${ouText}</span>` : ''}
+                </div>
+              ` : ''}
+            </div>
+            <div class="compact-teams">
+              <div class="compact-team-row">
+                <img src="${awayLogo}" class="compact-logo" onerror="this.style.display='none'">
+                <div class="compact-team-name-wrap">
+                  <span class="compact-team-abbr ${isAwayWinner ? 'winner' : ''}">${awayAbbr}</span>
+                  ${awayRank ? `<span class="compact-team-rank">${awayRank}</span>` : ''}
+                </div>
+                <span class="compact-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
+              </div>
+              <div class="compact-team-row">
+                <img src="${homeLogo}" class="compact-logo" onerror="this.style.display='none'">
+                <div class="compact-team-name-wrap">
+                  <span class="compact-team-abbr ${isHomeWinner ? 'winner' : ''}">${homeAbbr}</span>
+                  ${homeRank ? `<span class="compact-team-rank">${homeRank}</span>` : ''}
+                </div>
+                <span class="compact-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    fetchScores(false);
+
+    setInterval(() => {
+      fetchScores(true);
+    }, 10000);
+  </script>
+</body>
+</html>
