@@ -292,6 +292,23 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Helper function to extract team names properly from pick strings (handling spreads, totals, team totals, and matchups)
+    function extractTeamNamesFromSelection(selectionText) {
+      if (!selectionText) return [];
+      let clean = selectionText.trim();
+      
+      // Strip common betting terminology modifiers
+      clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b(over|under)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*[\d\.]+\b/gi, '');
+      clean = clean.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
+
+      if (clean.includes('/')) {
+        return clean.split('/').map(t => t.trim()).filter(Boolean);
+      }
+      return clean ? [clean] : [];
+    }
+
     async function loadSeasonHistory() {
       const { data: weeks, error: weeksErr } = await _supabase
         .from('weeks')
@@ -342,27 +359,24 @@
             if (isOU) ouW++;
             else spreadW++;
 
-            if (!isOU) {
-              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
-              if (cleanTeam) {
-                const key = cleanTeam.toLowerCase();
-                teamCorrectCounts[key] = (teamCorrectCounts[key] || 0) + 1;
-                if (!teamCorrectDisplay[key]) teamCorrectDisplay[key] = cleanTeam;
-              }
-            }
+            const teams = extractTeamNamesFromSelection(selection);
+            teams.forEach(teamName => {
+              const key = teamName.toLowerCase();
+              teamCorrectCounts[key] = (teamCorrectCounts[key] || 0) + 1;
+              if (!teamCorrectDisplay[key]) teamCorrectDisplay[key] = teamName;
+            });
           } else if (res === 'L') {
             totalL++;
             if (isOU) ouL++;
             else spreadL++;
 
-            if (!isOU) {
-              const cleanTeam = selection.replace(/[+-]?\d+(\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
-              if (cleanTeam) {
-                const key = cleanTeam.toLowerCase();
-                teamLossCounts[key] = (teamLossCounts[key] || 0) + 1;
-                if (!teamLossDisplay[key]) teamLossDisplay[key] = cleanTeam;
-              }
-            }
+            // Increment loss counts for every team mentioned on this losing ticket
+            const teams = extractTeamNamesFromSelection(selection);
+            teams.forEach(teamName => {
+              const key = teamName.toLowerCase();
+              teamLossCounts[key] = (teamLossCounts[key] || 0) + 1;
+              if (!teamLossDisplay[key]) teamLossDisplay[key] = teamName;
+            });
           } else if (res === 'D') {
             totalD++;
             if (isOU) ouD++;
@@ -384,7 +398,7 @@
         }
       }
 
-      // Find most losing team
+      // Find most losing team (Worst Beat Team)
       let worstTeam = 'None';
       let maxLossCount = 0;
       for (const [key, count] of Object.entries(teamLossCounts)) {
