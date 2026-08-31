@@ -226,11 +226,11 @@
     </header>
 
     <nav>
-      <a href="testindex.html">Weekly</a>
-      <a href="teststandings.html" class="active">Standings</a>
-      <a href="testseason.html">Season</a>
-      <a href="testhalloffame.html">HOF</a>
-      <a href="testscores.html">Scores</a>
+      <a href="index.html">Weekly</a>
+      <a href="standings.html" class="active">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
     </nav>
 
     <div class="card">
@@ -361,7 +361,7 @@
           const before = p.initials.substring(0, dsMatchIndex);
           const matched = p.initials.substring(dsMatchIndex, dsMatchIndex + 2);
           const after = p.initials.substring(dsMatchIndex + 2);
-          formattedInitials = `${before}<a href="testadmin.html" style="color: inherit; text-decoration: none;">${matched[0]}</a>${matched[1]}${after}`;
+          formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">${matched[0]}</a>${matched[1]}${after}`;
         }
 
         // Dynamic Win % Color Logic (Green if wins > losses, Red if losses > wins, muted default if even)
