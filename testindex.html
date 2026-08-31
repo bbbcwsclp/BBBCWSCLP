@@ -446,7 +446,7 @@
     <div id="upcoming-preview-container"></div>
   </div>
 
-  <script>
+    <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
@@ -454,20 +454,42 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
+
+    // Shorthand alias mappings for robust ESPN matching
+    const TEAM_ALIASES = {
+      'sac': 'sacramento state',
+      'jax state': 'jacksonville state',
+      'tcu': 'tcu horned frogs',
+      'unc': 'north carolina',
+      'usc': 'southern cal',
+      'unlv': 'unlv',
+      'stanford': 'stanford'
+    };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
-      let clean = selection.trim();
+      let clean = selection.trim().toLowerCase();
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
-      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
 
+      let terms = [];
       if (clean.includes('/')) {
-        return clean.split('/').map(t => t.trim().toLowerCase());
+        terms = clean.split('/').map(t => t.trim());
+      } else {
+        terms = [clean];
       }
-      return [clean.toLowerCase()];
+
+      // Expand using aliases if available
+      let expanded = [];
+      terms.forEach(t => {
+        expanded.push(t);
+        if (TEAM_ALIASES[t]) {
+          expanded.push(TEAM_ALIASES[t]);
+        }
+      });
+      return expanded;
     }
 
     function evaluatePicksWithScores(picks, espnEvents) {
@@ -487,7 +509,7 @@
             const shortName = (c.team.shortDisplayName || '').toLowerCase();
             const displayName = (c.team.displayName || '').toLowerCase();
             const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term => 
+            return searchTerms.some(term =>
               term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
             );
           });
@@ -500,7 +522,7 @@
           if (isFinal) {
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-            
+
             const homeScore = parseInt(homeTeam.score || '0', 10);
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
@@ -508,12 +530,8 @@
             const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
             const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
 
-            const awayName = (awayTeam.team.name || '').toLowerCase();
-            const awayShort = (awayTeam.team.shortDisplayName || '').toLowerCase();
-            const awayAbbr = (awayTeam.team.abbreviation || '').toLowerCase();
-
-            const isHomePick = searchTerms.some(term => 
-              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
+            const isHomePick = searchTerms.some(term =>
+              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
             );
 
             if (isTotalOrTT) {
@@ -546,8 +564,9 @@
         }
 
         const finalResultForScoring = computedResult || pick.result || null;
+        const sortMargin = computedMargin === -999 ? 0 : computedMargin;
 
-        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin };
+        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
       });
     }
 
@@ -558,19 +577,16 @@
       }
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
-      
       cachedData.top5.forEach(p => {
-        const initials = p.players?.initials || '??';
-        text += `${initials}:\n`;
+        text += `${p.players?.initials || '??'}:\n`;
       });
 
       const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
-      
+
       if (otherPicksList.length > 0) {
         otherPicksList.forEach(p => {
-          const initials = p.players?.initials || '??';
-          text += `${initials}:\n`;
+          text += `${p.players?.initials || '??'}:\n`;
         });
       }
 
@@ -581,44 +597,39 @@
           btn.innerText = 'Copied! ✅';
           setTimeout(() => { btn.innerText = originalText; }, 2000);
         }
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy to clipboard.');
       });
     }
 
-    async function loadActiveWeek(isBackgroundRefresh = false) {
+    async function loadActiveWeek(isInitialLoad = true) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
 
-      if (!isBackgroundRefresh && !hasLoadedOnce) {
+      if (isInitialLoad) {
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
-      const { data: weeks } = await _supabase
+      const { data: weeks, error: weeksError } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
-      if (!weeks || weeks.length === 0) {
-        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
-        previewContainer.innerHTML = '';
-        hasLoadedOnce = true;
+      if (weeksError || !weeks || weeks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
+          previewContainer.innerHTML = '';
+        }
         return;
       }
 
       const currentWeek = weeks[0];
-      const nextWeekNum = currentWeek.week_number + 1;
-      cachedData.nextWeekNum = nextWeekNum;
+      cachedData.currentWeekId = currentWeek.id;
+      cachedData.nextWeekNum = currentWeek.week_number + 1;
 
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
         fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
       ]);
-
-      const picks = picksRes.data;
-      cachedData.allPicks = picks || [];
 
       let espnEvents = [];
       if (espnRes && espnRes.ok) {
@@ -626,24 +637,20 @@
         espnEvents = espnData.events || [];
       }
 
-      if (!picks || picks.length === 0) {
-        container.innerHTML = `
-          <div class="current-week-card">
-            <div class="week-section">
-              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
-              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+      const picks = picksRes.data || [];
+      cachedData.allPicks = picks;
+
+      if (picks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = `
+            <div class="current-week-card">
+              <div class="week-section">
+                <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+                <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+              </div>
             </div>
-          </div>
-        `;
-        previewContainer.innerHTML = `
-          <div class="upcoming-preview-card">
-            <div class="upcoming-preview-header">
-              <span>Week ${nextWeekNum} Pickers</span>
-            </div>
-            <div class="upcoming-pending">Results pending until the winners are decided.</div>
-          </div>
-        `;
-        hasLoadedOnce = true;
+          `;
+        }
         return;
       }
 
@@ -657,47 +664,38 @@
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const adminResult = p.result; 
-          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; max-width: none; display: block;">No consensus parlay picks designated yet.</div>`;
       }
 
       if (otherPicks.length > 0) {
-        html += `
-          <div class="category-title" style="margin-top: 1rem;">Others:</div>
-          <div class="picks-group">
-        `;
+        html += `<div class="category-title" style="margin-top: 1rem;">Others:</div><div class="picks-group">`;
         otherPicks.forEach(p => {
-          const adminResult = p.result; 
-          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
+      // Video promo block
       html += `
-        <div style="margin: 1.25rem 0; position: relative; display: inline-block; width: 100%; cursor: pointer;" onclick="
+        <div class="promo-video-wrap" onclick="
           const vid = this.querySelector('video');
           const btn = this.querySelector('.custom-play-btn');
-          if (vid.paused) {
-            vid.play();
-            btn.style.display = 'none';
-          } else {
-            vid.pause();
-            btn.style.display = 'flex';
-          }
+          if (vid.paused) { vid.play(); btn.style.display = 'none'; }
+          else { vid.pause(); btn.style.display = 'flex'; }
         ">
-          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+          <video width="100%" preload="metadata" playsinline webkit-playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mp4" type="video/mp4">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
-          
-          <div class="custom-play-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-            <div style="width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 22px solid white; margin-left: 4px;"></div>
+          <div class="custom-play-btn">
+            <div class="play-triangle"></div>
           </div>
         </div>
       `;
@@ -705,20 +703,21 @@
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">📲 Open Slip in Courtside</a>`;
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
         }
         if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">🎲 Open Gambly Link</a>`;
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
         }
         html += `</div>`;
       }
 
-      if (parlayPicks.length > 0 && espnEvents.length > 0) {
+      // Compact Scores Grid - Evaluates BOTH parlay picks and other picks if they match ESPN events
+      const allDisplayPicks = evaluatedPicks; 
+      if (allDisplayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
-
         const gameEventMap = {};
 
-        parlayPicks.forEach(p => {
+        allDisplayPicks.forEach(p => {
           const searchTerms = getTeamSearchTerms(p.selection);
           const initials = p.players?.initials || '??';
           const trimmedSelection = p.selection.trim();
@@ -728,10 +727,9 @@
             return comp.competitors.some(c => {
               const name = (c.team.name || '').toLowerCase();
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
-              const displayName = (c.team.displayName || '').toLowerCase();
               const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term => 
-                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
+              return searchTerms.some(term =>
+                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
               );
             });
           });
@@ -739,28 +737,20 @@
           if (matchedEvent) {
             const eventId = matchedEvent.id;
             if (!gameEventMap[eventId]) {
-              gameEventMap[eventId] = {
-                event: matchedEvent,
-                dateObj: new Date(matchedEvent.date),
-                entries: []
-              };
+              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entriesMap: {} };
             }
-            
-            let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
-            if (existingEntry) {
-              existingEntry.initialsList.push(initials);
-            } else {
-              gameEventMap[eventId].entries.push({
-                selection: trimmedSelection,
-                initialsList: [initials]
-              });
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection]) {
+              gameEventMap[eventId].entriesMap[trimmedSelection] = [];
+            }
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection].includes(initials)) {
+              gameEventMap[eventId].entriesMap[trimmedSelection].push(initials);
             }
           } else {
-            const unmatchedKey = `unmatched_${p.id}`;
-            gameEventMap[unmatchedKey] = {
+            const fallbackKey = `unmatched_${p.id}`;
+            gameEventMap[fallbackKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
-              entries: [{ selection: trimmedSelection, initialsList: [initials] }]
+              entriesMap: { [trimmedSelection]: [initials] }
             };
           }
         });
@@ -768,20 +758,25 @@
         const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
 
         sortedGames.forEach(item => {
+          let entriesArray = [];
+          if (item.entriesMap) {
+            entriesArray = Object.entries(item.entriesMap).map(([sel, initialsList]) => ({
+              selection: sel,
+              initialsList: initialsList
+            }));
+          }
+
           if (item.event) {
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
-            
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
-            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
-            
+            const homeAbbr = homeTeam.team.abbreviation || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || 'AWAY';
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
-            
             const homeScore = homeTeam.score || '0';
             const awayScore = awayTeam.score || '0';
 
@@ -794,13 +789,12 @@
               statusText = 'FINAL';
             }
 
-            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
-            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
 
             let picksStackHtml = `<div class="compact-picks-stack">`;
-            item.entries.forEach(entry => {
-              const combinedInitials = entry.initialsList.join(', ');
-              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            entriesArray.forEach(entry => {
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -826,9 +820,8 @@
             `;
           } else {
             let picksStackHtml = `<div class="compact-picks-stack">`;
-            item.entries.forEach(entry => {
-              const combinedInitials = entry.initialsList.join(', ');
-              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
+            entriesArray.forEach(entry => {
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -838,90 +831,28 @@
                   ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
-                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
-                  No live feed found
-                </div>
+                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">No live feed</div>
               </div>
             `;
           }
         });
-
         html += `</div>`;
       }
-
       html += `</div></div>`;
-      container.innerHTML = html;
 
+      if (isInitialLoad || !container.querySelector('video')) {
+        container.innerHTML = html;
+      }
+
+      // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
-            <span>Week ${nextWeekNum} Pickers</span>
+            <span>Week ${cachedData.nextWeekNum} Pickers</span>
       `;
 
-      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.finalResultForScoring === 'W' || p.finalResultForScoring === 'L' || p.finalResultForScoring === 'D');
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
 
       if (allFinalized) {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.margin - a.margin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.margin - a.margin);
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.margin - a.margin);
-
-        let top5 = [];
-        if (winners.length >= 5) {
-          top5 = winners.slice(0, 5);
-        } else {
-          top5 = [...winners];
-          const needed = 5 - top5.length;
-          top5 = top5.concat(losses.slice(0, needed));
-          
-          if (top5.length < 5) {
-            top5 = top5.concat(pushes.slice(0, 5 - top5.length));
-          }
-        }
-
-        cachedData.top5 = top5;
-        previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
-      } else {
-        cachedData.top5 = [];
-      }
-
-      previewHtml += `</div>`;
-
-      if (!allFinalized) {
-        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
-      } else {
-        previewHtml += `<div class="upcoming-list">`;
-        cachedData.top5.forEach((p, idx) => {
-          let marginDisplay = 'Even';
-
-          if (p.margin > 0) {
-            marginDisplay = `+${p.margin}`;
-          } else if (p.margin < 0 && p.margin !== -999) {
-            marginDisplay = `${p.margin}`;
-          }
-
-          previewHtml += `
-            <div class="upcoming-item">
-              <div>
-                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
-                <div class="upcoming-pick">${p.selection}</div>
-              </div>
-              <div class="upcoming-badge">${marginDisplay}</div>
-            </div>
-          `;
-        });
-        previewHtml += `</div>`;
-      }
-
-      previewHtml += `</div>`;
-      previewContainer.innerHTML = previewHtml;
-      hasLoadedOnce = true;
-    }
-
-    loadActiveWeek(false);
-
-    setInterval(() => {
-      loadActiveWeek(true);
-    }, 10000);
-  </script>
-</body>
-</html>
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPick...
