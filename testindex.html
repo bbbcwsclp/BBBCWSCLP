@@ -176,14 +176,33 @@
       transform: translateY(-1px);
     }
 
-    /* Video promo block */
+    //* Video promo block */
     .promo-video-wrap {
       margin: 1.25rem 0;
       position: relative;
       display: inline-block;
       width: 100%;
       cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden; /* Ensures the dim overlay matches the rounded corners */
     }
+
+    /* Dim overlay when video is paused */
+    .promo-video-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4); /* Adjust opacity here if you want it darker/lighter */
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 1;
+    }
+
+    /* Removes dimming once playing class is added */
+    .promo-video-wrap.playing::after {
+      opacity: 0;
+    }
+
     .promo-video-wrap video {
       border-radius: 6px;
       border: 1px solid var(--border);
@@ -204,6 +223,7 @@
       justify-content: center;
       pointer-events: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 2; /* Keeps the play button cleanly on top of the dim overlay */
     }
     .custom-play-btn .play-triangle {
       width: 0; height: 0;
@@ -680,15 +700,27 @@
         html += `</div>`;
       }
 
-      // Video promo block
+            // Video promo block
       html += `
         <div class="promo-video-wrap" onclick="
-          const vid = this.querySelector('video');
-          const btn = this.querySelector('.custom-play-btn');
-          if (vid.paused) { vid.play(); btn.style.display = 'none'; }
-          else { vid.pause(); btn.style.display = 'flex'; }
+          const wrap = this;
+          const vid = wrap.querySelector('video');
+          const btn = wrap.querySelector('.custom-play-btn');
+          if (vid.paused) {
+            vid.play();
+            btn.style.display = 'none';
+            wrap.classList.add('playing');
+          } else {
+            vid.pause();
+            btn.style.display = 'flex';
+            wrap.classList.remove('playing');
+          }
         ">
-          <video width="100%" preload="metadata" playsinline webkit-playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
+          <video width="100%" preload="metadata" playsinline webkit-playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="
+            const wrap = this.parentElement;
+            wrap.querySelector('.custom-play-btn').style.display = 'flex';
+            wrap.classList.remove('playing');
+          ">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mp4" type="video/mp4">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
