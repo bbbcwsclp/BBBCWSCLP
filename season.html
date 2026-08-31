@@ -38,11 +38,16 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html {
-      background-color: #0a0e10;
-      height: 100%;
-      overflow-x: hidden;
-    }
+   html {
+     height: 100%;
+     overflow-x: hidden;
+     background-color: var(--bg);
+     background-image:
+       radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+       radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%);
+     background-attachment: fixed;
+     background-position: center top;
+   }
 
     body {
       font-family: var(--font-label);
