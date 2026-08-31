@@ -185,7 +185,10 @@
       padding-right: 2.5rem;
     }
 
-    .input-with-action { display: flex; gap: 0.5rem; }
+    .input-with-action {
+      display: flex;
+      gap: 0.5rem;
+    }
 
     .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
     .checkbox-group input { width: auto; }
@@ -284,52 +287,6 @@
     .btn-autograde { background-color: var(--warning); color: var(--bg); }
     .btn-autograde:hover { background-color: #72c8ff; }
 
-    /* Accordion styling for Finalized Weeks */
-    .week-accordion-card {
-      background: var(--card-inner);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 6px;
-      margin: 0.75rem 0;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .week-accordion-header {
-      padding: 0.75rem 1rem;
-      font-family: var(--font-label);
-      font-weight: 700;
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--accent);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      background: rgba(255, 176, 32, 0.03);
-    }
-    .week-accordion-header:hover {
-      background: rgba(255, 176, 32, 0.08);
-    }
-    .week-accordion-header span:last-child {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 700;
-      text-transform: none;
-      letter-spacing: 0;
-    }
-    .week-accordion-body {
-      display: none;
-      padding: 0.75rem 1rem 1rem 1rem;
-      border-top: 1px solid var(--border);
-      background: var(--card-bg);
-    }
-    .week-accordion-card.open .week-accordion-body {
-      display: block;
-    }
-
     .week-section-banner {
       background: var(--card-inner);
       border: 1px solid var(--border);
@@ -356,8 +313,17 @@
       letter-spacing: 0;
     }
 
-    .filter-input { margin-bottom: 1.1rem; }
-    .live-score-tag { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); margin-top: 0.2rem; display: block; }
+    .filter-input {
+      margin-bottom: 1.1rem;
+    }
+
+    .live-score-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-top: 0.2rem;
+      display: block;
+    }
 
     .sticky-action-bar {
       position: fixed;
@@ -374,8 +340,14 @@
       transition: bottom 0.3s ease;
       z-index: 100;
     }
-    .sticky-action-bar.visible { bottom: 0; }
-    .sticky-action-bar button { max-width: 300px; }
+
+    .sticky-action-bar.visible {
+      bottom: 0;
+    }
+
+    .sticky-action-bar button {
+      max-width: 300px;
+    }
   </style>
 </head>
 <body>
@@ -521,6 +493,7 @@
     let allWeeksCache = [];
     let allPlayersCache = [];
 
+    // Section-level dirty tracking
     let activeDirty = false;
     let finalizedDirty = false;
     let hasInitializedWeekSelect = false;
@@ -533,6 +506,9 @@
     async function initAdmin() {
       await loadDropdowns();
       await loadAdminPicks();
+      // Feature 3: Automatically run auto-grading on page load/refresh
+      await autoGradePicksSilently('active');
+      await autoGradePicksSilently('finalized');
     }
 
     function hasAnyUnsavedChanges() {
@@ -598,14 +574,20 @@
       allPlayersCache = players || [];
 
       updatePlayerDropdownOptions();
+      // Feature 2: Auto-select parlay status from the current week's configured pickers box list
       applyDesignatedParlayPickers();
     }
 
+    // Feature 1: Filter out already selected players from add-pick dropdown
     function updatePlayerDropdownOptions() {
       const playerSelect = document.getElementById('pick-player');
+      const selectedWeekId = document.getElementById('pick-week').value;
+      
+      // Get players already picked in the currently selected week dropdown
       const activeRows = document.querySelectorAll('#active-container tr[data-pick-id]');
       const alreadyChosenPlayerIds = new Set();
       
+      // We can also query current DOM or cache elements associated with the pick week
       activeRows.forEach(row => {
         const playerId = row.dataset.playerId;
         if (playerId) alreadyChosenPlayerIds.add(playerId);
@@ -627,6 +609,7 @@
       applyDesignatedParlayPickers();
     });
 
+    // Feature 2: Auto-check is_parlay for players defined in the week's designated pickers array/list
     async function applyDesignatedParlayPickers() {
       const selectedWeekId = document.getElementById('pick-week').value;
       if (!selectedWeekId) return;
@@ -634,6 +617,7 @@
       const currentWeekObj = allWeeksCache.find(w => w.id === selectedWeekId);
       if (!currentWeekObj) return;
 
+      // Matches your index page field for pickers (parlay_pickers or similar array on weeks table)
       const designatedPickers = currentWeekObj.parlay_pickers || currentWeekObj.pickers || [];
       const playerSelect = document.getElementById('pick-player');
       const parlayCheckbox = document.getElementById('pick-is-parlay');
@@ -789,16 +773,15 @@
       const activePicks = [];
       const finalizedPicks = [];
 
-      picks.heading = true;
       picks.forEach(p => {
-        // A pick belongs in finalized/closed weeks if its parent week status is 'closed'
-        const isClosedWeek = p.weeks?.status === 'closed';
-        if (isClosedWeek) finalizedPicks.push(p);
+        // Feature 4: Check if week is closed OR if individual pick is explicitly graded/finalized
+        const isClosed = p.weeks?.status === 'closed' || p.is_finalized === true || (p.result && p.result !== '');
+        if (isClosed) finalizedPicks.push(p);
         else activePicks.push(p);
       });
 
       renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.');
-      renderFinalizedAccordions(finalizedPicks, finalizedContainer, 'No finalized picks found.');
+      renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.');
       attachRowChangeListeners();
       updatePlayerDropdownOptions();
     }
@@ -859,7 +842,7 @@
             </td>
             <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
             <td>
-              <select class="row-result ${resultClass}" onchange="updateResultSelectColor(this)">
+              <select class="row-result ${resultClass}" onchange="handleResultChange('${p.id}', this)">
                 <option value="" ${!p.result ? 'selected' : ''}>--</option>
                 <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
                 <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
@@ -878,98 +861,29 @@
       });
     }
 
-    // Render Section 4 as collapsible accordions per closed week
-    function renderFinalizedAccordions(picksArray, containerElement, emptyMessage) {
-      if (picksArray.length === 0) {
-        containerElement.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1rem;">${emptyMessage}</div>`;
-        return;
-      }
-
-      const grouped = {};
-      picksArray.forEach(p => {
-        const wkNum = p.weeks?.week_number ?? '??';
-        if (!grouped[wkNum]) grouped[wkNum] = [];
-        grouped[wkNum].push(p);
-      });
-
-      const sortedWeeks = Object.keys(grouped).sort((a, b) => b - a);
-
-      sortedWeeks.forEach(wkNum => {
-        const weekPicks = grouped[wkNum];
-
-        const accordionCard = document.createElement('div');
-        accordionCard.className = 'week-accordion-card';
-        accordionCard.dataset.weekGroup = wkNum;
-
-        const header = document.createElement('div');
-        header.className = 'week-accordion-header';
-        header.innerHTML = `<span>Week ${wkNum}</span><span>${weekPicks.length} Picks ▾</span>`;
-        header.onclick = () => {
-          accordionCard.classList.toggle('open');
-          header.querySelector('span:last-child').innerText = accordionCard.classList.contains('open') ? `${weekPicks.length} Picks ▴` : `${weekPicks.length} Picks ▾`;
-        };
-
-        const body = document.createElement('div');
-        body.className = 'week-accordion-body';
-
-        const tableWrapper = document.createElement('div');
-        tableWrapper.style.overflowX = 'auto';
-
-        const table = document.createElement('table');
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th style="width: 15%;">Player</th>
-              <th style="width: 45%;">Selection</th>
-              <th style="width: 15%; text-align: center;">Parlay</th>
-              <th style="width: 15%;">Result</th>
-              <th style="width: 10%;"></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        `;
-
-        const tbody = table.querySelector('tbody');
-
-        weekPicks.forEach(p => {
-          const tr = document.createElement('tr');
-          tr.dataset.pickId = p.id;
-          tr.dataset.playerId = p.player_id;
-          tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
-          const resultClass = p.result ? `res-select-${p.result}` : '';
-          tr.innerHTML = `
-            <td><strong>${p.players?.initials || '??'}</strong></td>
-            <td>
-              <input type="text" class="row-selection" value="${p.selection || ''}">
-              <div class="live-score-tag" style="display:none;"></div>
-            </td>
-            <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
-            <td>
-              <select class="row-result ${resultClass}" onchange="updateResultSelectColor(this)">
-                <option value="" ${!p.result ? 'selected' : ''}>--</option>
-                <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
-                <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
-                <option value="D" ${p.result === 'D' ? 'selected' : ''}>D</option>
-              </select>
-            </td>
-            <td>
-              <button class="delete-btn" onclick="deletePick('${p.id}')" title="Delete">✕</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        tableWrapper.appendChild(table);
-        body.appendChild(tableWrapper);
-        accordionCard.appendChild(header);
-        accordionCard.appendChild(body);
-        containerElement.appendChild(accordionCard);
-      });
-    }
-
     function updateResultSelectColor(select) {
       select.classList.remove('res-select-W', 'res-select-L', 'res-select-D');
       if (select.value) select.classList.add(`res-select-${select.value}`);
+    }
+
+    // Automatically shift pick to finalized section when a result is set, without closing the full week
+    async function handleResultChange(pickId, selectElem) {
+      updateResultSelectColor(selectElem);
+      const isGraded = selectElem.value !== '';
+      
+      const { error } = await _supabase
+        .from('picks')
+        .update({
+          result: selectElem.value || null,
+          is_finalized: isGraded
+        })
+        .eq('id', pickId);
+
+      if (!error) {
+        await loadAdminPicks();
+      } else {
+        console.error('Error updating pick result:', error.message);
+      }
     }
 
     function attachRowChangeListeners() {
@@ -1025,27 +939,41 @@
       return [clean.toLowerCase()];
     }
 
-    async function autoGradePicks(sectionType) {
-      const containerId = sectionType === 'active' ? 'active-container' : 'finalized-container';
-      const msgId = sectionType === 'active' ? 'active-msg' : 'finalized-msg';
+    async function autoGradePicksSilently(sectionType) {
+      await autoGradePicks(sectionType, true);
+    }
+
+    async function autoGradePicks(sectionType, silent = false) {
+      // GUARD: Ensure auto-grading is strictly restricted to active picks only
+      if (sectionType === 'finalized') {
+        if (!silent) console.log("Auto-grading is restricted to active picks only.");
+        return;
+      }
+
+      const containerId = 'active-container';
+      const msgId = 'active-msg';
       const container = document.getElementById(containerId);
       const msgDiv = document.getElementById(msgId);
       const rows = container.querySelectorAll('tr[data-pick-id]');
 
       if (rows.length === 0) return;
 
-      msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
-      msgDiv.style.color = 'var(--text-muted)';
-      msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
+      if (!silent) {
+        msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
+        msgDiv.style.color = 'var(--text-muted)';
+        msgDiv.innerText = 'Fetching live scores from ESPN to auto-grade...';
+      }
 
       try {
         const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
         const data = await response.json();
 
         if (!data.events) {
-          msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
-          msgDiv.style.color = 'var(--danger)';
-          msgDiv.innerText = 'Could not retrieve live games from ESPN.';
+          if (!silent) {
+            msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+            msgDiv.style.color = 'var(--danger)';
+            msgDiv.innerText = 'Could not retrieve live games from ESPN.';
+          }
           return;
         }
 
@@ -1133,16 +1061,20 @@
           }
         }
 
-        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
-        msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = `Auto-graded ${gradedCount} final games successfully! Review and save.`;
+        if (!silent) {
+          msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
+          msgDiv.style.color = 'var(--success)';
+          msgDiv.innerText = `Auto-graded ${gradedCount} final games successfully! Review and save.`;
+        }
         markSectionDirty(sectionType, true);
 
       } catch (err) {
         console.error('Auto-grade error:', err);
-        msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
-        msgDiv.style.color = 'var(--danger)';
-        msgDiv.innerText = 'Error connecting to ESPN score feed.';
+        if (!silent) {
+          msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+          msgDiv.style.color = 'var(--danger)';
+          msgDiv.innerText = 'Error connecting to ESPN score feed.';
+        }
       }
     }
 
@@ -1170,13 +1102,15 @@
         const selection = row.querySelector('.row-selection').value;
         const isParlay = row.querySelector('.row-parlay').checked;
         const result = row.querySelector('.row-result').value;
+        const isFinalized = result !== '';
 
         const { error } = await _supabase
           .from('picks')
           .update({
             selection: selection,
             is_parlay: isParlay,
-            result: result || null
+            result: result || null,
+            is_finalized: isFinalized
           })
           .eq('id', pickId);
 
