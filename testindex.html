@@ -5,50 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BBBCWSCLP — Weekly</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
   <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
     :root {
-      --bg: #0a0e10;
-      --card-bg: #14191d;
-      --card-inner: #060a0c;
-      --text: #eef2f2;
-      --text-muted: #7c8a90;
-      --border: #223038;
-
-      --success: #34d67a;
-      --danger: #ff4d4d;
-      --warning: #4fb8ff;
-
-      --accent: #ffb020;
-      --gold: #ffb020;
-
-      --font-display: 'Anton', 'Arial Narrow', sans-serif;
-      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
-      --font-label: 'Barlow Condensed', system-ui, sans-serif;
+      --bg: #0f172a;
+      --card-bg: #1a2638;
+      --card-inner: #0b1120;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #eab308;
+      --accent: #3b82f6;
+      --gold: #f59e0b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font-label);
-      background-color: var(--bg);
-      background-image:
-        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
-        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
-        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
-      background-size: auto, auto, 56px 56px, 56px 56px;
-      background-position: center top, center top, center top, center top;
-      background-attachment: fixed;
-      color: var(--text);
-      padding: 2rem 1rem 4rem 1rem;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 2rem 1rem 4rem 1rem; 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -59,77 +40,49 @@
 
     header { margin-bottom: 1rem; width: 100%; }
     header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
-
-    .eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 0.4rem;
-    }
-
-    h1.main-title {
-      font-family: var(--font-display);
-      font-size: 3rem;
-      font-weight: 400;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      color: var(--text);
-      line-height: 1;
-    }
+    
+    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
 
     /* Navigation Bar */
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 0.35rem;
-      margin-bottom: 2rem;
-      width: 100%;
+    nav { 
+      display: flex; 
+      justify-content: center; 
+      gap: 0.35rem; 
+      margin-bottom: 2.5rem; 
+      width: 100%; 
     }
-
-    nav a {
-      font-family: var(--font-label);
-      color: var(--text-muted);
-      text-decoration: none;
+    
+    nav a { 
+      color: var(--text-muted); 
+      text-decoration: none; 
       transition: all 0.2s ease;
-      background-color: transparent;
+      background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-bottom: 2px solid var(--border);
-      padding: 0.4rem 0.75rem;
-      border-radius: 4px 4px 0 0;
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 600; 
+      font-size: 0.82rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
       white-space: nowrap;
     }
-
-    nav a:hover {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-      background-color: rgba(255, 176, 32, 0.06);
+    
+    nav a:hover { 
+      color: var(--text); 
+      border-color: var(--accent);
+      background-color: #273548;
     }
 
-    nav a.active {
-      color: var(--accent);
-      background-color: rgba(255, 176, 32, 0.08);
-      border-color: var(--border);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    nav a:focus-visible, .btn-gambly:focus-visible, .btn-copy-text:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
+    nav a.active { 
+      color: white; 
+      background-color: var(--accent);
+      border-color: var(--accent);
     }
 
     /* Current Week Card Container */
     .current-week-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 12px;
       padding: 1.75rem 1.25rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
@@ -138,58 +91,18 @@
 
     /* Week Section Styling */
     .week-section { margin-bottom: 0; text-align: center; }
-    .week-title {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 400;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      color: var(--text);
-      letter-spacing: 0.5px;
-    }
-    .category-title {
-      font-family: var(--font-label);
-      font-size: 1rem;
-      font-weight: 700;
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
 
-    /* Grid Layout matching spreadsheet sketch */
-    .picks-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem 1.5rem;
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-    .picks-group .pick-item:nth-child(5):last-child {
-      grid-column: 1 / -1;
-      justify-self: center;
-      width: calc(50% - 0.75rem);
-    }
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
 
-    .pick-item {
-      font-family: var(--font-label);
-      font-weight: 600;
-      font-size: 0.95rem;
-      background: transparent;
-      border: none;
-      padding: 0.35rem 0.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    /* Win/Loss/Push Text Color States (No cells/backgrounds) */
-    .pick-item.res-W { color: var(--success); }
-    .pick-item.res-L { color: var(--danger); }
-    .pick-item.res-D { color: var(--warning); }
-    .pick-item.res-pending { color: var(--text-muted); }
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
 
     /* Action Link Button Styling */
     .btn-gambly {
@@ -198,62 +111,21 @@
       max-width: 400px;
       margin: 1.25rem auto 0 auto;
       background-color: var(--accent);
-      color: var(--bg);
+      color: white;
       text-align: center;
       padding: 0.75rem 1rem;
-      border-radius: 4px;
-      font-family: var(--font-label);
+      border-radius: 8px;
       font-weight: 700;
       text-decoration: none;
       font-size: 0.95rem;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 2px 8px rgba(255, 176, 32, 0.25);
+      transition: background-color 0.2s;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
     }
     .btn-gambly:hover {
-      background-color: #ffc457;
-      transform: translateY(-1px);
+      background-color: #2563eb;
     }
 
-    /* Video promo block */
-    .promo-video-wrap {
-      margin: 1.25rem 0;
-      position: relative;
-      display: inline-block;
-      width: 100%;
-      cursor: pointer;
-    }
-    .promo-video-wrap video {
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      display: block;
-      background: #000;
-      width: 100%;
-    }
-    .custom-play-btn {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 64px; height: 64px;
-      background: rgba(6, 10, 12, 0.75);
-      border: 2px solid var(--accent);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-    .custom-play-btn .play-triangle {
-      width: 0; height: 0;
-      border-top: 14px solid transparent;
-      border-bottom: 14px solid transparent;
-      border-left: 22px solid var(--accent);
-      margin-left: 4px;
-    }
-
-    /* Clean Compact Parlay Scoreboard */
+    /* Clean Compact Parlay Scoreboard Ticker */
     .compact-scores-grid {
       display: flex;
       flex-direction: column;
@@ -265,16 +137,13 @@
     .compact-card {
       background-color: var(--card-inner);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--border);
-      border-radius: 4px;
+      border-radius: 10px;
       padding: 0.85rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-    }
-    .compact-card:has(.compact-status.live) {
-      border-left-color: var(--success);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .compact-left {
@@ -292,17 +161,15 @@
     }
 
     .compact-pick-info {
-      font-family: var(--font-label);
-      font-weight: 600;
-      color: #ffd38a;
+      font-weight: 700;
+      color: #93c5fd;
       font-size: 0.88rem;
       overflow-wrap: break-word;
       word-break: break-word;
     }
 
     .compact-status {
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -310,25 +177,11 @@
       width: fit-content;
     }
     .compact-status.live {
-      background-color: rgba(52, 214, 122, 0.12);
+      background-color: rgba(34, 197, 94, 0.15);
       color: var(--success);
       padding: 0.15rem 0.5rem;
-      border-radius: 3px;
-      border: 1px solid rgba(52, 214, 122, 0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-    .compact-status.live::before {
-      content: '';
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--success);
-      animation: tk-pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes tk-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.25; }
+      border-radius: 4px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
     .compact-teams {
@@ -347,46 +200,27 @@
     }
 
     .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-abbr {
-      font-family: var(--font-label);
-      font-weight: 700;
-      color: var(--text);
-      min-width: 34px;
-      text-align: left;
-      letter-spacing: 0.3px;
-    }
-    .compact-score {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      min-width: 26px;
-      text-align: right;
-      color: var(--text);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 0.05rem 0.3rem;
-    }
-    .winner { color: var(--accent); }
-    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
+    .compact-team-abbr { font-weight: 700; color: var(--text); min-width: 36px; text-align: left; }
+    .compact-score { font-weight: 800; min-width: 22px; text-align: right; color: var(--text); }
+    .winner { color: var(--gold); }
 
-    /* Upcoming Week Top 5 Box */
+    /* Upcoming Week Top 5 Box Styling */
     .upcoming-preview-card {
-      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
-      border: 1px solid rgba(255, 176, 32, 0.3);
-      border-radius: 6px;
+      background: linear-gradient(135deg, #1a2638 0%, #0f172a 100%);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
       padding: 1.25rem;
       margin-top: 2rem;
       text-align: left;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
       width: 100%;
     }
     .upcoming-preview-header {
-      font-family: var(--font-label);
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 0.8px;
       margin-bottom: 0.75rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
@@ -399,44 +233,25 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.75rem;
-      background: rgba(6, 10, 12, 0.6);
+      background: rgba(15, 23, 42, 0.6);
       padding: 0.5rem 0.75rem;
-      border-radius: 4px;
+      border-radius: 6px;
       font-size: 0.9rem;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(51, 65, 85, 0.5);
     }
-    .upcoming-rank {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.78rem;
-      color: var(--accent);
-      background: rgba(255, 176, 32, 0.1);
-      border: 1px solid rgba(255, 176, 32, 0.35);
-      border-radius: 3px;
-      min-width: 1.6rem;
-      text-align: center;
-      padding: 0.15rem 0;
-      flex-shrink: 0;
-    }
-    .upcoming-body { min-width: 0; flex-grow: 1; }
-    .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
+    .upcoming-player { font-weight: 700; color: var(--text); }
     .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
     .upcoming-badge {
-      font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.2rem 0.55rem;
-      border-radius: 3px;
-      flex-shrink: 0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(51, 65, 85, 0.4);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
     }
-    .upcoming-badge.margin-pos { background: rgba(52, 214, 122, 0.12); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
-    .upcoming-badge.margin-neg { background: rgba(255, 77, 77, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
-    .upcoming-badge.margin-even { background: rgba(79, 184, 255, 0.12); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
-    .upcoming-badge.margin-unknown { background: rgba(124, 138, 144, 0.12); color: var(--text-muted); border: 1px solid var(--border); }
     .upcoming-pending {
-      font-family: var(--font-label);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
       text-align: center;
       padding: 1rem 0;
@@ -444,20 +259,17 @@
     }
     .btn-copy-text {
       background-color: var(--accent);
-      color: var(--bg);
+      color: white;
       border: none;
-      padding: 0.4rem 0.75rem;
-      border-radius: 4px;
-      font-family: var(--font-label);
-      font-size: 0.78rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
       cursor: pointer;
       transition: background-color 0.2s;
     }
     .btn-copy-text:hover {
-      background-color: #ffc457;
+      background-color: #2563eb;
     }
   </style>
 </head>
@@ -466,16 +278,15 @@
   <div class="container">
     <header>
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
-      <div class="eyebrow">Week Results</div>
       <h1 class="main-title">BBBCWSCLP</h1>
     </header>
 
     <nav>
-      <a href="testindex.html" class="active">Weekly</a>
-      <a href="teststandings.html">Standings</a>
-      <a href="testseason.html">Season</a>
-      <a href="testhalloffame.html">HOF</a>
-      <a href="testscores.html">Scores</a>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
     </nav>
 
     <div id="content-container">
@@ -494,14 +305,15 @@
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim();
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
-      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      clean = clean.replace(/\b[ou]\d+(\.\d+)?\b/gi, '').trim();
+      clean = clean.replace(/o\d+(\.\d+)?$/, '').replace(/u\d+(\.\d+)?$/, '').trim();
 
       if (clean.includes('/')) {
         return clean.split('/').map(t => t.trim().toLowerCase());
@@ -526,7 +338,7 @@
             const shortName = (c.team.shortDisplayName || '').toLowerCase();
             const displayName = (c.team.displayName || '').toLowerCase();
             const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term =>
+            return searchTerms.some(term => 
               term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
             );
           });
@@ -539,7 +351,7 @@
           if (isFinal) {
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
+            
             const homeScore = parseInt(homeTeam.score || '0', 10);
             const awayScore = parseInt(awayTeam.score || '0', 10);
 
@@ -547,8 +359,12 @@
             const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
             const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
 
-            const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
+            const awayName = (awayTeam.team.name || '').toLowerCase();
+            const awayShort = (awayTeam.team.shortDisplayName || '').toLowerCase();
+            const awayAbbr = (awayTeam.team.abbreviation || '').toLowerCase();
+
+            const isHomePick = searchTerms.some(term => 
+              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
             );
 
             if (isTotalOrTT) {
@@ -581,9 +397,8 @@
         }
 
         const finalResultForScoring = computedResult || pick.result || null;
-        const sortMargin = computedMargin === -999 ? 0 : computedMargin;
 
-        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
+        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin };
       });
     }
 
@@ -594,16 +409,19 @@
       }
 
       let text = `Week ${cachedData.nextWeekNum}\n`;
+      
       cachedData.top5.forEach(p => {
-        text += `${p.players?.initials || '??'}:\n`;
+        const initials = p.players?.initials || '??';
+        text += `${initials}:\n`;
       });
 
       const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
-
+      
       if (otherPicksList.length > 0) {
         otherPicksList.forEach(p => {
-          text += `${p.players?.initials || '??'}:\n`;
+          const initials = p.players?.initials || '??';
+          text += `${initials}:\n`;
         });
       }
 
@@ -614,39 +432,44 @@
           btn.innerText = 'Copied! ✅';
           setTimeout(() => { btn.innerText = originalText; }, 2000);
         }
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy to clipboard.');
       });
     }
 
-    async function loadActiveWeek(isInitialLoad = true) {
+    async function loadActiveWeek(isBackgroundRefresh = false) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
 
-      if (isInitialLoad) {
+      if (!isBackgroundRefresh && !hasLoadedOnce) {
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
-      const { data: weeks, error: weeksError } = await _supabase
+      const { data: weeks } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
-      if (weeksError || !weeks || weeks.length === 0) {
-        if (isInitialLoad) {
-          container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
-          previewContainer.innerHTML = '';
-        }
+      if (!weeks || weeks.length === 0) {
+        container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active. Check Season History for past weeks.</div></div>';
+        previewContainer.innerHTML = '';
+        hasLoadedOnce = true;
         return;
       }
 
       const currentWeek = weeks[0];
-      cachedData.currentWeekId = currentWeek.id;
-      cachedData.nextWeekNum = currentWeek.week_number + 1;
+      const nextWeekNum = currentWeek.week_number + 1;
+      cachedData.nextWeekNum = nextWeekNum;
 
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
         fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
       ]);
+
+      const picks = picksRes.data;
+      cachedData.allPicks = picks || [];
 
       let espnEvents = [];
       if (espnRes && espnRes.ok) {
@@ -654,20 +477,24 @@
         espnEvents = espnData.events || [];
       }
 
-      const picks = picksRes.data || [];
-      cachedData.allPicks = picks;
-
-      if (picks.length === 0) {
-        if (isInitialLoad) {
-          container.innerHTML = `
-            <div class="current-week-card">
-              <div class="week-section">
-                <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
-                <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
-              </div>
+      if (!picks || picks.length === 0) {
+        container.innerHTML = `
+          <div class="current-week-card">
+            <div class="week-section">
+              <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+              <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
             </div>
-          `;
-        }
+          </div>
+        `;
+        previewContainer.innerHTML = `
+          <div class="upcoming-preview-card">
+            <div class="upcoming-preview-header">
+              <span>Week ${nextWeekNum} Pickers</span>
+            </div>
+            <div class="upcoming-pending">Results pending until the winners are decided.</div>
+          </div>
+        `;
+        hasLoadedOnce = true;
         return;
       }
 
@@ -681,38 +508,47 @@
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
         parlayPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const adminResult = p.result; 
+          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; max-width: none; display: block;">No consensus parlay picks designated yet.</div>`;
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">No consensus parlay picks designated yet.</div>`;
       }
 
       if (otherPicks.length > 0) {
-        html += `<div class="category-title" style="margin-top: 1rem;">Others:</div><div class="picks-group">`;
+        html += `
+          <div class="category-title" style="margin-top: 1rem;">Others:</div>
+          <div class="picks-group">
+        `;
         otherPicks.forEach(p => {
-          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          const adminResult = p.result; 
+          const resClass = adminResult ? `res-${adminResult}` : 'res-pending';
           html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
         });
         html += `</div>`;
       }
 
-      // Video promo block
       html += `
-        <div class="promo-video-wrap" onclick="
+        <div style="margin: 1.25rem 0; position: relative; display: inline-block; width: 100%; cursor: pointer;" onclick="
           const vid = this.querySelector('video');
           const btn = this.querySelector('.custom-play-btn');
-          if (vid.paused) { vid.play(); btn.style.display = 'none'; }
-          else { vid.pause(); btn.style.display = 'flex'; }
+          if (vid.paused) {
+            vid.play();
+            btn.style.display = 'none';
+          } else {
+            vid.pause();
+            btn.style.display = 'flex';
+          }
         ">
-          <video width="100%" preload="metadata" playsinline webkit-playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
-            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mp4" type="video/mp4">
+          <video width="100%" preload="metadata" playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" style="border-radius: 8px; border: 1px solid var(--border); display: block; background: #000;" onended="this.parentElement.querySelector('.custom-play-btn').style.display = 'flex';">
             <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
             Your browser does not support the video tag.
           </video>
-          <div class="custom-play-btn">
-            <div class="play-triangle"></div>
+          
+          <div class="custom-play-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+            <div style="width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 22px solid white; margin-left: 4px;"></div>
           </div>
         </div>
       `;
@@ -720,17 +556,17 @@
       if (currentWeek.slip_link || currentWeek.gambly_link) {
         html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
         if (currentWeek.slip_link) {
-          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--accent);">📲 Open Slip in Courtside</a>`;
         }
         if (currentWeek.gambly_link) {
-          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: #334155; color: var(--text);">🎲 Open Gambly Link</a>`;
         }
         html += `</div>`;
       }
 
-      // Compact Scores Grid
       if (parlayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
+
         const gameEventMap = {};
 
         parlayPicks.forEach(p => {
@@ -743,9 +579,10 @@
             return comp.competitors.some(c => {
               const name = (c.team.name || '').toLowerCase();
               const shortName = (c.team.shortDisplayName || '').toLowerCase();
+              const displayName = (c.team.displayName || '').toLowerCase();
               const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term =>
-                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
+              return searchTerms.some(term => 
+                term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
               );
             });
           });
@@ -753,16 +590,25 @@
           if (matchedEvent) {
             const eventId = matchedEvent.id;
             if (!gameEventMap[eventId]) {
-              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entries: [] };
+              gameEventMap[eventId] = {
+                event: matchedEvent,
+                dateObj: new Date(matchedEvent.date),
+                entries: []
+              };
             }
+            
             let existingEntry = gameEventMap[eventId].entries.find(e => e.selection === trimmedSelection);
             if (existingEntry) {
               existingEntry.initialsList.push(initials);
             } else {
-              gameEventMap[eventId].entries.push({ selection: trimmedSelection, initialsList: [initials] });
+              gameEventMap[eventId].entries.push({
+                selection: trimmedSelection,
+                initialsList: [initials]
+              });
             }
           } else {
-            gameEventMap[`unmatched_${p.id}`] = {
+            const unmatchedKey = `unmatched_${p.id}`;
+            gameEventMap[unmatchedKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
               entries: [{ selection: trimmedSelection, initialsList: [initials] }]
@@ -777,13 +623,16 @@
             const competition = item.event.competitions[0];
             const statusType = competition.status.type.state;
             const statusDetail = competition.status.type.detail;
+            
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            const homeAbbr = homeTeam.team.abbreviation || 'HOME';
-            const awayAbbr = awayTeam.team.abbreviation || 'AWAY';
+            const homeAbbr = homeTeam.team.abbreviation || homeTeam.team.shortDisplayName || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || awayTeam.team.shortDisplayName || 'AWAY';
+            
             const homeLogo = homeTeam.team.logo || '';
             const awayLogo = awayTeam.team.logo || '';
+            
             const homeScore = homeTeam.score || '0';
             const awayScore = awayTeam.score || '0';
 
@@ -796,12 +645,13 @@
               statusText = 'FINAL';
             }
 
-            const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
-            const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore) > parseInt(awayScore);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore) > parseInt(homeScore);
 
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
-              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -828,7 +678,8 @@
           } else {
             let picksStackHtml = `<div class="compact-picks-stack">`;
             item.entries.forEach(entry => {
-              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+              const combinedInitials = entry.initialsList.join(', ');
+              picksStackHtml += `<div class="compact-pick-info">${combinedInitials}: ${entry.selection}</div>`;
             });
             picksStackHtml += `</div>`;
 
@@ -838,35 +689,45 @@
                   ${picksStackHtml}
                   <div class="compact-status">Matchup pending</div>
                 </div>
-                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">No live feed</div>
+                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">
+                  No live feed found
+                </div>
               </div>
             `;
           }
         });
+
         html += `</div>`;
       }
+
       html += `</div></div>`;
+      container.innerHTML = html;
 
-      if (isInitialLoad || !container.querySelector('video')) {
-        container.innerHTML = html;
-      }
-
-      // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
-            <span>Week ${cachedData.nextWeekNum} Pickers</span>
+            <span>Week ${nextWeekNum} Pickers</span>
       `;
 
-      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => p.finalResultForScoring === 'W' || p.finalResultForScoring === 'L' || p.finalResultForScoring === 'D');
 
       if (allFinalized) {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.margin - a.margin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.margin - a.margin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.margin - a.margin);
 
-        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...losses.slice(0, 5 - winners.length)];
-        if (top5.length < 5) top5 = [...top5, ...pushes.slice(0, 5 - top5.length)];
+        let top5 = [];
+        if (winners.length >= 5) {
+          top5 = winners.slice(0, 5);
+        } else {
+          top5 = [...winners];
+          const needed = 5 - top5.length;
+          top5 = top5.concat(losses.slice(0, needed));
+          
+          if (top5.length < 5) {
+            top5 = top5.concat(pushes.slice(0, 5 - top5.length));
+          }
+        }
 
         cachedData.top5 = top5;
         previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
@@ -881,17 +742,21 @@
       } else {
         previewHtml += `<div class="upcoming-list">`;
         cachedData.top5.forEach((p, idx) => {
-          let marginDisplay = p.margin === -999 ? '—' : (p.margin > 0 ? `+${p.margin}` : `${p.margin}`);
-          let marginClass = p.margin === -999 ? 'margin-unknown' : (p.margin > 0 ? 'margin-pos' : (p.margin < 0 ? 'margin-neg' : 'margin-even'));
+          let marginDisplay = 'Even';
+
+          if (p.margin > 0) {
+            marginDisplay = `+${p.margin}`;
+          } else if (p.margin < 0 && p.margin !== -999) {
+            marginDisplay = `${p.margin}`;
+          }
 
           previewHtml += `
             <div class="upcoming-item">
-              <div class="upcoming-rank">${idx + 1}</div>
-              <div class="upcoming-body">
-                <span class="upcoming-player">${p.players?.initials || '??'}</span>
+              <div>
+                <span class="upcoming-player">#${idx + 1} ${p.players?.initials || '??'}</span>
                 <div class="upcoming-pick">${p.selection}</div>
               </div>
-              <div class="upcoming-badge ${marginClass}">${marginDisplay}</div>
+              <div class="upcoming-badge">${marginDisplay}</div>
             </div>
           `;
         });
@@ -903,10 +768,10 @@
       hasLoadedOnce = true;
     }
 
-    loadActiveWeek(true);
+    loadActiveWeek(false);
 
     setInterval(() => {
-      loadActiveWeek(false);
+      loadActiveWeek(true);
     }, 10000);
   </script>
 </body>
