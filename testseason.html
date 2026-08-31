@@ -236,44 +236,31 @@
       text-align: center;
     }
 
-    /* Centered picks grid layout matching index style */
+       /* Updated to match the inline pick style */
     .history-picks-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 0.5rem;
-      justify-content: center;
-      justify-items: center;
-    }
-    .history-pick-item {
-      font-family: var(--font-label);
-      font-weight: 600;
-      font-size: 0.9rem;
-      background-color: var(--card-inner);
-      border-radius: 6px;
-      padding: 0.5rem 0.65rem;
       display: flex;
-      align-items: center;
-      width: 100%;
-      justify-content: flex-start;
-      text-align: left;
-    }
-    .history-pick-item::before {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.66rem;
-      margin-right: 0.5rem;
-      padding: 0.1rem 0.35rem;
-      border-radius: 3px;
-      display: inline-flex;
-      align-items: center;
+      flex-wrap: wrap;
       justify-content: center;
-      line-height: 1;
-      flex-shrink: 0;
+      gap: 0.75rem 1.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.05rem;
     }
-    .history-pick-item.res-W::before { content: 'W'; background: rgba(52, 214, 122, 0.15); color: var(--success); }
-    .history-pick-item.res-L::before { content: 'L'; background: rgba(255, 77, 77, 0.15); color: var(--danger); }
-    .history-pick-item.res-D::before { content: 'P'; background: rgba(79, 184, 255, 0.15); color: var(--warning); }
-    .history-pick-item.res-pending::before { content: '—'; background: rgba(124, 138, 144, 0.15); color: var(--text-muted); }
+    
+    .history-pick-item {
+      font-weight: 700;
+      background-color: transparent;
+      border: none;
+      padding: 0;
+      display: inline;
+      width: auto;
+    }
+
+    /* Result Color Coding matching index style */
+    .history-pick-item.res-W { color: var(--success); }
+    .history-pick-item.res-L { color: var(--danger); }
+    .history-pick-item.res-D { color: var(--warning); }
+    .history-pick-item.res-pending { color: var(--text); }
+
   </style>
 </head>
 <body>
