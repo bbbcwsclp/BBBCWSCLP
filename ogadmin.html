@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BBBCWSCLP — Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tesseract.js OCR CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,7 +160,7 @@
       letter-spacing: 0.4px;
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 0.7rem 0.85rem;
       background: var(--card-inner);
@@ -170,7 +172,7 @@
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.15);
@@ -287,6 +289,7 @@
     .btn-autograde { background-color: var(--warning); color: var(--bg); }
     .btn-autograde:hover { background-color: #72c8ff; }
 
+    /* Collapsible Week Accordions styling */
     details.week-accordion {
       background: var(--card-inner);
       border: 1px solid var(--border);
@@ -314,7 +317,7 @@
       align-items: center;
       cursor: pointer;
       user-select: none;
-      list-style: none;
+      list-style: none; /* Hide default arrow marker */
     }
     
     summary.week-section-banner::-webkit-details-marker { display: none; }
@@ -448,9 +451,26 @@
       </form>
     </div>
 
+    <!-- Screenshot Pick Extractor Card -->
+    <div class="card">
+      <h2>📸 Scan Picks from Group Chat Screenshot</h2>
+      <div class="form-group">
+        <label for="ocr-file-input">Upload Group Text Screenshot</label>
+        <input type="file" id="ocr-file-input" accept="image/*">
+      </div>
+      <button type="button" onclick="parseScreenshotPicks()">Scan & Extract Picks</button>
+      <div id="ocr-msg" class="msg"></div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label for="ocr-output-preview">Extracted Text Preview / Raw Edits</label>
+        <textarea id="ocr-output-preview" rows="5" placeholder="Scanned text will appear here. Each line will be checked for player initials and pick choices..."></textarea>
+      </div>
+      <button type="button" onclick="importExtractedPicks()" class="btn-batch" style="margin-top: 0.5rem;">📥 Batch Import Extracted Picks</button>
+    </div>
+
     <!-- Add New Pick Card -->
     <div class="card">
-      <h2>2. Add a Member Pick</h2>
+      <h2>3. Add a Member Pick</h2>
       <form id="pick-form">
         <div class="form-group">
           <label for="pick-week">Select Week</label>
@@ -480,7 +500,7 @@
     <!-- Active Week Picks Card -->
     <div class="card">
       <div class="table-header-action">
-        <h2>3. Manage & Grade Active Week Picks</h2>
+        <h2>4. Manage & Grade Active Week Picks</h2>
         <div class="btn-row">
           <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade Active Picks</button>
           <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
@@ -496,7 +516,7 @@
     <!-- Finalized / Closed Weeks Card -->
     <div class="card">
       <div class="table-header-action">
-        <h2>4. Finalized & Closed Week Picks</h2>
+        <h2>5. Finalized & Closed Week Picks</h2>
         <div class="btn-row">
           <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade Finalized Picks</button>
           <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save All Finalized</button>
@@ -534,133 +554,6 @@
     const statusSelect = document.getElementById('week-status');
     const slipLinkInput = document.getElementById('week-slip-link');
     const gamblyLinkInput = document.getElementById('week-gambly-link');
-
-    // Shorthand alias mappings for robust ESPN matching (matching index.html)
-    const TEAM_ALIASES = {
-      'sac': 'sacramento state',
-      'jax state': 'jacksonville state',
-      'tcu': 'tcu horned frogs',
-      'unc': 'north carolina',
-      'usc': 'southern cal',
-      'unlv': 'unlv',
-      'stanford': 'stanford'
-    };
-
-    function getTeamSearchTerms(selection) {
-      if (!selection) return [];
-      let clean = selection.trim().toLowerCase();
-      clean = clean.replace(/\b(team total|tt)\b/gi, '');
-      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
-      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
-
-      let terms = [];
-      if (clean.includes('/')) {
-        terms = clean.split('/').map(t => t.trim());
-      } else {
-        terms = [clean];
-      }
-
-      let expanded = [];
-      terms.forEach(t => {
-        expanded.push(t);
-        if (TEAM_ALIASES[t]) {
-          expanded.push(TEAM_ALIASES[t]);
-        }
-      });
-      return expanded;
-    }
-
-    // Exact evaluation and margin scoring logic from index.html
-    function evaluatePicksWithScores(picks, espnEvents) {
-      return picks.map(pick => {
-        let computedResult = pick.result || null;
-        let computedMargin = -999;
-
-        const selText = (pick.selection || '').trim().toLowerCase();
-        const searchTerms = getTeamSearchTerms(selText);
-        const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
-        const isTeamTotal = /\b(team total|tt)\b/.test(selText);
-
-        const matchedEvent = espnEvents.find(ev => {
-          const comp = ev.competitions[0];
-          return comp.competitors.some(c => {
-            const name = (c.team.name || '').toLowerCase();
-            const shortName = (c.team.shortDisplayName || '').toLowerCase();
-            const displayName = (c.team.displayName || '').toLowerCase();
-            const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term =>
-              term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
-            );
-          });
-        });
-
-        if (matchedEvent) {
-          const competition = matchedEvent.competitions[0];
-          const isFinal = competition.status.type.state === 'post';
-
-          if (isFinal) {
-            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
-            const homeScore = parseInt(homeTeam.score || '0', 10);
-            const awayScore = parseInt(awayTeam.score || '0', 10);
-
-            const homeName = (homeTeam.team.name || '').toLowerCase();
-            const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
-            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
-
-            const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
-            );
-
-            if (isTotalOrTT) {
-              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
-              if (lineMatch) {
-                const direction = lineMatch[1];
-                const line = parseFloat(lineMatch[2]);
-                const isOver = direction === 'o' || direction === 'over';
-
-                if (isTeamTotal) {
-                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
-                  computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
-                } else {
-                  const totalScore = homeScore + awayScore;
-                  computedMargin = isOver ? (totalScore - line) : (line - totalScore);
-                }
-                computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
-              }
-            } else {
-              const pickedTeamScore = isHomePick ? homeScore : awayScore;
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
-              let spread = 0;
-              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
-
-              computedMargin = (pickedTeamScore + spread) - oppTeamScore;
-              computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
-            }
-          }
-        }
-
-        const finalResultForScoring = computedResult || pick.result || null;
-        const sortMargin = computedMargin === -999 ? 0 : computedMargin;
-
-        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
-      });
-    }
-
-    // Exact top 5 calculation and sorting algorithm matching index.html
-    function calculateTop5Picks(evaluatedPicks) {
-      const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-      const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
-      const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
-
-      let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...losses.slice(0, 5 - winners.length)];
-      if (top5.length < 5) {
-        top5 = [...top5, ...pushes.slice(0, 5 - top5.length)];
-      }
-      return top5;
-    }
 
     async function initAdmin() {
       await loadDropdowns();
@@ -859,6 +752,89 @@
         loadDropdowns();
       }
     });
+
+    // --- OCR Screenshot Scanner Functions ---
+    async function parseScreenshotPicks() {
+      const fileInput = document.getElementById('ocr-file-input');
+      const msgDiv = document.getElementById('ocr-msg');
+      const previewArea = document.getElementById('ocr-output-preview');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+        msgDiv.style.color = 'var(--danger)';
+        msgDiv.innerText = 'Please select a screenshot image first.';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
+      msgDiv.style.color = 'var(--text-muted)';
+      msgDiv.innerText = 'Scanning image text with OCR... Please wait.';
+
+      try {
+        const worker = await Tesseract.createWorker('eng');
+        const ret = await worker.recognize(file);
+        await worker.terminate();
+
+        previewArea.value = ret.data.text;
+
+        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
+        msgDiv.style.color = 'var(--success)';
+        msgDiv.innerText = 'Successfully extracted text! Review below and click Batch Import.';
+      } catch (err) {
+        console.error('OCR Error:', err);
+        msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+        msgDiv.style.color = 'var(--danger)';
+        msgDiv.innerText = 'Failed to process screenshot image.';
+      }
+    }
+
+    async function importExtractedPicks() {
+      const previewArea = document.getElementById('ocr-output-preview');
+      const msgDiv = document.getElementById('ocr-msg');
+      const weekId = document.getElementById('pick-week').value;
+
+      if (!weekId) {
+        alert('Please select a target week in Section 3 (Add a Member Pick) first so the tool knows which week to assign these imported picks to.');
+        return;
+      }
+
+      const rawLines = previewArea.value.split('\n').map(l => l.trim()).filter(Boolean);
+      if (rawLines.length === 0) {
+        alert('No text found to import.');
+        return;
+      }
+
+      let importedCount = 0;
+
+      for (const line of rawLines) {
+        let parts = line.includes(':') ? line.split(':') : line.split('-');
+        
+        if (parts.length >= 2) {
+          const possibleInitials = parts[0].trim().toUpperCase();
+          const selectionText = parts.slice(1).join(line.includes(':') ? ':' : '-').trim();
+
+          const matchedPlayer = allPlayersCache.find(p => p.initials.toUpperCase() === possibleInitials);
+
+          if (matchedPlayer && selectionText) {
+            const { error } = await _supabase.from('picks').insert([{
+              week_id: weekId,
+              player_id: matchedPlayer.id,
+              selection: selectionText,
+              is_parlay: false
+            }]);
+
+            if (!error) importedCount++;
+          }
+        }
+      }
+
+      msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
+      msgDiv.style.color = 'var(--success)';
+      msgDiv.innerText = `Successfully batch imported ${importedCount} picks from screenshot! Refreshing panel...`;
+      
+      setTimeout(() => initAdmin(), 1500);
+    }
 
     document.getElementById('pick-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1097,6 +1073,19 @@
       });
     }
 
+    function getTeamSearchTerms(selection) {
+      if (!selection) return [];
+      let clean = selection.trim();
+      clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
+      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+
+      if (clean.includes('/')) {
+        return clean.split('/').map(t => t.trim().toLowerCase());
+      }
+      return [clean.toLowerCase()];
+    }
+
     async function autoGradePicksSilently(sectionType) {
       await autoGradePicks(sectionType, true);
     }
@@ -1160,11 +1149,11 @@
             const awayScore = parseInt(away.score || '0', 10);
 
             const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
+              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
             );
 
             const isAwayPick = searchTerms.some(term =>
-              term && (awayName.includes(term) || awayShort.includes(term) || awayAbbr === term)
+              term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
             );
 
             if (isHomePick || isAwayPick) {
