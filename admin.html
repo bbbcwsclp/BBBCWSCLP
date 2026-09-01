@@ -190,9 +190,6 @@
       gap: 0.5rem;
     }
 
-    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
-    .checkbox-group input { width: auto; }
-
     button {
       background-color: var(--accent);
       color: var(--bg);
@@ -315,10 +312,9 @@
       align-items: center;
       cursor: pointer;
       user-select: none;
-      list-style: none; /* Hide default arrow marker */
+      list-style: none;
     }
     
-    /* Custom clean toggle indicator */
     summary.week-section-banner::-webkit-details-marker { display: none; }
     summary.week-section-banner::after {
       content: '▼';
@@ -457,16 +453,16 @@
       </p>
     </div>
 
-    <!-- Add New Pick Card -->
+    <!-- Add New Pick Card (Bulk Only) -->
     <div class="card">
       <h2>2. Add a Member Pick</h2>
-      <div class="form-group" style="margin-bottom: 1.1rem;">
+      <div class="form-group">
         <label for="pick-week">Select Week</label>
         <select id="pick-week" required>
           <option value="">Loading weeks...</option>
         </select>
       </div>
-      <div>
+      <div style="border-top: 1px solid var(--border); margin-top: 1.5rem; padding-top: 1.25rem;">
         <label for="bulk-picks-input">Bulk Add Picks (one per line, for the week selected above)</label>
         <textarea id="bulk-picks-input" rows="5" placeholder="JD: Alabama -7.5&#10;MK: Ohio State/Michigan&#10;TR: Over 54.5" style="width: 100%; padding: 0.7rem 0.85rem; background: var(--card-inner); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;"></textarea>
         <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">
@@ -477,8 +473,6 @@
       </div>
     </div>
 
-
-
     <!-- Active Week Picks Card -->
     <div class="card">
       <div class="table-header-action">
@@ -486,11 +480,6 @@
         <div class="btn-row">
           <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade Active Picks</button>
           <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
-          </form>
-          <button type="button" id="set-parlay-btn" class="btn-autograde" style="margin-top: 0.75rem;" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
-          <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
-            Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
-          </p>
         </div>
       </div>
       <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
@@ -532,7 +521,6 @@
     let allWeeksCache = [];
     let allPlayersCache = [];
 
-    // Section-level dirty tracking
     let activeDirty = false;
     let finalizedDirty = false;
     let hasInitializedWeekSelect = false;
@@ -570,7 +558,7 @@
       return confirm(message || 'You have unsaved pick edits that haven\'t been saved yet. Continue and lose those changes?');
     }
 
-        async function loadDropdowns() {
+    async function loadDropdowns() {
       const { data: weeks, error: weeksError } = await _supabase
         .from('weeks')
         .select('*')
@@ -580,30 +568,32 @@
       allWeeksCache = weeks || [];
 
       const pickWeekSelect = document.getElementById('pick-week');
-      if (!pickWeekSelect) return; // Safety check
+      if (pickWeekSelect) {
+        pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
 
-      pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
+        let openWeekNum = null;
+        let openWeekId = '';
 
-      let openWeekNum = null;
-      let openWeekId = '';
+        if (weeks) {
+          weeks.forEach(w => {
+            if (w.status === 'open' && openWeekNum === null) {
+              openWeekNum = w.week_number;
+              openWeekId = w.id;
+            }
+            pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+          });
+        }
 
-      if (weeks) {
-        weeks.forEach(w => {
-          if (w.status === 'open' && openWeekNum === null) {
-            openWeekNum = w.week_number;
-            openWeekId = w.id;
-          }
-          pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
-        });
+        if (openWeekId) pickWeekSelect.value = openWeekId;
       }
-
-      if (openWeekId) pickWeekSelect.value = openWeekId;
 
       if (!hasInitializedWeekSelect) {
         hasInitializedWeekSelect = true;
-        if (openWeekNum !== null && weekSelect) weekSelect.value = openWeekNum;
+        if (weeks && weeks.length > 0 && weekSelect) {
+          const openWeek = weeks.find(w => w.status === 'open');
+          weekSelect.value = openWeek ? openWeek.week_number : weeks[0].week_number;
+        }
       }
-      
       if (weekSelect) loadWeekDetails(parseInt(weekSelect.value, 10));
 
       const { data: players, error: playersError } = await _supabase
@@ -614,54 +604,6 @@
       if (playersError) console.error('Failed to load players:', playersError);
       allPlayersCache = players || [];
     }
-
-
-    function updatePlayerDropdownOptions() {
-      const playerSelect = document.getElementById('pick-player');
-      const activeRows = document.querySelectorAll('#active-container tr[data-pick-id]');
-      const alreadyChosenPlayerIds = new Set();
-      
-      activeRows.forEach(row => {
-        const playerId = row.dataset.playerId;
-        if (playerId) alreadyChosenPlayerIds.add(playerId);
-      });
-
-      const currentVal = playerSelect.value;
-      playerSelect.innerHTML = '<option value="">-- Choose Player --</option>';
-      if (allPlayersCache) {
-        allPlayersCache.forEach(p => {
-          if (!alreadyChosenPlayerIds.has(p.id.toString()) || p.id.toString() === currentVal) {
-            playerSelect.innerHTML += `<option value="${p.id}">${p.initials}</option>`;
-          }
-        });
-      }
-    }
-
-    document.getElementById('pick-week').addEventListener('change', () => {
-      updatePlayerDropdownOptions();
-      applyDesignatedParlayPickers();
-    });
-
-    async function applyDesignatedParlayPickers() {
-      const selectedWeekId = document.getElementById('pick-week').value;
-      if (!selectedWeekId) return;
-
-      const currentWeekObj = allWeeksCache.find(w => w.id === selectedWeekId);
-      if (!currentWeekObj) return;
-
-      const designatedPickers = currentWeekObj.parlay_pickers || currentWeekObj.pickers || [];
-      const playerSelect = document.getElementById('pick-player');
-      const parlayCheckbox = document.getElementById('pick-is-parlay');
-
-      if (!playerSelect.value) return;
-      const selectedOptionText = playerSelect.options[playerSelect.selectedIndex]?.text;
-
-      if (designatedPickers.includes(playerSelect.value) || designatedPickers.includes(selectedOptionText)) {
-        parlayCheckbox.checked = true;
-      }
-    }
-
-    document.getElementById('pick-player').addEventListener('change', applyDesignatedParlayPickers);
 
     async function loadWeekDetails(weekNum) {
       const found = allWeeksCache.find(w => w.week_number === weekNum);
@@ -676,9 +618,11 @@
       }
     }
 
-    weekSelect.addEventListener('change', (e) => {
-      loadWeekDetails(parseInt(e.target.value, 10));
-    });
+    if (weekSelect) {
+      weekSelect.addEventListener('change', (e) => {
+        loadWeekDetails(parseInt(e.target.value, 10));
+      });
+    }
 
     async function clearWeekLink(linkType) {
       const weekNum = parseInt(weekSelect.value, 10);
@@ -748,9 +692,6 @@
       }
     });
 
-    // When a week is closed, automatically open the next numerical week (up through Week 12).
-    // If the next week already has a row, its status is simply flipped to 'open'; otherwise a
-    // fresh row is created for it. Does nothing past Week 12, since that's the last week.
     async function autoOpenNextWeek(closedWeekNum) {
       const nextWeekNum = closedWeekNum + 1;
       if (nextWeekNum > 12) return '';
@@ -782,9 +723,6 @@
       return `Week ${nextWeekNum} auto-opened.`;
     }
 
-    // Ranks Week N-1's graded picks (wins > draws > losses, each sorted by margin of cover,
-    // highest first) and takes the top 5 players as the designated parlay pickers for Week N.
-    // Requires a numeric `margin` column on the picks table, populated by auto-grading/saving.
     async function setParlayPickersFromPreviousWeek() {
       const msg = document.getElementById('week-msg');
       const currentWeekNum = parseInt(weekSelect.value, 10);
@@ -853,7 +791,6 @@
         return;
       }
 
-      // Sync any picks already entered for the current week to reflect the new designation.
       const currentWeekObj = allWeeksCache.find(w => w.week_number === currentWeekNum);
       if (currentWeekObj) {
         await _supabase.from('picks').update({ is_parlay: false }).eq('week_id', currentWeekObj.id);
@@ -872,44 +809,6 @@
       }
     }
 
-    document.getElementById('pick-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const weekId = document.getElementById('pick-week').value;
-      const playerId = document.getElementById('pick-player').value;
-      const selection = document.getElementById('pick-selection').value;
-      const isParlay = document.getElementById('pick-is-parlay').checked;
-      const msg = document.getElementById('pick-msg');
-
-      const { error } = await _supabase
-        .from('picks')
-        .insert([{
-          week_id: weekId,
-          player_id: playerId,
-          selection: selection,
-          is_parlay: isParlay
-        }]);
-
-      if (error) {
-        msg.style.background = 'rgba(255, 77, 77, 0.15)';
-        msg.style.color = 'var(--danger)';
-        msg.innerText = `Error: ${error.message}`;
-      } else {
-        msg.style.background = 'rgba(52, 214, 122, 0.15)';
-        msg.style.color = 'var(--success)';
-        msg.innerText = `Pick added successfully!`;
-        document.getElementById('pick-selection').value = '';
-        document.getElementById('pick-is-parlay').checked = false;
-
-        if (confirmDiscardIfDirty('Adding this pick will refresh the picks tables. You have unsaved edits there — continue and lose them?')) {
-          initAdmin();
-        }
-      }
-    });
-
-    // Parses lines like "JD: Alabama -7.5", matches initials to a player, and for the
-    // selected week: inserts if the player has no pick yet, skips if they already have this
-    // exact selection, or updates their existing pick if the selection text has changed.
-    // Also syncs is_parlay for anyone designated as a parlay picker for this week.
     async function bulkAddPicks() {
       const weekId = document.getElementById('pick-week').value;
       const textarea = document.getElementById('bulk-picks-input');
@@ -1016,7 +915,6 @@
         .select('*, weeks(week_number, status), players(id, initialss || id, initials)')
         .order('created_at', { ascending: false });
 
-      // Fallback query if initials select needs adjustment
       let picksData = picks;
       if (error) {
         const fallback = await _supabase
@@ -1047,11 +945,9 @@
         else activePicks.push(p);
       });
 
-      // Active weeks open by default, Finalized collapsed by default
       renderPicksByWeek(activePicks, activeContainer, 'No active picks for open weeks.', true);
       renderPicksByWeek(finalizedPicks, finalizedContainer, 'No finalized picks found.', false);
       attachRowChangeListeners();
-      updatePlayerDropdownOptions();
     }
 
     function renderPicksByWeek(picksArray, containerElement, emptyMessage, defaultOpen = true) {
@@ -1072,7 +968,6 @@
       sortedWeeks.forEach(wkNum => {
         const weekPicks = grouped[wkNum];
 
-        // Converted to HTML <details> and <summary> accordion elements
         const details = document.createElement('details');
         details.className = 'week-accordion';
         if (defaultOpen) details.open = true;
@@ -1212,12 +1107,11 @@
           }
         });
 
-        // Hide the whole week accordion if none of its picks match the filter
         if (term && visibleCount === 0) {
           details.style.display = 'none';
         } else {
           details.style.display = '';
-          if (term && visibleCount > 0) details.open = true; // Auto-expand when searching
+          if (term && visibleCount > 0) details.open = true;
         }
       });
     }
@@ -1306,8 +1200,6 @@
             );
 
             if (isHomePick || isAwayPick) {
-              // Only reveal the score once the game is final and the pick is actually gradeable —
-              // in-progress games stay hidden so the tag only ever shows a finalized result.
               if (comp.status.type.state === 'post') {
                 scoreTag.style.display = 'block';
                 scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
@@ -1406,8 +1298,6 @@
           result: result || null,
           is_finalized: isFinalized
         };
-        // Only include margin if we actually have one for this row (freshly auto-graded
-        // or previously persisted) — otherwise leave the stored value untouched.
         if (row.dataset.margin !== undefined) {
           updatePayload.margin = parseFloat(row.dataset.margin);
         }
