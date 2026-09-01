@@ -502,7 +502,11 @@
         <h2>3. Manage & Grade Active Week Picks</h2>
         <div class="btn-row">
           <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade Active Picks</button>
-          <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
+          </form>
+          <button type="button" id="set-parlay-btn" class="btn-autograde" style="margin-top: 0.75rem;" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
+          <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
+            Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
+          </p>
         </div>
       </div>
       <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
