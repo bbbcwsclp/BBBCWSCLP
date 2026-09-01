@@ -656,6 +656,7 @@
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
 
       if (otherPicksList.length > 0) {
+        text += `\n`; // Added blank line separating top 5 from others
         otherPicksList.forEach(p => {
           text += `${p.players?.initials || '??'}:\n`;
         });
