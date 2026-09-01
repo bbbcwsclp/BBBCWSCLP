@@ -448,6 +448,10 @@
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
       </form>
+      <button type="button" id="set-parlay-btn" class="btn-autograde" style="margin-top: 0.75rem;" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
+      <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
+        Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
+      </p>
     </div>
 
     <!-- Add New Pick Card -->
@@ -477,6 +481,16 @@
         <button type="submit">Submit Pick</button>
         <div id="pick-msg" class="msg"></div>
       </form>
+
+      <div style="border-top: 1px solid var(--border); margin-top: 1.5rem; padding-top: 1.25rem;">
+        <label for="bulk-picks-input">Bulk Add Picks (one per line, for the week selected above)</label>
+        <textarea id="bulk-picks-input" rows="5" placeholder="JD: Alabama -7.5&#10;MK: Ohio State/Michigan&#10;TR: Over 54.5" style="width: 100%; padding: 0.7rem 0.85rem; background: var(--card-inner); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;"></textarea>
+        <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">
+          Format: "INITIALS: selection" per line. A player with no pick yet this week gets added; a player who already has a pick with the same text is skipped; a player who already has a pick with different text gets updated to the new selection.
+        </p>
+        <button type="button" id="bulk-add-btn" class="btn-batch" style="margin-top: 0.75rem;" onclick="bulkAddPicks()">📋 Bulk Add Picks</button>
+        <div id="bulk-picks-result" class="msg"></div>
+      </div>
     </div>
 
     <!-- Active Week Picks Card -->
@@ -728,12 +742,143 @@
         msg.style.color = 'var(--danger)';
         msg.innerText = `Error: ${error.message}`;
       } else {
+        let successText = `Week ${weekNum} updated successfully!`;
+
+        if (status === 'closed') {
+          const nextWeekResult = await autoOpenNextWeek(weekNum);
+          if (nextWeekResult) successText += ` ${nextWeekResult}`;
+        }
+
         msg.style.background = 'rgba(52, 214, 122, 0.15)';
         msg.style.color = 'var(--success)';
-        msg.innerText = `Week ${weekNum} updated successfully!`;
+        msg.innerText = successText;
         loadDropdowns();
       }
     });
+
+    // When a week is closed, automatically open the next numerical week (up through Week 12).
+    // If the next week already has a row, its status is simply flipped to 'open'; otherwise a
+    // fresh row is created for it. Does nothing past Week 12, since that's the last week.
+    async function autoOpenNextWeek(closedWeekNum) {
+      const nextWeekNum = closedWeekNum + 1;
+      if (nextWeekNum > 12) return '';
+
+      const existing = allWeeksCache.find(w => w.week_number === nextWeekNum);
+
+      if (existing) {
+        if (existing.status !== 'open') {
+          const { error } = await _supabase
+            .from('weeks')
+            .update({ status: 'open' })
+            .eq('season', 2026)
+            .eq('week_number', nextWeekNum);
+          if (error) {
+            console.error('Error auto-opening next week:', error.message);
+            return `(Could not auto-open Week ${nextWeekNum}: ${error.message})`;
+          }
+        }
+      } else {
+        const { error } = await _supabase
+          .from('weeks')
+          .insert([{ season: 2026, week_number: nextWeekNum, status: 'open' }]);
+        if (error) {
+          console.error('Error auto-creating next week:', error.message);
+          return `(Could not auto-open Week ${nextWeekNum}: ${error.message})`;
+        }
+      }
+
+      return `Week ${nextWeekNum} auto-opened.`;
+    }
+
+    // Ranks Week N-1's graded picks (wins > draws > losses, each sorted by margin of cover,
+    // highest first) and takes the top 5 players as the designated parlay pickers for Week N.
+    // Requires a numeric `margin` column on the picks table, populated by auto-grading/saving.
+    async function setParlayPickersFromPreviousWeek() {
+      const msg = document.getElementById('week-msg');
+      const currentWeekNum = parseInt(weekSelect.value, 10);
+      const prevWeekNum = currentWeekNum - 1;
+
+      if (prevWeekNum < 0) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'No previous week exists for Week 0.';
+        return;
+      }
+
+      const prevWeekObj = allWeeksCache.find(w => w.week_number === prevWeekNum);
+      if (!prevWeekObj) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Week ${prevWeekNum} not found — can't compute parlay pickers.`;
+        return;
+      }
+
+      const { data: prevPicks, error } = await _supabase
+        .from('picks')
+        .select('player_id, result, margin, players(initials)')
+        .eq('week_id', prevWeekObj.id)
+        .not('result', 'is', null);
+
+      if (error) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error loading Week ${prevWeekNum} picks: ${error.message}`;
+        return;
+      }
+
+      if (!prevPicks || prevPicks.length === 0) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `No graded picks found for Week ${prevWeekNum}.`;
+        return;
+      }
+
+      const priority = { W: 0, D: 1, L: 2 };
+      const ranked = prevPicks
+        .filter(p => priority[p.result] !== undefined)
+        .sort((a, b) => {
+          const pa = priority[a.result], pb = priority[b.result];
+          if (pa !== pb) return pa - pb;
+          const ma = (a.margin === null || a.margin === undefined) ? -Infinity : a.margin;
+          const mb = (b.margin === null || b.margin === undefined) ? -Infinity : b.margin;
+          return mb - ma;
+        });
+
+      const top5 = ranked.slice(0, 5);
+      const top5PlayerIds = top5.map(p => p.player_id);
+      const top5Initials = top5.map(p => p.players?.initials || '?');
+
+      const { error: weekUpdateError } = await _supabase
+        .from('weeks')
+        .update({ parlay_pickers: top5PlayerIds })
+        .eq('season', 2026)
+        .eq('week_number', currentWeekNum);
+
+      if (weekUpdateError) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = `Error saving parlay pickers: ${weekUpdateError.message}`;
+        return;
+      }
+
+      // Sync any picks already entered for the current week to reflect the new designation.
+      const currentWeekObj = allWeeksCache.find(w => w.week_number === currentWeekNum);
+      if (currentWeekObj) {
+        await _supabase.from('picks').update({ is_parlay: false }).eq('week_id', currentWeekObj.id);
+        if (top5PlayerIds.length > 0) {
+          await _supabase.from('picks').update({ is_parlay: true }).eq('week_id', currentWeekObj.id).in('player_id', top5PlayerIds);
+        }
+      }
+
+      msg.style.background = 'rgba(52, 214, 122, 0.15)';
+      msg.style.color = 'var(--success)';
+      msg.innerText = `Parlay pickers for Week ${currentWeekNum} set from Week ${prevWeekNum}: ${top5Initials.join(', ')} (${top5.length}/5 found).`;
+
+      await loadDropdowns();
+      if (confirmDiscardIfDirty('Setting parlay pickers will refresh the picks tables. You have unsaved edits there — continue and lose them?')) {
+        await loadAdminPicks();
+      }
+    }
 
     document.getElementById('pick-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -768,6 +913,110 @@
         }
       }
     });
+
+    // Parses lines like "JD: Alabama -7.5", matches initials to a player, and for the
+    // selected week: inserts if the player has no pick yet, skips if they already have this
+    // exact selection, or updates their existing pick if the selection text has changed.
+    // Also syncs is_parlay for anyone designated as a parlay picker for this week.
+    async function bulkAddPicks() {
+      const weekId = document.getElementById('pick-week').value;
+      const textarea = document.getElementById('bulk-picks-input');
+      const resultDiv = document.getElementById('bulk-picks-result');
+      const raw = textarea.value;
+
+      if (!weekId) {
+        resultDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+        resultDiv.style.color = 'var(--danger)';
+        resultDiv.innerText = 'Select a week first.';
+        return;
+      }
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) {
+        resultDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+        resultDiv.style.color = 'var(--danger)';
+        resultDiv.innerText = 'Paste at least one pick line, e.g. "JD: Alabama -7.5"';
+        return;
+      }
+
+      const { data: existingPicks, error: fetchErr } = await _supabase
+        .from('picks')
+        .select('id, player_id, selection, is_parlay')
+        .eq('week_id', weekId);
+
+      if (fetchErr) {
+        resultDiv.style.background = 'rgba(255, 77, 77, 0.15)';
+        resultDiv.style.color = 'var(--danger)';
+        resultDiv.innerText = `Error checking existing picks: ${fetchErr.message}`;
+        return;
+      }
+
+      const existingByPlayer = {};
+      (existingPicks || []).forEach(p => { existingByPlayer[p.player_id] = p; });
+
+      const currentWeekObj = allWeeksCache.find(w => w.id === weekId);
+      const designatedPickers = currentWeekObj?.parlay_pickers || currentWeekObj?.pickers || [];
+
+      let added = 0, updated = 0, skipped = 0;
+      const problems = [];
+
+      for (const line of lines) {
+        const match = line.match(/^([A-Za-z]{1,6})\s*[:\-–]\s*(.+)$/);
+        if (!match) {
+          problems.push(`Could not parse: "${line}"`);
+          continue;
+        }
+        const initials = match[1].trim();
+        const selection = match[2].trim();
+
+        const player = allPlayersCache.find(p => (p.initials || '').toLowerCase() === initials.toLowerCase());
+        if (!player) {
+          problems.push(`Unknown player initials "${initials}" in: "${line}"`);
+          continue;
+        }
+
+        const isDesignated = designatedPickers.includes(player.id) || designatedPickers.includes(player.id.toString()) || designatedPickers.includes(player.initials);
+        const existing = existingByPlayer[player.id];
+
+        if (!existing) {
+          const { error } = await _supabase.from('picks').insert([{
+            week_id: weekId,
+            player_id: player.id,
+            selection: selection,
+            is_parlay: isDesignated
+          }]);
+          if (error) problems.push(`Failed to add ${initials}: ${error.message}`);
+          else added++;
+        } else {
+          const desiredIsParlay = isDesignated || existing.is_parlay;
+          const sameSelection = existing.selection.trim().toLowerCase() === selection.toLowerCase();
+          const sameParlayFlag = existing.is_parlay === desiredIsParlay;
+
+          if (sameSelection && sameParlayFlag) {
+            skipped++;
+          } else {
+            const { error } = await _supabase
+              .from('picks')
+              .update({ selection: selection, is_parlay: desiredIsParlay })
+              .eq('id', existing.id);
+            if (error) problems.push(`Failed to update ${initials}: ${error.message}`);
+            else updated++;
+          }
+        }
+      }
+
+      resultDiv.style.background = problems.length ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
+      resultDiv.style.color = problems.length ? 'var(--accent)' : 'var(--success)';
+      let summary = `Added ${added}, updated ${updated}, skipped ${skipped} (already up to date).`;
+      if (problems.length) summary += ` Issues: ${problems.join(' | ')}`;
+      resultDiv.innerText = summary;
+
+      textarea.value = '';
+
+      if (confirmDiscardIfDirty('Bulk add will refresh the picks tables. You have unsaved edits there — continue and lose them?')) {
+        initAdmin();
+      }
+    }
 
     async function loadAdminPicks() {
       const { data: picks, error } = await _supabase
@@ -868,6 +1117,7 @@
           tr.dataset.pickId = p.id;
           tr.dataset.playerId = p.player_id;
           tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
+          if (p.margin !== null && p.margin !== undefined) tr.dataset.margin = p.margin;
           const resultClass = p.result ? `res-select-${p.result}` : '';
           tr.innerHTML = `
             <td><strong>${p.players?.initials || '??'}</strong></td>
@@ -1060,10 +1310,12 @@
             );
 
             if (isHomePick || isAwayPick) {
-              scoreTag.style.display = 'block';
-              scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (${comp.status.type.completed ? 'Final' : comp.status.type.shortDetail})`;
-
+              // Only reveal the score once the game is final and the pick is actually gradeable —
+              // in-progress games stay hidden so the tag only ever shows a finalized result.
               if (comp.status.type.state === 'post') {
+                scoreTag.style.display = 'block';
+                scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
+
                 if (isTotalOrTT) {
                   const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
                   if (lineMatch) {
@@ -1071,17 +1323,15 @@
                     const line = parseFloat(lineMatch[2]);
                     const isOver = direction === 'o' || direction === 'over';
 
-                    if (isTeamTotal) {
-                      const pickedTeamScore = isHomePick ? homeScore : awayScore;
-                      if (pickedTeamScore > line) { resultSelect.value = isOver ? 'W' : 'L'; }
-                      else if (pickedTeamScore < line) { resultSelect.value = isOver ? 'L' : 'W'; }
-                      else { resultSelect.value = 'D'; }
-                    } else {
-                      const totalScore = homeScore + awayScore;
-                      if (totalScore > line) { resultSelect.value = isOver ? 'W' : 'L'; }
-                      else if (totalScore < line) { resultSelect.value = isOver ? 'L' : 'W'; }
-                      else { resultSelect.value = 'D'; }
-                    }
+                    const compareScore = isTeamTotal ? (isHomePick ? homeScore : awayScore) : (homeScore + awayScore);
+                    const rawDiff = compareScore - line;
+                    const marginValue = isOver ? rawDiff : -rawDiff;
+
+                    if (marginValue > 0) { resultSelect.value = 'W'; }
+                    else if (marginValue < 0) { resultSelect.value = 'L'; }
+                    else { resultSelect.value = 'D'; }
+
+                    row.dataset.margin = marginValue.toString();
                     gradedCount++;
                     updateResultSelectColor(resultSelect);
                     row.style.background = 'rgba(255, 176, 32, 0.06)';
@@ -1094,10 +1344,14 @@
                   if (spreadMatch) spread = parseFloat(spreadMatch[1]);
 
                   const adjustedScore = pickedTeamScore + spread;
-                  if (adjustedScore > oppTeamScore) { resultSelect.value = 'W'; gradedCount++; }
-                  else if (adjustedScore < oppTeamScore) { resultSelect.value = 'L'; gradedCount++; }
-                  else { resultSelect.value = 'D'; gradedCount++; }
-                  
+                  const marginValue = adjustedScore - oppTeamScore;
+
+                  if (marginValue > 0) { resultSelect.value = 'W'; }
+                  else if (marginValue < 0) { resultSelect.value = 'L'; }
+                  else { resultSelect.value = 'D'; }
+
+                  row.dataset.margin = marginValue.toString();
+                  gradedCount++;
                   updateResultSelectColor(resultSelect);
                   row.style.background = 'rgba(255, 176, 32, 0.06)';
                 }
@@ -1150,14 +1404,21 @@
         const result = row.querySelector('.row-result').value;
         const isFinalized = result !== '';
 
+        const updatePayload = {
+          selection: selection,
+          is_parlay: isParlay,
+          result: result || null,
+          is_finalized: isFinalized
+        };
+        // Only include margin if we actually have one for this row (freshly auto-graded
+        // or previously persisted) — otherwise leave the stored value untouched.
+        if (row.dataset.margin !== undefined) {
+          updatePayload.margin = parseFloat(row.dataset.margin);
+        }
+
         const { error } = await _supabase
           .from('picks')
-          .update({
-            selection: selection,
-            is_parlay: isParlay,
-            result: result || null,
-            is_finalized: isFinalized
-          })
+          .update(updatePayload)
           .eq('id', pickId);
 
         if (error) {
