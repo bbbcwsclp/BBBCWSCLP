@@ -585,8 +585,31 @@
         const finalResultForScoring = computedResult || pick.result || null;
         const sortMargin = computedMargin === -999 ? 0 : computedMargin;
 
-        return { ...pick, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
+        return { ...pick, dbResult: pick.result, dbMargin: pick.margin, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
       });
+    }
+
+    // Writes freshly computed final results/margins back to Supabase so admin.html (and
+    // anything else reading the picks table) has real graded data without requiring a manual
+    // visit to the admin page. Only touches rows where the computed value actually differs
+    // from what's stored, so a normal 10s poll with nothing new to grade makes zero writes.
+    async function syncFinalizedResultsToSupabase(evaluatedPicks) {
+      const toSync = evaluatedPicks.filter(p => {
+        if (!p.computedResult) return false; // game not matched / not final yet
+        const resultChanged = p.dbResult !== p.computedResult;
+        const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
+        return resultChanged || marginChanged;
+      });
+
+      if (toSync.length === 0) return;
+
+      for (const p of toSync) {
+        const { error } = await _supabase
+          .from('picks')
+          .update({ result: p.computedResult, margin: p.margin, is_finalized: true })
+          .eq('id', p.id);
+        if (error) console.error(`Failed to sync result for pick ${p.id}:`, error.message);
+      }
     }
 
     function copyTop5ForText() {
@@ -674,6 +697,10 @@
       }
 
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
+
+      // Persist any newly-final results/margins back to the DB before rendering.
+      await syncFinalizedResultsToSupabase(evaluatedPicks);
+
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => !p.is_parlay);
 
@@ -886,11 +913,12 @@
 
       if (allFinalized) {
         const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
         const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
 
-        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...losses.slice(0, 5 - winners.length)];
-        if (top5.length < 5) top5 = [...top5, ...pushes.slice(0, 5 - top5.length)];
+        // Priority order: wins first, then draws, then losses — each ranked by margin of cover.
+        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
+        if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
 
         cachedData.top5 = top5;
         previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
