@@ -450,14 +450,42 @@
         </div>
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
+      </form>
+      <button type="button" id="set-parlay-btn" class="btn-autograde" style="margin-top: 0.75rem;" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
+      <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
+        Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
+      </p>
     </div>
 
     <!-- Add New Pick Card -->
     <div class="card">
-      <h2>2. Paste Group Chat Picks</h2>
+      <h2>2. Add a Member Pick</h2>
       <form id="pick-form">
-        <div class="form-group">  
-        <div style="border-top: 1px solid var(--border); margin-top: 1.5rem; padding-top: 1.25rem;">
+        <div class="form-group">
+          <label for="pick-week">Select Week</label>
+          <select id="pick-week" required>
+            <option value="">Loading weeks...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-player">Select Player</label>
+          <select id="pick-player" required>
+            <option value="">Loading players...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pick-selection">Selection (e.g. Alabama -7.5)</label>
+          <input type="text" id="pick-selection" required placeholder="Enter pick details">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="pick-is-parlay">
+          <label for="pick-is-parlay" style="margin-bottom: 0; color: var(--text); text-transform: none;">Include in Week's Top Parlay</label>
+        </div>
+        <button type="submit">Submit Pick</button>
+        <div id="pick-msg" class="msg"></div>
+      </form>
+
+      <div style="border-top: 1px solid var(--border); margin-top: 1.5rem; padding-top: 1.25rem;">
         <label for="bulk-picks-input">Bulk Add Picks (one per line, for the week selected above)</label>
         <textarea id="bulk-picks-input" rows="5" placeholder="JD: Alabama -7.5&#10;MK: Ohio State/Michigan&#10;TR: Over 54.5" style="width: 100%; padding: 0.7rem 0.85rem; background: var(--card-inner); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;"></textarea>
         <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">
