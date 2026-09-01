@@ -262,15 +262,14 @@
       transition: all 0.3s ease;
     }
 
-    .table-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .table-header-action { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
     .table-header-action h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 
     .btn-row {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 0.5rem;
       width: 100%;
-      margin-bottom: 0.5rem;
     }
     .btn-row button {
       width: 100%;
@@ -283,6 +282,8 @@
     .btn-batch:hover { background-color: #4fe092; }
     .btn-autograde { background-color: var(--warning); color: var(--bg); }
     .btn-autograde:hover { background-color: #72c8ff; }
+    .btn-gold { background-color: var(--gold); color: var(--bg); }
+    .btn-gold:hover { background-color: #ffc457; }
 
     /* Collapsible Week Accordions styling */
     details.week-accordion {
@@ -447,10 +448,6 @@
         <button type="submit">Save Week Details</button>
         <div id="week-msg" class="msg"></div>
       </form>
-      <button type="button" id="set-parlay-btn" class="btn-autograde" style="margin-top: 0.75rem;" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
-      <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
-        Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
-      </p>
     </div>
 
     <!-- Add New Pick Card (Bulk Only) -->
@@ -478,10 +475,14 @@
       <div class="table-header-action">
         <h2>3. Manage & Grade Active Week Picks</h2>
         <div class="btn-row">
-          <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade Active Picks</button>
-          <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save All Active</button>
+          <button class="btn-autograde" onclick="autoGradePicks('active')">⚡ Auto-Grade</button>
+          <button class="btn-batch" onclick="saveAllPicks('active')">💾 Save Active</button>
         </div>
+        <button type="button" id="set-parlay-btn" class="btn-gold" onclick="setParlayPickersFromPreviousWeek()">🎯 Set Parlay Pickers from Previous Week</button>
       </div>
+      <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.1rem; text-align: center;">
+        Ranks the week selected above (Week N) using Week N-1's graded picks: wins first, then draws, then losses — each ranked by margin of cover — down to 5 players.
+      </p>
       <input type="text" class="filter-input" placeholder="🔍 Filter active picks by player or team..." oninput="filterPicksTable('active', this.value)">
       <div id="active-container">
         <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading active picks...</div>
@@ -494,8 +495,8 @@
       <div class="table-header-action">
         <h2>4. Finalized & Closed Week Picks</h2>
         <div class="btn-row">
-          <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade Finalized Picks</button>
-          <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save All Finalized</button>
+          <button class="btn-autograde" onclick="autoGradePicks('finalized')">⚡ Auto-Grade</button>
+          <button class="btn-batch" onclick="saveAllPicks('finalized')">💾 Save Finalized</button>
         </div>
       </div>
       <input type="text" class="filter-input" placeholder="🔍 Filter closed picks by player or team..." oninput="filterPicksTable('finalized', this.value)">
@@ -724,7 +725,7 @@
     }
 
     async function setParlayPickersFromPreviousWeek() {
-      const msg = document.getElementById('week-msg');
+      const msg = document.getElementById('active-msg');
       const currentWeekNum = parseInt(weekSelect.value, 10);
       const prevWeekNum = currentWeekNum - 1;
 
