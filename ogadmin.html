@@ -517,7 +517,7 @@
     <button class="btn-batch" onclick="saveAllCurrentModifiedPicks()">💾 Save Unsaved Changes</button>
   </div>
 
-  <script>
+    <script>
     const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
 
@@ -565,7 +565,8 @@
       return confirm(message || 'You have unsaved pick edits that haven\'t been saved yet. Continue and lose those changes?');
     }
 
-    async function fetchPriorWeekResults(currentWeekNum) {
+    // Automatically calculate/pull prior week results to determine parlay qualifiers
+    async function fetchPriorWeekParlayQualifiers(currentWeekNum) {
       if (currentWeekNum <= 0) return [];
       const priorWeekNum = currentWeekNum - 1;
       
@@ -578,10 +579,17 @@
         .eq('week_id', priorWeekObj.id);
 
       if (error) {
-        console.error('Error fetching prior week picks:', error);
+        console.error('Error fetching prior week picks for parlay calculation:', error);
         return [];
       }
-      return priorPicks || [];
+
+      // Filter for winners/qualifiers from prior week to enter the parlay
+      // Adjust this filter condition based on how your index page calculates it (e.g., result === 'W')
+      const qualifiers = (priorPicks || [])
+        .filter(p => p.result === 'W')
+        .map(p => p.player_id.toString());
+
+      return qualifiers;
     }
 
     async function loadDropdowns() {
@@ -615,7 +623,7 @@
         hasInitializedWeekSelect = true;
         if (openWeekNum !== null) weekSelect.value = openWeekNum;
       }
-      loadWeekDetails(parseInt(weekSelect.value, 10));
+      await loadWeekDetails(parseInt(weekSelect.value, 10));
 
       const { data: players, error: playersError } = await _supabase
         .from('players')
@@ -626,7 +634,7 @@
       allPlayersCache = players || [];
 
       updatePlayerDropdownOptions();
-      applyDesignatedParlayPickers();
+      await applyDesignatedParlayPickers();
     }
 
     function updatePlayerDropdownOptions() {
@@ -657,20 +665,29 @@
 
     async function applyDesignatedParlayPickers() {
       const selectedWeekId = document.getElementById('pick-week').value;
-      if (!selectedWeekId) return;
-
-      const currentWeekObj = allWeeksCache.find(w => w.id === selectedWeekId);
-      if (!currentWeekObj) return;
-
-      const designatedPickers = currentWeekObj.parlay_pickers || currentWeekObj.pickers || [];
       const playerSelect = document.getElementById('pick-player');
       const parlayCheckbox = document.getElementById('pick-is-parlay');
 
-      if (!playerSelect.value) return;
+      if (!selectedWeekId || !playerSelect.value) return;
+
+      const currentWeekObj = allWeeksCache.explicitFind ? null : allWeeksCache.find(w => w.id === selectedWeekId);
+      if (!currentWeekObj) return;
+
+      // Check designated parlay pickers saved on the week object or calculated dynamically from prior week results
+      let designatedPickers = currentWeekObj.parlay_pickers || currentWeekObj.pickers || [];
+      
+      // If none explicitly set on the week row, fall back to auto-calculated prior week winners
+      if (designatedPickers.length === 0) {
+        designatedPickers = await fetchPriorWeekParlayQualifiers(currentWeekObj.week_number);
+      }
+
+      const selectedPlayerId = playerSelect.value.toString();
       const selectedOptionText = playerSelect.options[playerSelect.selectedIndex]?.text;
 
-      if (designatedPickers.includes(playerSelect.value) || designatedPickers.includes(selectedOptionText)) {
+      if (designatedPickers.includes(selectedPlayerId) || designatedPickers.includes(selectedOptionText)) {
         parlayCheckbox.checked = true;
+      } else {
+        parlayCheckbox.checked = false;
       }
     }
 
@@ -692,12 +709,7 @@
     weekSelect.addEventListener('change', async (e) => {
       const selectedWeekNum = parseInt(e.target.value, 10);
       await loadWeekDetails(selectedWeekNum);
-      
-      // Automatically pull prior week context and calculation states
-      const priorPicks = await fetchPriorWeekResults(selectedWeekNum);
-      if (priorPicks.length > 0) {
-        console.log(`Loaded ${priorPicks.length} records from prior week for calculation reference.`);
-      }
+      await applyDesignatedParlayPickers();
     });
 
     async function clearWeekLink(linkType) {
@@ -798,7 +810,7 @@
     async function loadAdminPicks() {
       const { data: picks, error } = await _supabase
         .from('picks')
-        .select('*, weeks(week_number, status), players(id, initialss || id, initials)')
+        .select('*, weeks(week_number, status), players(id, initials)')
         .order('created_at', { ascending: false });
 
       let picksData = picks;
@@ -1055,7 +1067,7 @@
 
           const searchTerms = getTeamSearchTerms(selText);
           const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
-          const isTeamTotal = /\b(team total|tt)\b/.test(selText);
+          const isTeamTotal = /\b(team total|tt)\b/.test(selTest);
 
           for (const event of data.events) {
             const comp = event.competitions[0];
@@ -1217,5 +1229,3 @@
 
     initAdmin();
   </script>
-</body>
-</html>
