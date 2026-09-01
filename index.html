@@ -527,7 +527,6 @@
       return expanded;
     }
 
-    // Helper to calculate live or final margin for any given pick and event
     function calculatePickMargin(pick, competition) {
       const selText = (pick.selection || '').trim().toLowerCase();
       const searchTerms = getTeamSearchTerms(selText);
@@ -607,7 +606,6 @@
           const isFinal = competition.status.type.state === 'post';
           const isInPlay = competition.status.type.state === 'in';
 
-          // Calculate margin if game is live or final
           if (isFinal || isInPlay) {
             const res = calculatePickMargin(pick, competition);
             computedMargin = res.computedMargin;
@@ -884,7 +882,6 @@
             });
             picksStackHtml += `</div>`;
 
-            // Build live/final margin badges next to the status if game is live or final
             let marginBadgesHtml = '';
             if (statusType === 'in' || statusType === 'post') {
               entriesArray.forEach(entry => {
@@ -957,7 +954,7 @@
       if (allFinalized) {
         const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
         const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) / => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
 
         let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
         if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
