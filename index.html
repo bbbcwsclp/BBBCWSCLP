@@ -184,21 +184,19 @@
       width: 100%;
       cursor: pointer;
       border-radius: 6px;
-      overflow: hidden; /* Ensures the dim overlay matches the rounded corners */
+      overflow: hidden;
     }
 
-    /* Dim overlay when video is paused */
     .promo-video-wrap::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4); /* Adjust opacity here if you want it darker/lighter */
+      background: rgba(0, 0, 0, 0.4);
       pointer-events: none;
       transition: opacity 0.2s ease;
       z-index: 1;
     }
 
-    /* Removes dimming once playing class is added */
     .promo-video-wrap.playing::after {
       opacity: 0;
     }
@@ -223,7 +221,7 @@
       justify-content: center;
       pointer-events: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      z-index: 2; /* Keeps the play button cleanly on top of the dim overlay */
+      z-index: 2;
     }
     .custom-play-btn .play-triangle {
       width: 0; height: 0;
@@ -280,6 +278,13 @@
       word-break: break-word;
     }
 
+    .compact-status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
     .compact-status {
       font-family: var(--font-mono);
       font-size: 0.66rem;
@@ -310,6 +315,18 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.25; }
     }
+
+    /* Margin Badges for Live/Final Spreads & Totals */
+    .margin-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+    }
+    .margin-pos { background: rgba(52, 214, 122, 0.12); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .margin-neg { background: rgba(255, 77, 77, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+    .margin-even { background: rgba(79, 184, 255, 0.12); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
 
     .compact-teams {
       display: flex;
@@ -476,7 +493,6 @@
     let hasLoadedOnce = false;
     let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
 
-    // Shorthand alias mappings for robust ESPN matching
     const TEAM_ALIASES = {
       'sac': 'sacramento state',
       'jax state': 'jacksonville state',
@@ -511,6 +527,60 @@
       return expanded;
     }
 
+    // Helper to calculate live or final margin for any given pick and event
+    function calculatePickMargin(pick, competition) {
+      const selText = (pick.selection || '').trim().toLowerCase();
+      const searchTerms = getTeamSearchTerms(selText);
+      const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
+      const isTeamTotal = /\b(team total|tt)\b/.test(selText);
+
+      const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+      const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+      const homeScore = parseInt(homeTeam.score || '0', 10);
+      const awayScore = parseInt(awayTeam.score || '0', 10);
+
+      const homeName = (homeTeam.team.name || '').toLowerCase();
+      const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
+      const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
+
+      const isHomePick = searchTerms.some(term =>
+        term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
+      );
+
+      let computedMargin = -999;
+      let computedResult = null;
+
+      if (isTotalOrTT) {
+        const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
+        if (lineMatch) {
+          const direction = lineMatch[1];
+          const line = parseFloat(lineMatch[2]);
+          const isOver = direction === 'o' || direction === 'over';
+
+          if (isTeamTotal) {
+            const pickedTeamScore = isHomePick ? homeScore : awayScore;
+            computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
+          } else {
+            const totalScore = homeScore + awayScore;
+            computedMargin = isOver ? (totalScore - line) : (line - totalScore);
+          }
+          computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+        }
+      } else {
+        const pickedTeamScore = isHomePick ? homeScore : awayScore;
+        const oppTeamScore = isHomePick ? awayScore : homeScore;
+        let spread = 0;
+        const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+        if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+        computedMargin = (pickedTeamScore + spread) - oppTeamScore;
+        computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+      }
+
+      return { computedMargin, computedResult };
+    }
+
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
@@ -518,8 +588,6 @@
 
         const selText = (pick.selection || '').trim().toLowerCase();
         const searchTerms = getTeamSearchTerms(selText);
-        const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
-        const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
         const matchedEvent = espnEvents.find(ev => {
           const comp = ev.competitions[0];
@@ -537,47 +605,14 @@
         if (matchedEvent) {
           const competition = matchedEvent.competitions[0];
           const isFinal = competition.status.type.state === 'post';
+          const isInPlay = competition.status.type.state === 'in';
 
-          if (isFinal) {
-            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
-            const homeScore = parseInt(homeTeam.score || '0', 10);
-            const awayScore = parseInt(awayTeam.score || '0', 10);
-
-            const homeName = (homeTeam.team.name || '').toLowerCase();
-            const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
-            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
-
-            const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
-            );
-
-            if (isTotalOrTT) {
-              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
-              if (lineMatch) {
-                const direction = lineMatch[1];
-                const line = parseFloat(lineMatch[2]);
-                const isOver = direction === 'o' || direction === 'over';
-
-                if (isTeamTotal) {
-                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
-                  computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
-                } else {
-                  const totalScore = homeScore + awayScore;
-                  computedMargin = isOver ? (totalScore - line) : (line - totalScore);
-                }
-                computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
-              }
-            } else {
-              const pickedTeamScore = isHomePick ? homeScore : awayScore;
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
-              let spread = 0;
-              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
-
-              computedMargin = (pickedTeamScore + spread) - oppTeamScore;
-              computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+          // Calculate margin if game is live or final
+          if (isFinal || isInPlay) {
+            const res = calculatePickMargin(pick, competition);
+            computedMargin = res.computedMargin;
+            if (isFinal) {
+              computedResult = res.computedResult;
             }
           }
         }
@@ -589,13 +624,9 @@
       });
     }
 
-    // Writes freshly computed final results/margins back to Supabase so admin.html (and
-    // anything else reading the picks table) has real graded data without requiring a manual
-    // visit to the admin page. Only touches rows where the computed value actually differs
-    // from what's stored, so a normal 10s poll with nothing new to grade makes zero writes.
     async function syncFinalizedResultsToSupabase(evaluatedPicks) {
       const toSync = evaluatedPicks.filter(p => {
-        if (!p.computedResult) return false; // game not matched / not final yet
+        if (!p.computedResult) return false;
         const resultChanged = p.dbResult !== p.computedResult;
         const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
         return resultChanged || marginChanged;
@@ -697,8 +728,6 @@
       }
 
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
-
-      // Persist any newly-final results/margins back to the DB before rendering.
       await syncFinalizedResultsToSupabase(evaluatedPicks);
 
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
@@ -738,7 +767,6 @@
         html += `</div>`;
       }
 
-      // Video promo block correctly positioned below picks and buttons
       html += `
         <div class="promo-video-wrap" onclick="
           const wrap = this;
@@ -769,7 +797,6 @@
         </div>
       `;
 
-      // Compact Scores Grid - includes both parlay picks and other picks mapped against ESPN
       const allDisplayPicks = evaluatedPicks;
       if (allDisplayPicks.length > 0 && espnEvents.length > 0) {
         html += `<div class="compact-scores-grid">`;
@@ -798,17 +825,17 @@
               gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entriesMap: {} };
             }
             if (!gameEventMap[eventId].entriesMap[trimmedSelection]) {
-              gameEventMap[eventId].entriesMap[trimmedSelection] = [];
+              gameEventMap[eventId].entriesMap[trimmedSelection] = { initialsList: [], pickObj: p };
             }
-            if (!gameEventMap[eventId].entriesMap[trimmedSelection].includes(initials)) {
-              gameEventMap[eventId].entriesMap[trimmedSelection].push(initials);
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection].initialsList.includes(initials)) {
+              gameEventMap[eventId].entriesMap[trimmedSelection].initialsList.push(initials);
             }
           } else {
             const fallbackKey = `unmatched_${p.id}`;
             gameEventMap[fallbackKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
-              entriesMap: { [trimmedSelection]: [initials] }
+              entriesMap: { [trimmedSelection]: { initialsList: [initials], pickObj: p } }
             };
           }
         });
@@ -818,9 +845,10 @@
         sortedGames.forEach(item => {
           let entriesArray = [];
           if (item.entriesMap) {
-            entriesArray = Object.entries(item.entriesMap).map(([sel, initialsList]) => ({
+            entriesArray = Object.entries(item.entriesMap).map(([sel, data]) => ({
               selection: sel,
-              initialsList: initialsList
+              initialsList: data.initialsList,
+              pickObj: data.pickObj
             }));
           }
 
@@ -856,11 +884,27 @@
             });
             picksStackHtml += `</div>`;
 
+            // Build live/final margin badges next to the status if game is live or final
+            let marginBadgesHtml = '';
+            if (statusType === 'in' || statusType === 'post') {
+              entriesArray.forEach(entry => {
+                const marginVal = entry.pickObj.margin;
+                if (marginVal !== undefined && marginVal !== -999) {
+                  let badgeText = marginVal > 0 ? `+${marginVal}` : `${marginVal}`;
+                  let badgeClass = marginVal > 0 ? 'margin-pos' : (marginVal < 0 ? 'margin-neg' : 'margin-even');
+                  marginBadgesHtml += `<span class="margin-badge ${badgeClass}" title="Current cover/total margin">${badgeText}</span>`;
+                }
+              });
+            }
+
             html += `
               <div class="compact-card">
                 <div class="compact-left">
                   ${picksStackHtml}
-                  <div class="compact-status ${statusClass}">${statusText}</div>
+                  <div class="compact-status-row">
+                    <div class="compact-status ${statusClass}">${statusText}</div>
+                    ${marginBadgesHtml}
+                  </div>
                 </div>
                 <div class="compact-teams">
                   <div class="compact-team-row">
@@ -902,7 +946,6 @@
         container.innerHTML = html;
       }
 
-      // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
@@ -914,9 +957,8 @@
       if (allFinalized) {
         const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
         const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) / => b.sortMargin - a.sortMargin);
 
-        // Priority order: wins first, then draws, then losses — each ranked by margin of cover.
         let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
         if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
 
