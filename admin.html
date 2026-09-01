@@ -457,11 +457,11 @@
       </p>
     </div>
 
-        <!-- Add New Pick Card -->
+    <!-- Add New Pick Card -->
     <div class="card">
       <h2>2. Add a Member Pick</h2>
       <div class="form-group" style="margin-bottom: 1.1rem;">
-        <label for="pick-week">Select Week (for Bulk Add)</label>
+        <label for="pick-week">Select Week</label>
         <select id="pick-week" required>
           <option value="">Loading weeks...</option>
         </select>
@@ -476,6 +476,7 @@
         <div id="bulk-picks-result" class="msg"></div>
       </div>
     </div>
+
 
 
     <!-- Active Week Picks Card -->
@@ -569,7 +570,7 @@
       return confirm(message || 'You have unsaved pick edits that haven\'t been saved yet. Continue and lose those changes?');
     }
 
-    async function loadDropdowns() {
+        async function loadDropdowns() {
       const { data: weeks, error: weeksError } = await _supabase
         .from('weeks')
         .select('*')
@@ -579,6 +580,8 @@
       allWeeksCache = weeks || [];
 
       const pickWeekSelect = document.getElementById('pick-week');
+      if (!pickWeekSelect) return; // Safety check
+
       pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
 
       let openWeekNum = null;
@@ -598,9 +601,10 @@
 
       if (!hasInitializedWeekSelect) {
         hasInitializedWeekSelect = true;
-        if (openWeekNum !== null) weekSelect.value = openWeekNum;
+        if (openWeekNum !== null && weekSelect) weekSelect.value = openWeekNum;
       }
-      loadWeekDetails(parseInt(weekSelect.value, 10));
+      
+      if (weekSelect) loadWeekDetails(parseInt(weekSelect.value, 10));
 
       const { data: players, error: playersError } = await _supabase
         .from('players')
@@ -609,10 +613,8 @@
 
       if (playersError) console.error('Failed to load players:', playersError);
       allPlayersCache = players || [];
-
-      updatePlayerDropdownOptions();
-      applyDesignatedParlayPickers();
     }
+
 
     function updatePlayerDropdownOptions() {
       const playerSelect = document.getElementById('pick-player');
