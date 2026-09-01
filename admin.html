@@ -353,9 +353,12 @@
 
     .live-score-tag {
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--accent);
-      margin-top: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 250px;
       display: block;
     }
 
@@ -1123,16 +1126,20 @@
             <td><strong>${p.players?.initials || '??'}</strong></td>
             <td>
               <input type="text" class="row-selection" value="${p.selection || ''}">
-              <div class="live-score-tag" style="display:none;"></div>
             </td>
             <td style="text-align: center;"><input type="checkbox" class="row-parlay" ${p.is_parlay ? 'checked' : ''}></td>
             <td>
-              <select class="row-result ${resultClass}" onchange="handleResultChange('${p.id}', this)">
-                <option value="" ${!p.result ? 'selected' : ''}>--</option>
-                <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
-                <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
-                <option value="D" ${p.result === 'D' ? 'selected' : ''}>D</option>
-              </select>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div class="live-score-tag" style="display:none;"></div>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <select class="row-result ${resultClass}" onchange="handleResultChange('${p.id}', this)">
+                    <option value="" ${!p.result ? 'selected' : ''}>--</option>
+                    <option value="W" ${p.result === 'W' ? 'selected' : ''}>W</option>
+                    <option value="L" ${p.result === 'L' ? 'selected' : ''}>L</option>
+                    <option value="D" ${p.result === 'D' ? 'selected' : ''}>D</option>
+                  </select>
+                </div>
+              </div>
             </td>
             <td>
               <button class="delete-btn" onclick="deletePick('${p.id}')" title="Delete">✕</button>
