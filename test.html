@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBBCWSCLP — Weekly</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
+  <link rel="apple-touch-icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff6b6b;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
+
+    header { margin-bottom: 1rem; width: 100%; }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
+    }
+
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    nav a:focus-visible, .btn-gambly:focus-visible, .btn-copy-text:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Current Week Card Container */
+    .current-week-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    /* Week Section Styling */
+    .week-section { margin-bottom: 0; text-align: center; }
+    .week-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text); letter-spacing: 0.3px; }
+    .category-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+    /* Picks Inline Flow */
+    .picks-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; font-size: 1.05rem; }
+    .pick-item { font-weight: 700; }
+
+    /* Result Color Coding */
+    .res-W { color: var(--success); }
+    .res-L { color: var(--danger); }
+    .res-D { color: var(--warning); }
+    .res-pending { color: var(--text); }
+    
+    /* Action Link Button Styling */
+    .btn-gambly {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 1.25rem auto 0 auto;
+      background-color: var(--accent);
+      color: var(--bg);
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-family: var(--font-label);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(255, 176, 32, 0.25);
+    }
+    .btn-gambly:hover {
+      background-color: #ffc457;
+      transform: translateY(-1px);
+    }
+
+    /* Video promo block */
+    .promo-video-wrap {
+      margin: 1.25rem 0;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden; /* Ensures the dim overlay matches the rounded corners */
+    }
+
+    /* Dim overlay when video is paused */
+    .promo-video-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4); /* Adjust opacity here if you want it darker/lighter */
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 1;
+    }
+
+    /* Removes dimming once playing class is added */
+    .promo-video-wrap.playing::after {
+      opacity: 0;
+    }
+
+    .promo-video-wrap video {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: block;
+      background: #000;
+      width: 100%;
+    }
+    .custom-play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px; height: 64px;
+      background: rgba(6, 10, 12, 0.75);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 2; /* Keeps the play button cleanly on top of the dim overlay */
+    }
+    .custom-play-btn .play-triangle {
+      width: 0; height: 0;
+      border-top: 14px solid transparent;
+      border-bottom: 14px solid transparent;
+      border-left: 22px solid var(--accent);
+      margin-left: 4px;
+    }
+
+    /* Clean Compact Parlay Scoreboard */
+    .compact-scores-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .compact-card {
+      background-color: var(--card-inner);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .compact-card:has(.compact-status.live) {
+      border-left-color: var(--success);
+    }
+
+    .compact-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .compact-picks-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .compact-pick-info {
+      font-family: var(--font-label);
+      font-weight: 600;
+      color: #ffd38a;
+      font-size: 0.88rem;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .compact-status {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+    .compact-status.live {
+      background-color: rgba(52, 214, 122, 0.12);
+      color: var(--success);
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid rgba(52, 214, 122, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .compact-status.live::before {
+      content: '';
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--success);
+      animation: tk-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tk-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .compact-teams {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .compact-team-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
+    .compact-team-abbr {
+      font-family: var(--font-label);
+      font-weight: 700;
+      color: var(--text);
+      min-width: 34px;
+      text-align: left;
+      letter-spacing: 0.3px;
+    }
+    .compact-score {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      min-width: 26px;
+      text-align: right;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.05rem 0.3rem;
+    }
+    .winner { color: var(--accent); }
+    .winner.compact-score { border-color: rgba(255, 176, 32, 0.4); }
+
+    /* Upcoming Week Top 5 Box */
+    .upcoming-preview-card {
+      background: linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid rgba(255, 176, 32, 0.3);
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      width: 100%;
+    }
+    .upcoming-preview-header {
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .upcoming-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(6, 10, 12, 0.6);
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+    }
+    .upcoming-rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--accent);
+      background: rgba(255, 176, 32, 0.1);
+      border: 1px solid rgba(255, 176, 32, 0.35);
+      border-radius: 3px;
+      min-width: 1.6rem;
+      text-align: center;
+      padding: 0.15rem 0;
+      flex-shrink: 0;
+    }
+    .upcoming-body { min-width: 0; flex-grow: 1; }
+    .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
+    .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
+    .upcoming-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .upcoming-badge.margin-pos { background: rgba(52, 214, 122, 0.12); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .upcoming-badge.margin-neg { background: rgba(255, 77, 77, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+    .upcoming-badge.margin-even { background: rgba(79, 184, 255, 0.12); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+    .upcoming-badge.margin-unknown { background: rgba(124, 138, 144, 0.12); color: var(--text-muted); border: 1px solid var(--border); }
+    .upcoming-pending {
+      font-family: var(--font-label);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1rem 0;
+      font-style: italic;
+    }
+    .btn-copy-text {
+      background-color: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-label);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn-copy-text:hover {
+      background-color: #ffc457;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">Week Results</div>
+      <h1 class="main-title">BBBCWSCLP</h1>
+    </header>
+
+    <nav>
+      <a href="index.html" class="active">Weekly</a>
+      <a href="standings.html">Standings</a>
+      <a href="season.html">Season</a>
+      <a href="halloffame.html">HOF</a>
+      <a href="scores.html">Scores</a>
+    </nav>
+
+    <div id="content-container">
+      <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
+    </div>
+
+    <!-- Always-On Upcoming Week / Top 5 Box Container -->
+    <div id="upcoming-preview-container"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gutmpjminpqhtwtilbzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1dG1wam1pbnBxaHR3dGlsYnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjgzNzYsImV4cCI6MjEwMzAwNDM3Nn0.wcK0JX-Ze-UyN_-zwAtbYsLz15-xVB1fj3YtJV0y4jI';
+
+    const { createClient } = window.supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let hasLoadedOnce = false;
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
+
+    // Shorthand alias mappings for robust ESPN matching
+    const TEAM_ALIASES = {
+      'sac': 'sacramento state',
+      'jax state': 'jacksonville state',
+      'tcu': 'tcu horned frogs',
+      'unc': 'north carolina',
+      'usc': 'southern cal',
+      'unlv': 'unlv',
+      'stanford': 'stanford'
+    };
+
+    function getTeamSearchTerms(selection) {
+      if (!selection) return [];
+      let clean = selection.trim().toLowerCase();
+      clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
+      clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+
+      let terms = [];
+      if (clean.includes('/')) {
+        terms = clean.split('/').map(t => t.trim());
+      } else {
+        terms = [clean];
+      }
+
+      let expanded = [];
+      terms.forEach(t => {
+        expanded.push(t);
+        if (TEAM_ALIASES[t]) {
+          expanded.push(TEAM_ALIASES[t]);
+        }
+      });
+      return expanded;
+    }
+
+    function evaluatePicksWithScores(picks, espnEvents) {
+      return picks.map(pick => {
+        let computedResult = pick.result || null;
+        let computedMargin = -999;
+
+        const selText = (pick.selection || '').trim().toLowerCase();
+        const searchTerms = getTeamSearchTerms(selText);
+        const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
+        const isTeamTotal = /\b(team total|tt)\b/.test(selText);
+
+        const matchedEvent = espnEvents.find(ev => {
+          const comp = ev.competitions[0];
+          return comp.competitors.some(c => {
+            const name = (c.team.name || '').toLowerCase();
+            const shortName = (c.team.shortDisplayName || '').toLowerCase();
+            const displayName = (c.team.displayName || '').toLowerCase();
+            const abbreviation = (c.team.abbreviation || '').toLowerCase();
+            return searchTerms.some(term =>
+              term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
+            );
+          });
+        });
+
+        if (matchedEvent) {
+          const competition = matchedEvent.competitions[0];
+          const isFinal = competition.status.type.state === 'post';
+
+          if (isFinal) {
+            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+            const homeScore = parseInt(homeTeam.score || '0', 10);
+            const awayScore = parseInt(awayTeam.score || '0', 10);
+
+            const homeName = (homeTeam.team.name || '').toLowerCase();
+            const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
+            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
+
+            const isHomePick = searchTerms.some(term =>
+              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
+            );
+
+            if (isTotalOrTT) {
+              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
+              if (lineMatch) {
+                const direction = lineMatch[1];
+                const line = parseFloat(lineMatch[2]);
+                const isOver = direction === 'o' || direction === 'over';
+
+                if (isTeamTotal) {
+                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
+                  computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
+                } else {
+                  const totalScore = homeScore + awayScore;
+                  computedMargin = isOver ? (totalScore - line) : (line - totalScore);
+                }
+                computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+              }
+            } else {
+              const pickedTeamScore = isHomePick ? homeScore : awayScore;
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
+              let spread = 0;
+              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+              computedMargin = (pickedTeamScore + spread) - oppTeamScore;
+              computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+            }
+          }
+        }
+
+        const finalResultForScoring = computedResult || pick.result || null;
+        const sortMargin = computedMargin === -999 ? 0 : computedMargin;
+
+        return { ...pick, dbResult: pick.result, dbMargin: pick.margin, computedResult, finalResultForScoring, margin: computedMargin, sortMargin };
+      });
+    }
+
+    // Writes freshly computed final results/margins back to Supabase so admin.html (and
+    // anything else reading the picks table) has real graded data without requiring a manual
+    // visit to the admin page. Only touches rows where the computed value actually differs
+    // from what's stored, so a normal 10s poll with nothing new to grade makes zero writes.
+    async function syncFinalizedResultsToSupabase(evaluatedPicks) {
+      const toSync = evaluatedPicks.filter(p => {
+        if (!p.computedResult) return false; // game not matched / not final yet
+        const resultChanged = p.dbResult !== p.computedResult;
+        const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
+        return resultChanged || marginChanged;
+      });
+
+      if (toSync.length === 0) return;
+
+      for (const p of toSync) {
+        const { error } = await _supabase
+          .from('picks')
+          .update({ result: p.computedResult, margin: p.margin, is_finalized: true })
+          .eq('id', p.id);
+        if (error) console.error(`Failed to sync result for pick ${p.id}:`, error.message);
+      }
+    }
+
+    function copyTop5ForText() {
+      if (!cachedData.top5 || cachedData.top5.length === 0) {
+        alert('Top 5 picks are not finalized yet!');
+        return;
+      }
+
+      let text = `Week ${cachedData.nextWeekNum}\n`;
+      cachedData.top5.forEach(p => {
+        text += `${p.players?.initials || '??'}:\n`;
+      });
+
+      const top5PlayerIds = new Set(cachedData.top5.map(p => p.player_id));
+      const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
+
+      if (otherPicksList.length > 0) {
+        otherPicksList.forEach(p => {
+          text += `${p.players?.initials || '??'}:\n`;
+        });
+      }
+
+      navigator.clipboard.writeText(text.trim()).then(() => {
+        const btn = document.getElementById('copy-btn-el');
+        if (btn) {
+          const originalText = btn.innerText;
+          btn.innerText = 'Copied! ✅';
+          setTimeout(() => { btn.innerText = originalText; }, 2000);
+        }
+      });
+    }
+
+    async function loadActiveWeek(isInitialLoad = true) {
+      const container = document.getElementById('content-container');
+      const previewContainer = document.getElementById('upcoming-preview-container');
+
+      if (isInitialLoad) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
+      }
+
+      const { data: weeks, error: weeksError } = await _supabase
+        .from('weeks')
+        .select('*')
+        .eq('status', 'open')
+        .limit(1);
+
+      if (weeksError || !weeks || weeks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
+          previewContainer.innerHTML = '';
+        }
+        return;
+      }
+
+      const currentWeek = weeks[0];
+      cachedData.currentWeekId = currentWeek.id;
+      cachedData.nextWeekNum = currentWeek.week_number + 1;
+
+      const [picksRes, espnRes] = await Promise.all([
+        _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
+        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
+      ]);
+
+      let espnEvents = [];
+      if (espnRes && espnRes.ok) {
+        const espnData = await espnRes.json();
+        espnEvents = espnData.events || [];
+      }
+
+      const picks = picksRes.data || [];
+      cachedData.allPicks = picks;
+
+      if (picks.length === 0) {
+        if (isInitialLoad) {
+          container.innerHTML = `
+            <div class="current-week-card">
+              <div class="week-section">
+                <div class="week-title">Week ${currentWeek.week_number} Parlay:</div>
+                <div style="color: var(--text-muted);">No picks submitted for this week yet.</div>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
+
+      // Persist any newly-final results/margins back to the DB before rendering.
+      await syncFinalizedResultsToSupabase(evaluatedPicks);
+
+      const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
+      const otherPicks = evaluatedPicks.filter(p => !p.is_parlay);
+
+      let html = `<div class="current-week-card"><div class="week-section">`;
+      html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
+
+      if (parlayPicks.length > 0) {
+        html += `<div class="picks-group">`;
+        parlayPicks.forEach(p => {
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+        });
+        html += `</div>`;
+      } else {
+        html += `<div class="picks-group" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; max-width: none; display: block;">No consensus parlay picks designated yet.</div>`;
+      }
+
+      if (otherPicks.length > 0) {
+        html += `<div class="category-title" style="margin-top: 1rem;">Others:</div><div class="picks-group">`;
+        otherPicks.forEach(p => {
+          const resClass = p.result ? `res-${p.result}` : 'res-pending';
+          html += `<div class="pick-item ${resClass}">${p.players?.initials || '??'}: ${p.selection}</div>`;
+        });
+        html += `</div>`;
+      }
+
+      if (currentWeek.slip_link || currentWeek.gambly_link) {
+        html += `<div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; width: 100%; align-items: center;">`;
+        if (currentWeek.slip_link) {
+          html += `<a href="${currentWeek.slip_link}" target="_blank" class="btn-gambly" style="margin: 0;">📲 Open Slip in Courtside</a>`;
+        }
+        if (currentWeek.gambly_link) {
+          html += `<a href="${currentWeek.gambly_link}" target="_blank" class="btn-gambly" style="margin: 0; background-color: var(--card-inner); color: var(--text); border: 1px solid var(--border); box-shadow: none;">🎲 Open Gambly Link</a>`;
+        }
+        html += `</div>`;
+      }
+
+      // Video promo block correctly positioned below picks and buttons
+      html += `
+        <div class="promo-video-wrap" onclick="
+          const wrap = this;
+          const vid = wrap.querySelector('video');
+          const btn = wrap.querySelector('.custom-play-btn');
+          if (vid.paused) {
+            vid.play();
+            btn.style.display = 'none';
+            wrap.classList.add('playing');
+          } else {
+            vid.pause();
+            btn.style.display = 'flex';
+            wrap.classList.remove('playing');
+          }
+        ">
+          <video width="100%" preload="metadata" playsinline webkit-playsinline poster="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/video-thumb.jpg" onended="
+            const wrap = this.parentElement;
+            wrap.querySelector('.custom-play-btn').style.display = 'flex';
+            wrap.classList.remove('playing');
+          ">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mp4" type="video/mp4">
+            <source src="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/videos/copy_D8DAA3C6-BD5A-4262-89FC-9CFC39DAAD65.mov" type="video/quicktime">
+            Your browser does not support the video tag.
+          </video>
+          <div class="custom-play-btn">
+            <div class="play-triangle"></div>
+          </div>
+        </div>
+      `;
+
+      // Compact Scores Grid - includes both parlay picks and other picks mapped against ESPN
+      const allDisplayPicks = evaluatedPicks;
+      if (allDisplayPicks.length > 0 && espnEvents.length > 0) {
+        html += `<div class="compact-scores-grid">`;
+        const gameEventMap = {};
+
+        allDisplayPicks.forEach(p => {
+          const searchTerms = getTeamSearchTerms(p.selection);
+          const initials = p.players?.initials || '??';
+          const trimmedSelection = p.selection.trim();
+
+          const matchedEvent = espnEvents.find(ev => {
+            const comp = ev.competitions[0];
+            return comp.competitors.some(c => {
+              const name = (c.team.name || '').toLowerCase();
+              const shortName = (c.team.shortDisplayName || '').toLowerCase();
+              const abbreviation = (c.team.abbreviation || '').toLowerCase();
+              return searchTerms.some(term =>
+                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
+              );
+            });
+          });
+
+          if (matchedEvent) {
+            const eventId = matchedEvent.id;
+            if (!gameEventMap[eventId]) {
+              gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entriesMap: {} };
+            }
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection]) {
+              gameEventMap[eventId].entriesMap[trimmedSelection] = [];
+            }
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection].includes(initials)) {
+              gameEventMap[eventId].entriesMap[trimmedSelection].push(initials);
+            }
+          } else {
+            const fallbackKey = `unmatched_${p.id}`;
+            gameEventMap[fallbackKey] = {
+              event: null,
+              dateObj: new Date('9999-12-31'),
+              entriesMap: { [trimmedSelection]: [initials] }
+            };
+          }
+        });
+
+        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
+
+        sortedGames.forEach(item => {
+          let entriesArray = [];
+          if (item.entriesMap) {
+            entriesArray = Object.entries(item.entriesMap).map(([sel, initialsList]) => ({
+              selection: sel,
+              initialsList: initialsList
+            }));
+          }
+
+          if (item.event) {
+            const competition = item.event.competitions[0];
+            const statusType = competition.status.type.state;
+            const statusDetail = competition.status.type.detail;
+            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+            const homeAbbr = homeTeam.team.abbreviation || 'HOME';
+            const awayAbbr = awayTeam.team.abbreviation || 'AWAY';
+            const homeLogo = homeTeam.team.logo || '';
+            const awayLogo = awayTeam.team.logo || '';
+            const homeScore = homeTeam.score || '0';
+            const awayScore = awayTeam.score || '0';
+
+            let statusText = statusDetail;
+            let statusClass = '';
+            if (statusType === 'in') {
+              statusText = `LIVE • ${statusDetail}`;
+              statusClass = 'live';
+            } else if (statusType === 'post') {
+              statusText = 'FINAL';
+            }
+
+            const isHomeWinner = statusType === 'post' && parseInt(homeScore, 10) > parseInt(awayScore, 10);
+            const isAwayWinner = statusType === 'post' && parseInt(awayScore, 10) > parseInt(homeScore, 10);
+
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            entriesArray.forEach(entry => {
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
+            html += `
+              <div class="compact-card">
+                <div class="compact-left">
+                  ${picksStackHtml}
+                  <div class="compact-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="compact-teams">
+                  <div class="compact-team-row">
+                    <img src="${awayLogo}" class="compact-logo" onerror="this.style.display='none'">
+                    <span class="compact-team-abbr ${isAwayWinner ? 'winner' : ''}">${awayAbbr}</span>
+                    <span class="compact-score ${isAwayWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : awayScore}</span>
+                  </div>
+                  <div class="compact-team-row">
+                    <img src="${homeLogo}" class="compact-logo" onerror="this.style.display='none'">
+                    <span class="compact-team-abbr ${isHomeWinner ? 'winner' : ''}">${homeAbbr}</span>
+                    <span class="compact-score ${isHomeWinner ? 'winner' : ''}">${statusType === 'pre' ? '-' : homeScore}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            let picksStackHtml = `<div class="compact-picks-stack">`;
+            entriesArray.forEach(entry => {
+              picksStackHtml += `<div class="compact-pick-info">${entry.initialsList.join(', ')}: ${entry.selection}</div>`;
+            });
+            picksStackHtml += `</div>`;
+
+            html += `
+              <div class="compact-card">
+                <div class="compact-left">
+                  ${picksStackHtml}
+                  <div class="compact-status">Matchup pending</div>
+                </div>
+                <div class="compact-teams" style="color: var(--text-muted); font-size: 0.8rem;">No live feed</div>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+      }
+      html += `</div></div>`;
+
+      if (isInitialLoad || !container.querySelector('video')) {
+        container.innerHTML = html;
+      }
+
+      // Render Top 5 preview container
+      let previewHtml = `
+        <div class="upcoming-preview-card">
+          <div class="upcoming-preview-header">
+            <span>Week ${cachedData.nextWeekNum} Pickers</span>
+      `;
+
+      const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
+
+      if (allFinalized) {
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+
+        // Priority order: wins first, then draws, then losses — each ranked by margin of cover.
+        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
+        if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
+
+        cachedData.top5 = top5;
+        previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
+      } else {
+        cachedData.top5 = [];
+      }
+
+      previewHtml += `</div>`;
+
+      if (!allFinalized) {
+        previewHtml += `<div class="upcoming-pending">Results pending until the winners are decided.</div>`;
+      } else {
+        previewHtml += `<div class="upcoming-list">`;
+        cachedData.top5.forEach((p, idx) => {
+          let marginDisplay = p.margin === -999 ? '—' : (p.margin > 0 ? `+${p.margin}` : `${p.margin}`);
+          let marginClass = p.margin === -999 ? 'margin-unknown' : (p.margin > 0 ? 'margin-pos' : (p.margin < 0 ? 'margin-neg' : 'margin-even'));
+
+          previewHtml += `
+            <div class="upcoming-item">
+              <div class="upcoming-rank">${idx + 1}</div>
+              <div class="upcoming-body">
+                <span class="upcoming-player">${p.players?.initials || '??'}</span>
+                <div class="upcoming-pick">${p.selection}</div>
+              </div>
+              <div class="upcoming-badge ${marginClass}">${marginDisplay}</div>
+            </div>
+          `;
+        });
+        previewHtml += `</div>`;
+      }
+
+      previewHtml += `</div>`;
+      previewContainer.innerHTML = previewHtml;
+      hasLoadedOnce = true;
+    }
+
+    loadActiveWeek(true);
+
+    setInterval(() => {
+      loadActiveWeek(false);
+    }, 10000);
+  </script>
+</body>
+</html>
