@@ -709,6 +709,23 @@
         espnEvents = espnData.events || [];
       }
 
+            // ONE-WEEK FIX: Remove or reset the erroneous Week 0 Memphis vs UNLV game from ESPN events
+      espnEvents = espnEvents.filter(ev => {
+        const comp = ev.competitions[0];
+        const isMemphis = comp.competitors.some(c => c.team.abbreviation === 'MEM');
+        const isUnlv = comp.competitors.some(c => c.team.abbreviation === 'UNLV');
+        
+        // If it's the Memphis vs UNLV game from August/Week 0, filter it out of Week 1
+        if (isMemphis && isUnlv) {
+          // Check event date or ID if necessary, or just drop it if it's the past game
+          const eventDate = new Date(ev.date);
+          const weekZeroCutoff = new Date('2026-09-01'); // Adjust based on your week timeline
+          return eventDate > weekZeroCutoff; 
+        }
+        return true;
+      });
+
+
       const picks = picksRes.data || [];
       cachedData.allPicks = picks;
 
