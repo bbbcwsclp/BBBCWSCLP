@@ -1166,7 +1166,7 @@
 
         let gradedCount = 0;
 
-        for (const row of rows) {
+                for (const row of rows) {
           const selectionInput = row.querySelector('.row-selection');
           const resultSelect = row.querySelector('.row-result');
           const scoreTag = row.querySelector('.live-score-tag');
@@ -1177,10 +1177,17 @@
           const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
           for (const event of data.events) {
+            // FIX: Skip games that occurred before September 1st, 2026 (filters out Week 0 games like Memphis/UNLV)
+            const eventDate = new Date(event.date);
+            if (eventDate < new Date('2026-09-01T00:00:00Z')) {
+              continue;
+            }
+
             const comp = event.competitions[0];
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const away = comp.competitors.find(c => c.homeAway === 'away');
-
+            // ... rest of your matching and grading logic continues down 
+            
             const homeName = (home.team.name || '').toLowerCase();
             const homeShort = (home.team.shortDisplayName || '').toLowerCase();
             const homeAbbr = (home.team.abbreviation || '').toLowerCase();
