@@ -1166,7 +1166,7 @@
 
         let gradedCount = 0;
 
-                for (const row of rows) {
+        for (const row of rows) {
           const selectionInput = row.querySelector('.row-selection');
           const resultSelect = row.querySelector('.row-result');
           const scoreTag = row.querySelector('.live-score-tag');
@@ -1177,7 +1177,7 @@
           const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
           for (const event of data.events) {
-            // FIX: Skip games that occurred before September 1st, 2026 (filters out Week 0 games like Memphis/UNLV)
+            // Skip games that occurred before September 1st, 2026
             const eventDate = new Date(event.date);
             if (eventDate < new Date('2026-09-01T00:00:00Z')) {
               continue;
@@ -1186,7 +1186,6 @@
             const comp = event.competitions[0];
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const away = comp.competitors.find(c => c.homeAway === 'away');
-            // ... rest of your matching and grading logic continues down 
             
             const homeName = (home.team.name || '').toLowerCase();
             const homeShort = (home.team.shortDisplayName || '').toLowerCase();
@@ -1199,13 +1198,24 @@
             const homeScore = parseInt(home.score || '0', 10);
             const awayScore = parseInt(away.score || '0', 10);
 
-            const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term)
-            );
+            // FIXED TEXAS MATCHING LOGIC
+            const isHomePick = searchTerms.some(term => {
+              if (!term) return false;
+              if (term === 'texas' || term === 'ut' || term === 'texas longhorns') {
+                return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
+                       homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
+              }
+              return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
+            });
 
-            const isAwayPick = searchTerms.some(term =>
-              term && (awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term)
-            );
+            const isAwayPick = searchTerms.some(term => {
+              if (!term) return false;
+              if (term === 'texas' || term === 'ut' || term === 'texas longhorns') {
+                return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
+                       awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
+              }
+              return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
+            });
 
             if (isHomePick || isAwayPick) {
               if (comp.status.type.state === 'post') {
