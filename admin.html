@@ -1199,23 +1199,31 @@
             const awayScore = parseInt(away.score || '0', 10);
 
             // FIXED "TEX" & TEXAS ABBREVIATION MATCHING LOGIC
-            const isHomePick = searchTerms.some(term => {
-              if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-                return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
-                       homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
-              }
-              return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
-            });
+const isHomePick = searchTerms.some(term => {
+  if (!term) return false;
+  if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+    return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
+           homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
+  }
+  // Ensure short abbreviations like "tex" don't falsely match "north texas" team names/abbreviations
+  if (term === 'tex') {
+    return homeAbbr === 'tex' || (homeShort.toLowerCase() === 'texas' && !homeName.includes('north'));
+  }
+  return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
+});
 
-            const isAwayPick = searchTerms.some(term => {
-              if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-                return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
-                       awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
-              }
-              return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
-            });
+const isAwayPick = searchTerms.some(term => {
+  if (!term) return false;
+  if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+    return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
+           awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
+  }
+  if (term === 'tex') {
+    return awayAbbr === 'tex' || (awayShort.toLowerCase() === 'texas' && !awayName.includes('north'));
+  }
+  return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
+});
+
 
             if (isHomePick || isAwayPick) {
               if (comp.status.type.state === 'post') {
