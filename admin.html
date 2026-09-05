@@ -1198,10 +1198,10 @@
             const homeScore = parseInt(home.score || '0', 10);
             const awayScore = parseInt(away.score || '0', 10);
 
-            // FIXED TEXAS MATCHING LOGIC
+            // FIXED "TEX" & TEXAS ABBREVIATION MATCHING LOGIC
             const isHomePick = searchTerms.some(term => {
               if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'texas longhorns') {
+              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
                 return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
                        homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
               }
@@ -1210,7 +1210,7 @@
 
             const isAwayPick = searchTerms.some(term => {
               if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'texas longhorns') {
+              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
                 return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
                        awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
               }
@@ -1239,7 +1239,7 @@
 
                     row.dataset.margin = marginValue.toString();
                     gradedCount++;
-                    updateResultSelectColor(resultSelect);
+                    updateResultSelectColor(selectSelect);
                     row.style.background = 'rgba(255, 176, 32, 0.06)';
                   }
                 } else {
@@ -1258,7 +1258,7 @@
 
                   row.dataset.margin = marginValue.toString();
                   gradedCount++;
-                  updateResultSelectColor(resultSelect);
+                  updateResultSelectColor(selectSelect);
                   row.style.background = 'rgba(255, 176, 32, 0.06)';
                 }
               }
