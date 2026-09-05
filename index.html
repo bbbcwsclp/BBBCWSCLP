@@ -493,26 +493,21 @@
     let hasLoadedOnce = false;
     let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
 
+    // Aliases map shorthand/nicknames people type into a pick to the term ESPN
+    // actually uses in its team fields (shortDisplayName, name, etc). Keep these
+    // as SHORT forms (e.g. 'texas', not 'texas longhorns') so they line up
+    // exactly with ESPN's shortDisplayName and the exact-match pass below can
+    // find them.
     const TEAM_ALIASES = {
       'sac': 'sacramento state',
       'jax state': 'jacksonville state',
-      'tcu': 'tcu horned frogs',
+      'tcu': 'tcu',
       'unc': 'north carolina',
       'usc': 'southern cal',
       'unlv': 'unlv',
       'stanford': 'stanford',
-      'tex': 'texas longhorns',
-      'bama': 'alabama crimson tide'
-    };
-
-    // Terms in EXACT_MATCH_TERMS are ambiguous as substrings (e.g. "bama" inside
-    // "north alabama", "texas" inside "north texas"/"texas state"), so instead of
-    // fuzzy .includes() matching we require an exact match against a curated set
-    // of fields for these terms. Add new problem teams here rather than special-
-    // casing them ad hoc in each matcher below.
-    const EXACT_MATCH_TERMS = {
-      'texas longhorns': { shortNames: ['texas'], abbrs: ['tex'] },
-      'alabama crimson tide': { shortNames: ['alabama'], abbrs: ['ala'] }
+      'tex': 'texas',
+      'bama': 'alabama'
     };
 
     function getTeamSearchTerms(selection) {
@@ -541,29 +536,63 @@
       return expanded;
     }
 
-    // Shared team-matching logic used everywhere a search term is checked against
-    // an ESPN competitor. Centralizing this avoids the bug where the exact-match
-    // rule for one ambiguous team code (e.g. "tex") wasn't applied to another
-    // (e.g. "bama"), letting substring matches like "north alabama".includes("bama")
-    // slip through and grab the wrong game.
-    function teamMatchesTerm(term, team) {
+    // Team-matching is done in two passes rather than one hardcoded list of
+    // "known ambiguous pairs." Any short team name can be a substring of a
+    // longer one (Alabama/North Alabama, Georgia/Georgia Tech, Texas/North
+    // Texas/Texas State, Miami/Miami OH, ...) so a single fuzzy .includes()
+    // pass is inherently unsafe. Instead:
+    //   1) EXACT pass: term must equal (not just be contained in) one of the
+    //      team's fields. This is unambiguous and resolves the vast majority
+    //      of picks, including all the substring collisions above.
+    //   2) FUZZY pass (fallback only): substring matching, for odd cases where
+    //      a pick's text doesn't exactly match any ESPN field (e.g. partial
+    //      nicknames not covered by TEAM_ALIASES).
+    // The exact pass is tried across ALL candidates before ever falling back
+    // to fuzzy, so a fuzzy match on the wrong team never wins over an exact
+    // match on the right one.
+    function teamFields(team) {
+      return {
+        name: (team.name || '').toLowerCase(),
+        shortName: (team.shortDisplayName || '').toLowerCase(),
+        displayName: (team.displayName || '').toLowerCase(),
+        abbreviation: (team.abbreviation || '').toLowerCase()
+      };
+    }
+
+    function teamMatchesExact(term, team) {
       if (!term) return false;
-      const name = (team.name || '').toLowerCase();
-      const shortName = (team.shortDisplayName || '').toLowerCase();
-      const displayName = (team.displayName || '').toLowerCase();
-      const abbreviation = (team.abbreviation || '').toLowerCase();
+      const f = teamFields(team);
+      return term === f.name || term === f.shortName || term === f.displayName || term === f.abbreviation;
+    }
 
-      const exactRule = EXACT_MATCH_TERMS[term];
-      if (exactRule) {
-        return exactRule.shortNames.includes(shortName) ||
-               exactRule.shortNames.includes(name) ||
-               exactRule.abbrs.includes(abbreviation) ||
-               displayName === term;
-      }
+    function teamMatchesFuzzy(term, team) {
+      if (!term) return false;
+      const f = teamFields(team);
+      return f.name.includes(term) || term.includes(f.name) ||
+             f.shortName.includes(term) || term.includes(f.shortName) ||
+             f.displayName.includes(term) || f.abbreviation === term;
+    }
 
-      return name.includes(term) || term.includes(name) ||
-             shortName.includes(term) || term.includes(shortName) ||
-             displayName.includes(term) || abbreviation === term;
+    // Finds the ESPN event matching any of searchTerms, preferring an event
+    // with an EXACT field match over one that only matches fuzzily.
+    function findMatchedEvent(searchTerms, espnEvents) {
+      const exact = espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesExact(term, c.team)))
+      );
+      if (exact) return exact;
+      return espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesFuzzy(term, c.team)))
+      );
+    }
+
+    // Determines whether searchTerms refer to the home or away side of a
+    // specific competition, again preferring exact matches over fuzzy ones so
+    // an ambiguous fuzzy hit on the home team can't override a correct exact
+    // match on the away team (or vice versa).
+    function pickIsHomeTeam(searchTerms, homeTeam, awayTeam) {
+      if (searchTerms.some(term => teamMatchesExact(term, homeTeam))) return true;
+      if (searchTerms.some(term => teamMatchesExact(term, awayTeam))) return false;
+      return searchTerms.some(term => teamMatchesFuzzy(term, homeTeam));
     }
 
     function calculatePickMargin(pick, competition) {
@@ -578,7 +607,7 @@
       const homeScore = parseInt(homeTeam.score || '0', 10);
       const awayScore = parseInt(awayTeam.score || '0', 10);
 
-      const isHomePick = searchTerms.some(term => teamMatchesTerm(term, homeTeam.team));
+      const isHomePick = pickIsHomeTeam(searchTerms, homeTeam.team, awayTeam.team);
 
       let computedMargin = -999;
       let computedResult = null;
@@ -621,10 +650,7 @@
         const selText = (pick.selection || '').trim().toLowerCase();
         const searchTerms = getTeamSearchTerms(selText);
 
-        const matchedEvent = espnEvents.find(ev => {
-          const comp = ev.competitions[0];
-          return comp.competitors.some(c => searchTerms.some(term => teamMatchesTerm(term, c.team)));
-        });
+        const matchedEvent = findMatchedEvent(searchTerms, espnEvents);
 
         if (matchedEvent) {
           const competition = matchedEvent.competitions[0];
@@ -844,10 +870,7 @@
           const initials = p.players?.initials || '??';
           const trimmedSelection = p.selection.trim();
 
-          const matchedEvent = espnEvents.find(ev => {
-            const comp = ev.competitions[0];
-            return comp.competitors.some(c => searchTerms.some(term => teamMatchesTerm(term, c.team)));
-          });
+          const matchedEvent = findMatchedEvent(searchTerms, espnEvents);
 
           if (matchedEvent) {
             const eventId = matchedEvent.id;
