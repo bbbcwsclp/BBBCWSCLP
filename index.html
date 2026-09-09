@@ -723,6 +723,53 @@
       });
     }
 
+    // Determines which week is "current" for the main page.
+    //   1. A week explicitly marked status = 'open' always wins, regardless of
+    //      date — this is the manual override / escape hatch from the admin panel.
+    //   2. Otherwise, the most recent week (by start_date) whose start_date has
+    //      already arrived wins, as long as it hasn't been force-closed.
+    // This lets weeks be created and populated with picks ahead of time (status
+    // left blank/"Scheduled") and have them activate automatically at midnight
+    // on their start_date, with no manual "open" click required.
+    async function getCurrentWeek() {
+      const { data: manualWeeks, error: manualError } = await _supabase
+        .from('weeks')
+        .select('*')
+        .eq('status', 'open')
+        .limit(1);
+
+      if (manualError) console.error('Failed to check manually-open weeks:', manualError);
+      if (manualWeeks && manualWeeks.length > 0) return manualWeeks[0];
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: dateWeeks, error: dateError } = await _supabase
+        .from('weeks')
+        .select('*')
+        .lte('start_date', todayStr)
+        .neq('status', 'closed')
+        .order('start_date', { ascending: false })
+        .limit(1);
+
+      if (dateError) console.error('Failed to check date-activated weeks:', dateError);
+      if (dateWeeks && dateWeeks.length > 0) return dateWeeks[0];
+
+      return null;
+    }
+
+    // Builds an ESPN `dates` range (YYYYMMDD-YYYYMMDD) covering the 7-day
+    // window that starts on the week's start_date. Keeps the scoreboard fetch
+    // pinned to the correct week instead of relying on ESPN's own idea of
+    // "current week," which flips over on its own schedule and was the root
+    // cause of picks getting matched to the wrong week's games.
+    function getEspnDateRange(startDateStr) {
+      const start = new Date(startDateStr + 'T00:00:00Z');
+      const end = new Date(start);
+      end.setUTCDate(end.getUTCDate() + 6);
+
+      const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+      return `${fmt(start)}-${fmt(end)}`;
+    }
+
     async function loadActiveWeek(isInitialLoad = true) {
       const container = document.getElementById('content-container');
       const previewContainer = document.getElementById('upcoming-preview-container');
@@ -731,13 +778,9 @@
         container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
       }
 
-      const { data: weeks, error: weeksError } = await _supabase
-        .from('weeks')
-        .select('*')
-        .eq('status', 'open')
-        .limit(1);
+      const currentWeek = await getCurrentWeek();
 
-      if (weeksError || !weeks || weeks.length === 0) {
+      if (!currentWeek) {
         if (isInitialLoad) {
           container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
           previewContainer.innerHTML = '';
@@ -745,13 +788,21 @@
         return;
       }
 
-      const currentWeek = weeks[0];
       cachedData.currentWeekId = currentWeek.id;
       cachedData.nextWeekNum = currentWeek.week_number + 1;
 
+      // Pin the ESPN scoreboard fetch to this week's own 7-day window (derived
+      // from start_date) rather than letting ESPN pick "the current week" for
+      // us — that's what was pulling in next week's games while this week's
+      // picks/labels were still showing.
+      const datesParam = currentWeek.start_date ? getEspnDateRange(currentWeek.start_date) : '';
+      const espnUrl = datesParam
+        ? `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300&dates=${datesParam}`
+        : `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300`;
+
       const [picksRes, espnRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
+        fetch(espnUrl).catch(() => null)
       ]);
 
       let espnEvents = [];
