@@ -427,7 +427,7 @@
         <div class="form-group">
           <label for="week-status">Week Status</label>
           <select id="week-status">
-            <option value="">Scheduled (auto-activates by start date)</option>
+            <option value="scheduled">Scheduled (auto-activates by start date)</option>
             <option value="open">Force Open (override)</option>
             <option value="closed">Force Closed (override)</option>
           </select>
@@ -615,12 +615,12 @@
     async function loadWeekDetails(weekNum) {
       const found = allWeeksCache.find(w => w.week_number === weekNum);
       if (found) {
-        statusSelect.value = found.status || '';
+        statusSelect.value = found.status || 'scheduled';
         startDateInput.value = found.start_date || '';
         slipLinkInput.value = found.slip_link || '';
         gamblyLinkInput.value = found.gambly_link || '';
       } else {
-        statusSelect.value = '';
+        statusSelect.value = 'scheduled';
         startDateInput.value = '';
         slipLinkInput.value = '';
         gamblyLinkInput.value = '';
@@ -678,7 +678,7 @@
         .upsert([{
           season: 2026,
           week_number: weekNum,
-          status: status || null,
+          status: status || 'scheduled',
           start_date: startDate,
           slip_link: slipLink || null,
           gambly_link: gamblyLink || null
@@ -717,7 +717,7 @@
       if (!existing) {
         const { error } = await _supabase
           .from('weeks')
-          .insert([{ season: 2026, week_number: nextWeekNum, status: null }]);
+          .insert([{ season: 2026, week_number: nextWeekNum, status: 'scheduled' }]);
         if (error) {
           console.error('Error creating next week:', error.message);
           return `(Could not create Week ${nextWeekNum}: ${error.message})`;
