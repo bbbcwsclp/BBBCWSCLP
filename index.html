@@ -1058,16 +1058,19 @@
       const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
 
       if (allFinalized) {
-        // Parlay membership outranks everything else: a parlay member ranks
-        // above a non-parlay member even if the non-parlay member's result
-        // was technically better (e.g. a parlay push outranks a non-parlay
-        // win). Within the same parlay status, results still rank W > D > L,
-        // and margin only breaks ties after that.
+        // Parlay members only get priority treatment when they actually won
+        // or pushed — a parlay member who lost gets no boost and ranks
+        // normally alongside everyone else. Among the boosted group (parlay
+        // W/D), results still rank W > D, then margin breaks ties. Everyone
+        // else (non-parlay picks of any result, and parlay losses) ranks
+        // below the boosted group, sorted by the normal W > D > L > margin order.
         const resultPriority = { W: 0, D: 1, L: 2 };
+        const isBoosted = (p) => p.is_parlay && (p.finalResultForScoring === 'W' || p.finalResultForScoring === 'D');
+
         const compareForRanking = (a, b) => {
-          const aParlay = a.is_parlay ? 0 : 1;
-          const bParlay = b.is_parlay ? 0 : 1;
-          if (aParlay !== bParlay) return aParlay - bParlay;
+          const aBoost = isBoosted(a) ? 0 : 1;
+          const bBoost = isBoosted(b) ? 0 : 1;
+          if (aBoost !== bBoost) return aBoost - bBoost;
 
           const pa = resultPriority[a.finalResultForScoring] ?? 3;
           const pb = resultPriority[b.finalResultForScoring] ?? 3;
