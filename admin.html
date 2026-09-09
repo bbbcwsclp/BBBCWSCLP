@@ -750,7 +750,7 @@
 
       const { data: prevPicks, error } = await _supabase
         .from('picks')
-        .select('player_id, result, margin, players(initials)')
+        .select('player_id, result, margin, is_parlay, players(initials)')
         .eq('week_id', prevWeekObj.id)
         .not('result', 'is', null);
 
@@ -768,12 +768,26 @@
         return;
       }
 
+      // Same ranking rule as the index.html preview: a player who was in the
+      // previous week's parlay only gets priority if they won or pushed —
+      // a parlay member who lost gets no boost and ranks normally alongside
+      // everyone else. Within the boosted group (parlay W/D), results still
+      // rank W > D, then margin breaks ties. Everyone else (non-parlay picks
+      // of any result, and parlay losses) ranks below, sorted by the normal
+      // W > D > L > margin order.
       const priority = { W: 0, D: 1, L: 2 };
+      const isBoosted = (p) => p.is_parlay && (p.result === 'W' || p.result === 'D');
+
       const ranked = prevPicks
         .filter(p => priority[p.result] !== undefined)
         .sort((a, b) => {
+          const aBoost = isBoosted(a) ? 0 : 1;
+          const bBoost = isBoosted(b) ? 0 : 1;
+          if (aBoost !== bBoost) return aBoost - bBoost;
+
           const pa = priority[a.result], pb = priority[b.result];
           if (pa !== pb) return pa - pb;
+
           const ma = (a.margin === null || a.margin === undefined) ? -Infinity : a.margin;
           const mb = (b.margin === null || b.margin === undefined) ? -Infinity : b.margin;
           return mb - ma;
