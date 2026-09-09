@@ -427,9 +427,14 @@
         <div class="form-group">
           <label for="week-status">Week Status</label>
           <select id="week-status">
-            <option value="open">Open (Active on Main Page)</option>
-            <option value="closed">Closed / Finished</option>
+            <option value="">Scheduled (auto-activates by start date)</option>
+            <option value="open">Force Open (override)</option>
+            <option value="closed">Force Closed (override)</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label for="week-start-date">Start Date (week goes live at midnight this day)</label>
+          <input type="date" id="week-start-date">
         </div>
         <div class="form-group">
           <label for="week-slip-link">Courtside Slip Link URL</label>
@@ -528,6 +533,7 @@
 
     const weekSelect = document.getElementById('week-number-select');
     const statusSelect = document.getElementById('week-status');
+    const startDateInput = document.getElementById('week-start-date');
     const slipLinkInput = document.getElementById('week-slip-link');
     const gamblyLinkInput = document.getElementById('week-gambly-link');
 
@@ -581,7 +587,7 @@
               openWeekNum = w.week_number;
               openWeekId = w.id;
             }
-            pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status})</option>`;
+            pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status || 'scheduled'})</option>`;
           });
         }
 
@@ -609,11 +615,13 @@
     async function loadWeekDetails(weekNum) {
       const found = allWeeksCache.find(w => w.week_number === weekNum);
       if (found) {
-        statusSelect.value = found.status || 'open';
+        statusSelect.value = found.status || '';
+        startDateInput.value = found.start_date || '';
         slipLinkInput.value = found.slip_link || '';
         gamblyLinkInput.value = found.gambly_link || '';
       } else {
-        statusSelect.value = 'open';
+        statusSelect.value = '';
+        startDateInput.value = '';
         slipLinkInput.value = '';
         gamblyLinkInput.value = '';
       }
@@ -660,6 +668,7 @@
       e.preventDefault();
       const weekNum = parseInt(weekSelect.value, 10);
       const status = statusSelect.value;
+      const startDate = startDateInput.value || null;
       const slipLink = slipLinkInput.value.trim();
       const gamblyLink = gamblyLinkInput.value.trim();
       const msg = document.getElementById('week-msg');
@@ -669,7 +678,8 @@
         .upsert([{
           season: 2026,
           week_number: weekNum,
-          status: status,
+          status: status || null,
+          start_date: startDate,
           slip_link: slipLink || null,
           gambly_link: gamblyLink || null
         }], { onConflict: 'season,week_number' });
@@ -682,7 +692,7 @@
         let successText = `Week ${weekNum} updated successfully!`;
 
         if (status === 'closed') {
-          const nextWeekResult = await autoOpenNextWeek(weekNum);
+          const nextWeekResult = await ensureNextWeekExists(weekNum);
           if (nextWeekResult) successText += ` ${nextWeekResult}`;
         }
 
@@ -693,35 +703,29 @@
       }
     });
 
-    async function autoOpenNextWeek(closedWeekNum) {
+    // Replaces the old autoOpenNextWeek(). With week activation now driven by
+    // start_date on the main page, we no longer force the next week's status
+    // to 'open' — we just make sure a row exists for it so you can start
+    // adding picks and set its start_date whenever you're ready. It stays
+    // dormant (Scheduled) until that date arrives, unless you override it.
+    async function ensureNextWeekExists(closedWeekNum) {
       const nextWeekNum = closedWeekNum + 1;
       if (nextWeekNum > 12) return '';
 
       const existing = allWeeksCache.find(w => w.week_number === nextWeekNum);
 
-      if (existing) {
-        if (existing.status !== 'open') {
-          const { error } = await _supabase
-            .from('weeks')
-            .update({ status: 'open' })
-            .eq('season', 2026)
-            .eq('week_number', nextWeekNum);
-          if (error) {
-            console.error('Error auto-opening next week:', error.message);
-            return `(Could not auto-open Week ${nextWeekNum}: ${error.message})`;
-          }
-        }
-      } else {
+      if (!existing) {
         const { error } = await _supabase
           .from('weeks')
-          .insert([{ season: 2026, week_number: nextWeekNum, status: 'open' }]);
+          .insert([{ season: 2026, week_number: nextWeekNum, status: null }]);
         if (error) {
-          console.error('Error auto-creating next week:', error.message);
-          return `(Could not auto-open Week ${nextWeekNum}: ${error.message})`;
+          console.error('Error creating next week:', error.message);
+          return `(Could not create Week ${nextWeekNum}: ${error.message})`;
         }
+        return `Week ${nextWeekNum} created — set its start date to activate it.`;
       }
 
-      return `Week ${nextWeekNum} auto-opened.`;
+      return '';
     }
 
     async function setParlayPickersFromPreviousWeek() {
@@ -1199,31 +1203,30 @@
             const awayScore = parseInt(away.score || '0', 10);
 
             // FIXED "TEX" & TEXAS ABBREVIATION MATCHING LOGIC
-const isHomePick = searchTerms.some(term => {
-  if (!term) return false;
-  if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-    return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
-           homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
-  }
-  // Ensure short abbreviations like "tex" don't falsely match "north texas" team names/abbreviations
-  if (term === 'tex') {
-    return homeAbbr === 'tex' || (homeShort.toLowerCase() === 'texas' && !homeName.includes('north'));
-  }
-  return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
-});
+            const isHomePick = searchTerms.some(term => {
+              if (!term) return false;
+              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+                return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
+                       homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
+              }
+              // Ensure short abbreviations like "tex" don't falsely match "north texas" team names/abbreviations
+              if (term === 'tex') {
+                return homeAbbr === 'tex' || (homeShort.toLowerCase() === 'texas' && !homeName.includes('north'));
+              }
+              return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
+            });
 
-const isAwayPick = searchTerms.some(term => {
-  if (!term) return false;
-  if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-    return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
-           awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
-  }
-  if (term === 'tex') {
-    return awayAbbr === 'tex' || (awayShort.toLowerCase() === 'texas' && !awayName.includes('north'));
-  }
-  return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
-});
-
+            const isAwayPick = searchTerms.some(term => {
+              if (!term) return false;
+              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+                return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
+                       awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
+              }
+              if (term === 'tex') {
+                return awayAbbr === 'tex' || (awayShort.toLowerCase() === 'texas' && !awayName.includes('north'));
+              }
+              return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
+            });
 
             if (isHomePick || isAwayPick) {
               if (comp.status.type.state === 'post') {
@@ -1247,7 +1250,7 @@ const isAwayPick = searchTerms.some(term => {
 
                     row.dataset.margin = marginValue.toString();
                     gradedCount++;
-                    updateResultSelectColor(selectSelect);
+                    updateResultSelectColor(resultSelect);
                     row.style.background = 'rgba(255, 176, 32, 0.06)';
                   }
                 } else {
@@ -1266,7 +1269,7 @@ const isAwayPick = searchTerms.some(term => {
 
                   row.dataset.margin = marginValue.toString();
                   gradedCount++;
-                  updateResultSelectColor(selectSelect);
+                  updateResultSelectColor(resultSelect);
                   row.style.background = 'rgba(255, 176, 32, 0.06)';
                 }
               }
