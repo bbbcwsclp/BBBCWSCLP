@@ -1058,9 +1058,20 @@
       const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
 
       if (allFinalized) {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+        // Within each result group, parlay members are ranked ahead of
+        // non-parlay members regardless of margin — e.g. a parlay member
+        // who won by +1 outranks a non-parlay member who won by +10. Margin
+        // only breaks ties among players who share the same parlay status.
+        const compareByParlayThenMargin = (a, b) => {
+          const aParlay = a.is_parlay ? 1 : 0;
+          const bParlay = b.is_parlay ? 1 : 0;
+          if (aParlay !== bParlay) return bParlay - aParlay;
+          return b.sortMargin - a.sortMargin;
+        };
+
+        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort(compareByParlayThenMargin);
+        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort(compareByParlayThenMargin);
+        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort(compareByParlayThenMargin);
 
         let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
         if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
