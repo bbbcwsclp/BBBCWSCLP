@@ -309,6 +309,50 @@
       return clean ? [clean] : [];
     }
 
+    // Mirrors the same "current week" logic used on index.html: a week
+    // explicitly forced status='open' always wins; otherwise the most recent
+    // week whose start_date has arrived (and isn't force-closed) is current.
+    // Used here purely to compute an accurate display label per week, since
+    // the raw status column (usually 'scheduled') doesn't tell you which
+    // week is actually live right now.
+    async function getCurrentWeekId() {
+      const { data: manualWeeks } = await _supabase
+        .from('weeks')
+        .select('id')
+        .eq('status', 'open')
+        .limit(1);
+
+      if (manualWeeks && manualWeeks.length > 0) return manualWeeks[0].id;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: dateWeeks } = await _supabase
+        .from('weeks')
+        .select('id')
+        .lte('start_date', todayStr)
+        .not('status', 'in', '("closed","Closed")')
+        .order('start_date', { ascending: false })
+        .limit(1);
+
+      if (dateWeeks && dateWeeks.length > 0) return dateWeeks[0].id;
+
+      return null;
+    }
+
+    // Labels each week for display: raw 'closed' status always shows CLOSED;
+    // the single week resolved as current by getCurrentWeekId() shows ACTIVE;
+    // a week whose start_date is still in the future shows UPCOMING; anything
+    // else (e.g. a week with no start_date yet) falls back to SCHEDULED.
+    function computeWeekDisplayStatus(week, currentWeekId) {
+      const rawStatus = (week.status || '').toLowerCase();
+      if (rawStatus === 'closed') return 'CLOSED';
+      if (week.id === currentWeekId) return 'ACTIVE';
+      if (week.start_date) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (week.start_date > todayStr) return 'UPCOMING';
+      }
+      return 'SCHEDULED';
+    }
+
     async function loadSeasonHistory() {
       const { data: weeks, error: weeksErr } = await _supabase
         .from('weeks')
@@ -332,6 +376,8 @@
         container.innerHTML = '<div style="color: var(--text-muted);">No season history recorded yet.</div>';
         return;
       }
+
+      const currentWeekId = await getCurrentWeekId();
 
       // Compute Overall Group Stats & Breakdown Metrics
       let totalW = 0;
@@ -542,7 +588,7 @@
         const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
         const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
         const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
-        const weekStatus = (week.status || 'open').toUpperCase();
+        const weekStatus = computeWeekDisplayStatus(week, currentWeekId);
 
         html += `
           <div class="week-history-card">
