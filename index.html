@@ -953,9 +953,25 @@
           }
         });
 
-        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
+        const gameHasParlay = (item) =>
+          Object.values(item.entriesMap).some(e => e.pickObj.is_parlay === true);
+
+        const sortedGames = Object.values(gameEventMap).sort((a, b) => {
+          const aParlay = gameHasParlay(a);
+          const bParlay = gameHasParlay(b);
+          if (aParlay !== bParlay) return aParlay ? -1 : 1;
+          return a.dateObj - b.dateObj;
+        });
+
+        const anyParlayGames = sortedGames.some(gameHasParlay);
+        let dividerInserted = false;
 
         sortedGames.forEach(item => {
+          if (anyParlayGames && !dividerInserted && !gameHasParlay(item)) {
+            html += `<div class="category-title" style="margin-top: 0.5rem;">Others</div>`;
+            dividerInserted = true;
+          }
+
           let entriesArray = [];
           if (item.entriesMap) {
             entriesArray = Object.entries(item.entriesMap).map(([sel, data]) => ({
