@@ -499,8 +499,7 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
 
     // Aliases map shorthand/nicknames people type into a pick to the term ESPN
     // actually uses in its team fields (shortDisplayName, name, etc). Keep these
@@ -510,11 +509,8 @@
     const TEAM_ALIASES = {
       'sac': 'sacramento state',
       'jax state': 'jacksonville state',
-      'tcu': 'tcu',
       'unc': 'north carolina',
       'usc': 'southern cal',
-      'unlv': 'unlv',
-      'stanford': 'stanford',
       'tex': 'texas',
       'bama': 'alabama'
     };
@@ -765,18 +761,30 @@
       return null;
     }
 
-    // Builds an ESPN `dates` range (YYYYMMDD-YYYYMMDD) covering the 7-day
-    // window that starts on the week's start_date. Keeps the scoreboard fetch
-    // pinned to the correct week instead of relying on ESPN's own idea of
-    // "current week," which flips over on its own schedule and was the root
-    // cause of picks getting matched to the wrong week's games.
-    function getEspnDateRange(startDateStr) {
-      const start = new Date(startDateStr + 'T00:00:00Z');
-      const end = new Date(start);
-      end.setUTCDate(end.getUTCDate() + 6);
+    // The promo video lives inside the same container that gets rebuilt on
+    // every poll. Capturing/restoring its play state around the innerHTML
+    // swap lets the scorecards (scores, margins, live status) actually update
+    // every 10 seconds without interrupting anyone mid-watch.
+    function captureVideoState(container) {
+      const video = container.querySelector('video');
+      if (!video) return null;
+      return { currentTime: video.currentTime, wasPlaying: !video.paused };
+    }
 
-      const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
-      return `${fmt(start)}-${fmt(end)}`;
+    function restoreVideoState(container, state) {
+      if (!state) return;
+      const video = container.querySelector('video');
+      if (!video) return;
+      video.currentTime = state.currentTime;
+      if (state.wasPlaying) {
+        video.play();
+        const wrap = container.querySelector('.promo-video-wrap');
+        if (wrap) {
+          wrap.classList.add('playing');
+          const btn = wrap.querySelector('.custom-play-btn');
+          if (btn) btn.style.display = 'none';
+        }
+      }
     }
 
     async function loadActiveWeek(isInitialLoad = true) {
@@ -797,24 +805,16 @@
         return;
       }
 
-      cachedData.currentWeekId = currentWeek.id;
       cachedData.nextWeekNum = currentWeek.week_number + 1;
 
-      // Pin the ESPN scoreboard fetch to this week's own 7-day window (derived
-      // from start_date) rather than letting ESPN pick "the current week" for
-      // us — that's what was pulling in next week's games while this week's
-      // picks/labels were still showing.
-      const datesParam = currentWeek.start_date ? getEspnDateRange(currentWeek.start_date) : '';
-
+      // Let ESPN determine "current week" itself (no dates= param) instead of
+      // deriving a window from the weeks table's start_date — one less place
+      // for our own date math to drift out of sync with ESPN's schedule.
       // Fetch BOTH FBS (groups=80) and FCS (groups=81) scoreboards and merge
-      // them. groups=80 alone misses any game where both teams are FCS (e.g.
-      // Sacramento State vs. another FCS opponent) — those games simply never
-      // came back from ESPN, which combined with the old "only render if
-      // espnEvents.length > 0" gate could blank the whole scorecards section.
-      const buildUrl = (groupId) => {
-        const base = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=${groupId}&limit=300`;
-        return datesParam ? `${base}&dates=${datesParam}` : base;
-      };
+      // them, since groups=80 alone misses any game where both teams are FCS
+      // (e.g. Sacramento State vs. another FCS opponent).
+      const buildUrl = (groupId) =>
+        `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=${groupId}&limit=300`;
 
       const [picksRes, fbsRes, fcsRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
@@ -835,19 +835,6 @@
           });
         }
       }
-
-      espnEvents = espnEvents.filter(ev => {
-        const comp = ev.competitions[0];
-        const isMemphis = comp.competitors.some(c => c.team.abbreviation === 'MEM');
-        const isUnlv = comp.competitors.some(c => c.team.abbreviation === 'UNLV');
-        
-        if (isMemphis && isUnlv) {
-          const eventDate = new Date(ev.date);
-          const weekZeroCutoff = new Date('2026-09-01');
-          return eventDate > weekZeroCutoff; 
-        }
-        return true;
-      });
 
       const picks = picksRes.data || [];
       cachedData.allPicks = picks;
@@ -1086,9 +1073,9 @@
       }
       html += `</div></div>`;
 
-      if (isInitialLoad || !container.querySelector('video')) {
-        container.innerHTML = html;
-      }
+      const videoState = captureVideoState(container);
+      container.innerHTML = html;
+      restoreVideoState(container, videoState);
 
       let previewHtml = `
         <div class="upcoming-preview-card">
