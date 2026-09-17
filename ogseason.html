@@ -138,31 +138,37 @@
       text-align: center;
     }
 
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem; }
     .stat-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1.25rem 0.75rem;
-      text-align: center;
+      padding: 0.7rem 0.85rem;
+      text-align: left;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 110px;
+      gap: 0.3rem;
     }
-    .stat-card h3 {
+    .stat-card .stat-label {
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
       white-space: nowrap;
+    }
+    .stat-card .stat-main-row {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.35rem;
     }
     .stat-card .stat-value {
       font-family: var(--font-label);
-      font-size: 1.15rem;
+      font-size: 0.98rem;
       font-weight: 700;
       color: var(--text);
       line-height: 1.2;
@@ -170,10 +176,10 @@
     }
     .stat-card .stat-sub {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-muted);
-      margin-top: 0.3rem;
+      opacity: 0.9;
     }
 
     /* Overall Performance Box */
@@ -761,14 +767,18 @@
       html += `
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>🔥 Hot Streak</h3>
-            <div class="stat-value" style="color: var(--success);">${hotNames}</div>
-            ${hotSub ? `<div class="stat-sub" style="color: var(--success);">${hotSub}</div>` : ''}
+            <div class="stat-label">🔥 Hot Streak</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success);">${hotNames}</span>
+              ${hotSub ? `<span class="stat-sub" style="color: var(--success);">${hotSub}</span>` : ''}
+            </div>
           </div>
           <div class="stat-card">
-            <h3>❄️ Cold Streak</h3>
-            <div class="stat-value" style="color: var(--danger);">${coldNames}</div>
-            ${coldSub ? `<div class="stat-sub" style="color: var(--danger);">${coldSub}</div>` : ''}
+            <div class="stat-label">❄️ Cold Streak</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger);">${coldNames}</span>
+              ${coldSub ? `<span class="stat-sub" style="color: var(--danger);">${coldSub}</span>` : ''}
+            </div>
           </div>
         </div>
       `;
@@ -777,36 +787,44 @@
       html += `
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>Best Bet Team</h3>
-            <div class="stat-value" style="color: var(--success);">${topTeamName}</div>
-            ${topTeamSub ? `<div class="stat-sub" style="color: var(--success);">${topTeamSub}</div>` : ''}
+            <div class="stat-label">Best Bet Team</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success);">${topTeamName}</span>
+              ${topTeamSub ? `<span class="stat-sub" style="color: var(--success);">${topTeamSub}</span>` : ''}
+            </div>
           </div>
           <div class="stat-card">
-            <h3>Worst Bet Team</h3>
-            <div class="stat-value" style="color: var(--danger);">${worstTeamName}</div>
-            ${worstTeamSub ? `<div class="stat-sub" style="color: var(--danger);">${worstTeamSub}</div>` : ''}
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Spread W-L-D</h3>
-            <div class="stat-value">${spreadW}-${spreadL}-${spreadD}</div>
-          </div>
-          <div class="stat-card">
-            <h3>O/U W-L-D</h3>
-            <div class="stat-value">${ouW}-${ouL}-${ouD}</div>
+            <div class="stat-label">Worst Bet Team</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger);">${worstTeamName}</span>
+              ${worstTeamSub ? `<span class="stat-sub" style="color: var(--danger);">${worstTeamSub}</span>` : ''}
+            </div>
           </div>
         </div>
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>🏆 Biggest Cover</h3>
-            <div class="stat-value" style="color: var(--success); font-size: 0.95rem;">${biggestWinValue}</div>
-            ${biggestWinSub ? `<div class="stat-sub" style="color: var(--success);">${biggestWinSub}</div>` : ''}
+            <div class="stat-label">Spread W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${spreadW}-${spreadL}-${spreadD}</span></div>
           </div>
           <div class="stat-card">
-            <h3>💀 Worst Beat</h3>
-            <div class="stat-value" style="color: var(--danger); font-size: 0.95rem;">${biggestLossValue}</div>
-            ${biggestLossSub ? `<div class="stat-sub" style="color: var(--danger);">${biggestLossSub}</div>` : ''}
+            <div class="stat-label">O/U W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${ouW}-${ouL}-${ouD}</span></div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">🏆 Biggest Cover</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success); font-size: 0.88rem;">${biggestWinValue}</span>
+              ${biggestWinSub ? `<span class="stat-sub" style="color: var(--success);">${biggestWinSub}</span>` : ''}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">💀 Worst Beat</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger); font-size: 0.88rem;">${biggestLossValue}</span>
+              ${biggestLossSub ? `<span class="stat-sub" style="color: var(--danger);">${biggestLossSub}</span>` : ''}
+            </div>
           </div>
         </div>
       `;
