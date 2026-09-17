@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BBBCWSCLP — Standings</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <!-- Favicon / Browser Tab Icon -->
   <link rel="icon" href="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG" type="image/png">
 
@@ -18,25 +18,46 @@
   <meta property="og:image" content="https://gutmpjminpqhtwtilbzx.supabase.co/storage/v1/object/public/logos/logo.PNG">
   <meta property="og:type" content="website">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --accent: #3b82f6;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --warning: #f59e0b;
+      --bg: #0a0e10;
+      --card-bg: #14191d;
+      --card-inner: #060a0c;
+      --text: #eef2f2;
+      --text-muted: #7c8a90;
+      --border: #223038;
+
+      --success: #34d67a;
+      --danger: #ff6b6b;
+      --warning: #4fb8ff;
+
+      --accent: #ffb020;
+      --gold: #ffb020;
+
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+      --font-label: 'Barlow Condensed', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { 
-      background-color: var(--bg); 
-      color: var(--text); 
-      padding: 2rem 1rem 4rem 1rem; 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-label);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255, 176, 32, 0.05), transparent 60%),
+        radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(20, 25, 29, 0.9), var(--bg) 70%),
+        linear-gradient(rgba(34, 48, 56, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 48, 56, 0.18) 1px, transparent 1px);
+      background-size: auto, auto, 56px 56px, 56px 56px;
+      background-position: center top, center top, center top, center top;
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 2rem 1rem 4rem 1rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -46,62 +67,94 @@
     .container { width: 100%; max-width: 650px; margin: 0 auto; text-align: center; }
 
     header { margin-bottom: 1rem; width: 100%; }
-    header img { max-height: 100px; margin-bottom: 0.75rem; object-fit: contain; }
-    
-    h1.main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1.5rem; color: var(--text); }
+    header img { max-height: 90px; margin-bottom: 0.75rem; object-fit: contain; }
 
-    /* Navigation Bar */
-    nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 0.35rem; 
-      margin-bottom: 2.5rem; 
-      width: 100%; 
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
     }
-    
-    nav a { 
-      color: var(--text-muted); 
-      text-decoration: none; 
+
+    h1.main-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Navigation Bar — broadcast channel tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    nav a {
+      font-family: var(--font-label);
+      color: var(--text-muted);
+      text-decoration: none;
       transition: all 0.2s ease;
-      background-color: var(--card-bg);
+      background-color: transparent;
       border: 1px solid var(--border);
-      padding: 0.4rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 600; 
-      font-size: 0.82rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      border-bottom: 2px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       white-space: nowrap;
     }
-    
-    nav a:hover { 
-      color: var(--text); 
-      border-color: var(--accent);
-      background-color: #273548;
+
+    nav a:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.06);
     }
 
-    nav a.active { 
-      color: white; 
-      background-color: var(--accent);
-      border-color: var(--accent);
+    nav a.active {
+      color: var(--accent);
+      background-color: rgba(255, 176, 32, 0.08);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
     }
 
-    /* Card styling with subtle gradient header */
-    .card { 
-      background-color: var(--card-bg); 
-      border: 1px solid var(--border); 
-      border-radius: 12px; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); 
-      margin-bottom: 2rem; 
-      text-align: left; 
+    nav a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Card styling */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
+      margin-bottom: 2rem;
+      text-align: center;
       overflow: hidden;
     }
-    
-    .card h2 { 
-      font-size: 1.25rem; 
-      padding: 1rem 1.5rem; 
-      background: linear-gradient(to right, #1e293b, #0f172a);
-      border-bottom: 2px solid var(--accent); 
-      text-align: center; 
+
+    .card h2 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 1rem 1.5rem;
+      background: var(--card-inner);
+      border-bottom: 2px solid var(--accent);
+      text-align: center;
     }
 
     .table-container {
@@ -109,45 +162,78 @@
     }
 
     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.95rem; }
-    
-    th, td { 
-      text-align: center; 
-      padding: 0.9rem 0.75rem; 
-      border-bottom: 1px solid var(--border); 
+
+    th, td {
+      text-align: center;
+      padding: 0.9rem 0.75rem;
+      border-bottom: 1px solid var(--border);
     }
-    
-    th { color: var(--text-muted); font-weight: 600; }
+
+    th {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { font-family: var(--font-label); }
+
+    /* Zebra striping so long lists are easier to scan */
+    tbody tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
 
     /* Interactive row hover & smooth transitions */
     tr {
       transition: background-color 0.2s ease;
     }
     tbody tr:hover {
-      background-color: rgba(59, 130, 246, 0.08);
+      background-color: rgba(255, 176, 32, 0.05);
     }
 
     /* Player initials styling */
     td:nth-child(2) {
       font-weight: 700;
       letter-spacing: 0.5px;
-      color: #f8fafc;
+      color: var(--text);
     }
 
     /* Tabular numeric alignment for stats */
+    td:nth-child(1) {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
     td:nth-child(3), td:nth-child(4) {
+      font-family: var(--font-mono);
       font-variant-numeric: tabular-nums;
     }
-    
+
     .rank-1 { font-weight: bold; }
     .rank-2 { font-weight: bold; }
     .rank-3 { font-weight: bold; }
 
     /* Colored text styling for top 3 player names */
-    .name-rank-1 { color: #facc15; font-weight: bold; }
+    .name-rank-1 { color: var(--accent); font-weight: bold; }
     .name-rank-2 { color: #cbd5e1; font-weight: bold; }
-    .name-rank-3 { color: #fb923c; font-weight: bold; }
+    .name-rank-3 { color: #d98757; font-weight: bold; }
 
-    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; }
+    .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; font-family: var(--font-label); }
+
+    /* Skeleton Loading State */
+    .skeleton-row td { padding: 0.7rem 0.75rem; }
+    .skeleton-bar {
+      height: 14px;
+      border-radius: 4px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, var(--card-inner) 25%, rgba(255,255,255,0.07) 50%, var(--card-inner) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
 </head>
 <body>
@@ -155,6 +241,7 @@
   <div class="container">
     <header>
       <img src="logo.PNG" alt="BBBC Logo" onerror="this.style.display='none'">
+      <div class="eyebrow">All-Time Standings</div>
       <h1 class="main-title">Leaderboard</h1>
     </header>
 
@@ -179,7 +266,10 @@
             </tr>
           </thead>
           <tbody id="standings-tbody">
-            <tr><td colspan="4" class="msg">Calculating standings...</td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -196,11 +286,11 @@
     async function loadStandings() {
       const tbody = document.getElementById('standings-tbody');
 
-      const { data: players, error: playerErr } = await _supabase
+      const { data: playersData, error: playerErr } = await _supabase
         .from('players')
         .select('*');
 
-      const { data: picks, error: pickErr } = await _supabase
+      const { data: picksData, error: pickErr } = await _supabase
         .from('picks')
         .select('*');
 
@@ -208,6 +298,12 @@
         tbody.innerHTML = `<tr><td colspan="4" class="msg" style="color: var(--danger);">Error loading standings data.</td></tr>`;
         return;
       }
+
+      // Guard against Supabase ever returning null data without an error —
+      // previously this would throw on .forEach and leave the page stuck
+      // on "Calculating standings...".
+      const players = playersData || [];
+      const picks = picksData || [];
 
       const stats = {};
       players.forEach(p => {
@@ -244,12 +340,12 @@
 
       leaderboard.sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) {
-          return b.totalPoints - a.totalPoints; 
+          return b.totalPoints - a.totalPoints;
         }
         if (b.wins !== a.wins) {
           return b.wins - a.wins;
         }
-        return b.winPct - a.winPct; 
+        return b.winPct - a.winPct;
       });
 
       tbody.innerHTML = '';
@@ -259,8 +355,22 @@
         return;
       }
 
+      // Standard competition ranking (1224-style): players who are fully
+      // tied on totalPoints, wins, AND winPct share the same rank/medal
+      // instead of the earlier one arbitrarily outranking the other.
+      let currentRank = 0;
+      let previous = null;
+
       leaderboard.forEach((p, index) => {
-        const rank = index + 1;
+        const isTie = previous
+          && p.totalPoints === previous.totalPoints
+          && p.wins === previous.wins
+          && p.winPct === previous.winPct;
+
+        if (!isTie) currentRank = index + 1;
+        const rank = currentRank;
+        previous = p;
+
         let rankDisplay = `#${rank}`;
         let rankClass = '';
         let nameClass = '';
@@ -279,12 +389,15 @@
           nameClass = 'name-rank-3';
         }
 
+        // Hidden admin link: only for the player whose initials are EXACTLY
+        // "DS" (case-insensitive). Previously this did a substring search
+        // across every player's initials, so anyone whose initials merely
+        // contained "ds" (e.g. "ADS") would have accidentally picked up a
+        // hidden, invisible link to admin.html. An exact match removes that
+        // risk entirely.
         let formattedInitials = p.initials;
-        const dsMatchIndex = p.initials.toUpperCase().indexOf('DS');
-        if (dsMatchIndex !== -1) {
-          const before = p.initials.substring(0, dsMatchIndex);
-          const after = p.initials.substring(dsMatchIndex + 2);
-          formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">D</a>S${after}`;
+        if (p.initials.toUpperCase() === 'DS') {
+          formattedInitials = `<a href="admin.html" style="color: inherit; text-decoration: none;">${p.initials}</a>`;
         }
 
         // Dynamic Win % Color Logic (Green if wins > losses, Red if losses > wins, muted default if even)
