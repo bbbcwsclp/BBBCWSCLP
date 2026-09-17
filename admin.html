@@ -1304,7 +1304,7 @@
           msgDiv.style.color = 'var(--success)';
           msgDiv.innerText = `Auto-graded ${gradedCount} final games successfully! Review and save.`;
         }
-        markSectionDirty(sectionType, true);
+        if (gradedCount > 0) markSectionDirty(sectionType, true);
 
       } catch (err) {
         console.error('Auto-grade error:', err);
