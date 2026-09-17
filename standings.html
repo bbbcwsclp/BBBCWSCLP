@@ -32,7 +32,7 @@
       --border: #223038;
 
       --success: #34d67a;
-      --danger: #ff4d4d;
+      --danger: #ff6b6b;
       --warning: #4fb8ff;
 
       --accent: #ffb020;
@@ -179,6 +179,11 @@
     }
     td { font-family: var(--font-label); }
 
+    /* Zebra striping so long lists are easier to scan */
+    tbody tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
     /* Interactive row hover & smooth transitions */
     tr {
       transition: background-color 0.2s ease;
@@ -214,6 +219,88 @@
     .name-rank-3 { color: #d98757; font-weight: bold; }
 
     .msg { text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; font-family: var(--font-label); }
+
+    /* Skeleton Loading State */
+    .skeleton-row td { padding: 0.7rem 0.75rem; }
+    .skeleton-bar {
+      height: 14px;
+      border-radius: 4px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, var(--card-inner) 25%, rgba(255,255,255,0.07) 50%, var(--card-inner) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Podium */
+    .podium {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0.6rem;
+      padding: 1.5rem 1rem 0.5rem 1rem;
+    }
+    .podium-spot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 33%;
+      max-width: 150px;
+    }
+    .podium-spot-1 { order: 2; }
+    .podium-spot-2 { order: 1; }
+    .podium-spot-3 { order: 3; }
+
+    .podium-medal { font-size: 1.6rem; margin-bottom: 0.35rem; }
+    .podium-spot-1 .podium-medal { font-size: 2rem; }
+
+    .podium-name {
+      font-family: var(--font-label);
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--text);
+      letter-spacing: 0.3px;
+      margin-bottom: 0.15rem;
+      overflow-wrap: break-word;
+      max-width: 100%;
+    }
+    .podium-spot-1 .podium-name { color: var(--accent); font-size: 1.15rem; }
+    .podium-spot-2 .podium-name { color: #cbd5e1; }
+    .podium-spot-3 .podium-name { color: #d98757; }
+
+    .podium-record {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .podium-pct {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    .podium-base {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 0.4rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--card-bg);
+    }
+    .podium-base-1 { height: 74px; background: linear-gradient(180deg, #ffd54f, var(--accent)); box-shadow: 0 0 16px rgba(255, 176, 32, 0.3); }
+    .podium-base-2 { height: 52px; background: linear-gradient(180deg, #e2e8f0, #b6c0c9); }
+    .podium-base-3 { height: 38px; background: linear-gradient(180deg, #e3a76f, #b97a45); }
   </style>
 </head>
 <body>
@@ -233,6 +320,8 @@
       <a href="scores.html">Scores</a>
     </nav>
 
+    <div id="podium-container"></div>
+
     <div class="card">
       <h2>Overall Leaderboard</h2>
       <div class="table-container" style="overflow-x: auto;">
@@ -246,7 +335,10 @@
             </tr>
           </thead>
           <tbody id="standings-tbody">
-            <tr><td colspan="4" class="msg">Calculating standings...</td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
+            <tr class="skeleton-row"><td><div class="skeleton-bar" style="width: 24px;"></div></td><td><div class="skeleton-bar" style="width: 40px;"></div></td><td><div class="skeleton-bar" style="width: 60px;"></div></td><td><div class="skeleton-bar" style="width: 44px;"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -259,6 +351,111 @@
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Standard competition ranking (1224-style): players who are fully tied
+    // on totalPoints, wins, AND winPct share the same rank/medal instead of
+    // one arbitrarily outranking the other. Shared by both the podium and
+    // the full table so they never disagree on who's "1st."
+    function buildRankedEntries(leaderboard) {
+      let currentRank = 0;
+      let previous = null;
+
+      return leaderboard.map((p, index) => {
+        const isTie = previous
+          && p.totalPoints === previous.totalPoints
+          && p.wins === previous.wins
+          && p.winPct === previous.winPct;
+
+        if (!isTie) currentRank = index + 1;
+        const rank = currentRank;
+        previous = p;
+
+        let rankDisplay = `#${rank}`;
+        let rankClass = '';
+        let nameClass = '';
+
+        if (rank === 1) {
+          rankDisplay = '🥇';
+          rankClass = 'rank-1';
+          nameClass = 'name-rank-1';
+        } else if (rank === 2) {
+          rankDisplay = '🥈';
+          rankClass = 'rank-2';
+          nameClass = 'name-rank-2';
+        } else if (rank === 3) {
+          rankDisplay = '🥉';
+          rankClass = 'rank-3';
+          nameClass = 'name-rank-3';
+        }
+
+        // Hidden admin link: only for the player whose initials are EXACTLY
+        // "DS" (case-insensitive), not a substring match, so no other
+        // player's initials can accidentally pick up a hidden link.
+        let formattedInitials = p.initials;
+        if (p.initials.toUpperCase() === 'DS') {
+          formattedInitials = `<a href="admin.html" style="color: inherit; text-decoration: none;">${p.initials}</a>`;
+        }
+
+        let pctColor = 'var(--text-muted)';
+        if (p.wins > p.losses) {
+          pctColor = 'var(--success)';
+        } else if (p.losses > p.wins) {
+          pctColor = 'var(--danger)';
+        }
+
+        return { ...p, rank, rankDisplay, rankClass, nameClass, formattedInitials, pctColor };
+      });
+    }
+
+    function renderPodium(rankedEntries) {
+      const podiumContainer = document.getElementById('podium-container');
+      if (!podiumContainer) return;
+
+      // Group by rank rather than by array position, since ties mean more
+      // than 3 people can occupy ranks 1-3 (or fewer than 3 distinct spots
+      // exist at all with a small roster).
+      const byRank = { 1: [], 2: [], 3: [] };
+      for (const entry of rankedEntries) {
+        if (entry.rank >= 1 && entry.rank <= 3) byRank[entry.rank].push(entry);
+        if (entry.rank > 3) break;
+      }
+
+      if (byRank[1].length === 0) {
+        podiumContainer.innerHTML = '';
+        return;
+      }
+
+      const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+      const renderSpot = (rank) => {
+        const group = byRank[rank];
+        if (!group || group.length === 0) return '';
+
+        const names = group.map(p => p.formattedInitials).join(' / ');
+        // When tied, stats can differ slightly (e.g. different W-L split
+        // producing the same win%); show the first tied player's line as
+        // representative rather than trying to merge differing records.
+        const rep = group[0];
+
+        return `
+          <div class="podium-spot podium-spot-${rank}">
+            <div class="podium-medal">${medals[rank]}</div>
+            <div class="podium-name">${names}</div>
+            <div class="podium-record">${rep.wins}-${rep.losses}-${rep.draws}</div>
+            <div class="podium-pct" style="color: ${rep.pctColor};">${(rep.winPct * 100).toFixed(1)}%</div>
+            <div class="podium-base podium-base-${rank}">${rank === 1 ? '1ST' : rank === 2 ? '2ND' : '3RD'}</div>
+          </div>
+        `;
+      };
+
+      podiumContainer.innerHTML = `
+        <div class="podium">
+          ${renderSpot(1)}
+          ${renderSpot(2)}
+          ${renderSpot(3)}
+        </div>
+      `;
+    }
 
     async function loadStandings() {
       const tbody = document.getElementById('standings-tbody');
@@ -332,8 +529,22 @@
         return;
       }
 
+      // Standard competition ranking (1224-style): players who are fully
+      // tied on totalPoints, wins, AND winPct share the same rank/medal
+      // instead of the earlier one arbitrarily outranking the other.
+      let currentRank = 0;
+      let previous = null;
+
       leaderboard.forEach((p, index) => {
-        const rank = index + 1;
+        const isTie = previous
+          && p.totalPoints === previous.totalPoints
+          && p.wins === previous.wins
+          && p.winPct === previous.winPct;
+
+        if (!isTie) currentRank = index + 1;
+        const rank = currentRank;
+        previous = p;
+
         let rankDisplay = `#${rank}`;
         let rankClass = '';
         let nameClass = '';
@@ -352,16 +563,15 @@
           nameClass = 'name-rank-3';
         }
 
-        // Preserve whatever case the initials were actually stored in —
-        // previously this hardcoded uppercase "D"/"S" regardless of input,
-        // silently changing the displayed casing for lowercase initials.
+        // Hidden admin link: only for the player whose initials are EXACTLY
+        // "DS" (case-insensitive). Previously this did a substring search
+        // across every player's initials, so anyone whose initials merely
+        // contained "ds" (e.g. "ADS") would have accidentally picked up a
+        // hidden, invisible link to admin.html. An exact match removes that
+        // risk entirely.
         let formattedInitials = p.initials;
-        const dsMatchIndex = p.initials.toUpperCase().indexOf('DS');
-        if (dsMatchIndex !== -1) {
-          const before = p.initials.substring(0, dsMatchIndex);
-          const matched = p.initials.substring(dsMatchIndex, dsMatchIndex + 2);
-          const after = p.initials.substring(dsMatchIndex + 2);
-          formattedInitials = `${before}<a href="admin.html" style="color: inherit; text-decoration: none;">${matched[0]}</a>${matched[1]}${after}`;
+        if (p.initials.toUpperCase() === 'DS') {
+          formattedInitials = `<a href="admin.html" style="color: inherit; text-decoration: none;">${p.initials}</a>`;
         }
 
         // Dynamic Win % Color Logic (Green if wins > losses, Red if losses > wins, muted default if even)
