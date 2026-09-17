@@ -184,21 +184,19 @@
       width: 100%;
       cursor: pointer;
       border-radius: 6px;
-      overflow: hidden; /* Ensures the dim overlay matches the rounded corners */
+      overflow: hidden;
     }
 
-    /* Dim overlay when video is paused */
     .promo-video-wrap::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4); /* Adjust opacity here if you want it darker/lighter */
+      background: rgba(0, 0, 0, 0.4);
       pointer-events: none;
       transition: opacity 0.2s ease;
       z-index: 1;
     }
 
-    /* Removes dimming once playing class is added */
     .promo-video-wrap.playing::after {
       opacity: 0;
     }
@@ -223,7 +221,7 @@
       justify-content: center;
       pointer-events: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      z-index: 2; /* Keeps the play button cleanly on top of the dim overlay */
+      z-index: 2;
     }
     .custom-play-btn .play-triangle {
       width: 0; height: 0;
@@ -256,6 +254,16 @@
     .compact-card:has(.compact-status.live) {
       border-left-color: var(--success);
     }
+    .compact-card.card-win {
+      border-color: rgba(52, 214, 122, 0.45);
+      border-left-color: var(--success);
+      background: linear-gradient(135deg, rgba(52, 214, 122, 0.09), var(--card-inner) 55%);
+    }
+    .compact-card.card-loss {
+      border-color: rgba(255, 107, 107, 0.45);
+      border-left-color: var(--danger);
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.09), var(--card-inner) 55%);
+    }
 
     .compact-left {
       display: flex;
@@ -278,6 +286,13 @@
       font-size: 0.88rem;
       overflow-wrap: break-word;
       word-break: break-word;
+    }
+
+    .compact-status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .compact-status {
@@ -311,6 +326,18 @@
       50% { opacity: 0.25; }
     }
 
+    /* Margin Badges for Live/Final Spreads & Totals */
+    .margin-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+    }
+    .margin-pos { background: rgba(52, 214, 122, 0.12); color: var(--success); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .margin-neg { background: rgba(255, 77, 77, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+    .margin-even { background: rgba(79, 184, 255, 0.12); color: var(--warning); border: 1px solid rgba(79, 184, 255, 0.3); }
+
     .compact-teams {
       display: flex;
       flex-direction: column;
@@ -326,15 +353,24 @@
       gap: 0.6rem;
     }
 
-    .compact-logo { width: 18px; height: 18px; object-fit: contain; }
-    .compact-team-abbr {
-      font-family: var(--font-label);
-      font-weight: 700;
-      color: var(--text);
-      min-width: 34px;
-      text-align: left;
-      letter-spacing: 0.3px;
+    .compact-logo {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      object-position: center;
+      background-color: #7c8a90;
+      border-radius: 50%;
+      padding: 4px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
     }
+        .compact-team-abbr {
+          font-family: var(--font-label);
+          font-weight: 700;
+          color: var(--text);
+          min-width: 34px;
+          text-align: left;
+          letter-spacing: 0.3px;
+        }
     .compact-score {
       font-family: var(--font-mono);
       font-weight: 700;
@@ -399,6 +435,25 @@
       padding: 0.15rem 0;
       flex-shrink: 0;
     }
+    .upcoming-rank.rank-1 {
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.16);
+      border-color: rgba(255, 215, 0, 0.55);
+      font-size: 0.92rem;
+      min-width: 1.9rem;
+      padding: 0.25rem 0;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.25);
+    }
+    .upcoming-rank.rank-2 {
+      color: #d8d8d8;
+      background: rgba(192, 192, 192, 0.14);
+      border-color: rgba(192, 192, 192, 0.5);
+    }
+    .upcoming-rank.rank-3 {
+      color: #e3a76f;
+      background: rgba(205, 127, 50, 0.14);
+      border-color: rgba(205, 127, 50, 0.5);
+    }
     .upcoming-body { min-width: 0; flex-grow: 1; }
     .upcoming-player { font-family: var(--font-label); font-weight: 700; color: var(--text); }
     .upcoming-pick { color: var(--text-muted); font-size: 0.83rem; margin-top: 0.1rem; }
@@ -439,6 +494,78 @@
     .btn-copy-text:hover {
       background-color: #ffc457;
     }
+
+    /* Skeleton Loading State */
+    .skeleton-line, .skeleton-block {
+      background: linear-gradient(90deg, var(--card-inner) 25%, rgba(255,255,255,0.07) 50%, var(--card-inner) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+      border-radius: 4px;
+    }
+    .skeleton-line { height: 14px; margin: 0 auto 0.85rem auto; }
+    .skeleton-title { width: 45%; height: 20px; margin: 0 auto 1.5rem auto; }
+    .skeleton-block { height: 58px; border-radius: 6px; margin-bottom: 0.75rem; }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Week Progress Pills */
+    .week-progress {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: -0.5rem 0 1.25rem 0;
+    }
+    .progress-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 10px;
+      background: rgba(124, 138, 144, 0.12);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .progress-pill.pill-final { background: rgba(255, 176, 32, 0.1); color: var(--accent); border-color: rgba(255, 176, 32, 0.3); }
+    .progress-pill.pill-live { background: rgba(52, 214, 122, 0.12); color: var(--success); border-color: rgba(52, 214, 122, 0.3); }
+    .progress-pill.pill-pending { background: rgba(124, 138, 144, 0.12); color: var(--text-muted); border-color: var(--border); }
+
+    /* Sticky Mini Header */
+    .sticky-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(10, 14, 16, 0.92);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
+    .sticky-bar-title {
+      font-family: var(--font-label);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sticky-bar-pills {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -458,8 +585,18 @@
       <a href="scores.html">Scores</a>
     </nav>
 
+    <div id="sticky-bar" class="sticky-bar" style="display: none;">
+      <span id="sticky-bar-title" class="sticky-bar-title">Week —</span>
+      <div id="sticky-bar-pills" class="sticky-bar-pills"></div>
+    </div>
+
     <div id="content-container">
-      <div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>
+      <div class="current-week-card">
+        <div class="skeleton-line skeleton-title"></div>
+        <div class="skeleton-block"></div>
+        <div class="skeleton-block"></div>
+        <div class="skeleton-block"></div>
+      </div>
     </div>
 
     <!-- Always-On Upcoming Week / Top 5 Box Container -->
@@ -473,18 +610,23 @@
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let hasLoadedOnce = false;
-    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [], currentWeekId: null };
+    let cachedData = { nextWeekNum: 1, top5: [], allPicks: [] };
 
-    // Shorthand alias mappings for robust ESPN matching
+    // Aliases map shorthand/nicknames people type into a pick to the term ESPN
+    // actually uses in its team fields (shortDisplayName, name, etc). Keep these
+    // as SHORT forms (e.g. 'texas', not 'texas longhorns') so they line up
+    // exactly with ESPN's shortDisplayName and the exact-match pass below can
+    // find them.
     const TEAM_ALIASES = {
       'sac': 'sacramento state',
       'jax state': 'jacksonville state',
-      'tcu': 'tcu horned frogs',
       'unc': 'north carolina',
       'usc': 'southern cal',
-      'unlv': 'unlv',
-      'stanford': 'stanford'
+      'tex': 'texas',
+      'bama': 'alabama',
+      'miss st': 'mississippi state',
+      'ms st': 'mississippi state',
+      'mississippi st': 'mississippi state'
     };
 
     function getTeamSearchTerms(selection) {
@@ -503,12 +645,120 @@
 
       let expanded = [];
       terms.forEach(t => {
-        expanded.push(t);
+        // Exact match check for shorthand codes like 'tex' to prevent substring collisions (e.g., North Texas)
         if (TEAM_ALIASES[t]) {
           expanded.push(TEAM_ALIASES[t]);
+        } else {
+          expanded.push(t);
         }
       });
       return expanded;
+    }
+
+    // Team-matching is done in two passes rather than one hardcoded list of
+    // "known ambiguous pairs." Any short team name can be a substring of a
+    // longer one (Alabama/North Alabama, Georgia/Georgia Tech, Texas/North
+    // Texas/Texas State, Miami/Miami OH, ...) so a single fuzzy .includes()
+    // pass is inherently unsafe. Instead:
+    //   1) EXACT pass: term must equal (not just be contained in) one of the
+    //      team's fields. This is unambiguous and resolves the vast majority
+    //      of picks, including all the substring collisions above.
+    //   2) FUZZY pass (fallback only): substring matching, for odd cases where
+    //      a pick's text doesn't exactly match any ESPN field (e.g. partial
+    //      nicknames not covered by TEAM_ALIASES).
+    // The exact pass is tried across ALL candidates before ever falling back
+    // to fuzzy, so a fuzzy match on the wrong team never wins over an exact
+    // match on the right one.
+    function teamFields(team) {
+      return {
+        name: (team.name || '').toLowerCase(),
+        shortName: (team.shortDisplayName || '').toLowerCase(),
+        displayName: (team.displayName || '').toLowerCase(),
+        abbreviation: (team.abbreviation || '').toLowerCase()
+      };
+    }
+
+    function teamMatchesExact(term, team) {
+      if (!term) return false;
+      const f = teamFields(team);
+      return term === f.name || term === f.shortName || term === f.displayName || term === f.abbreviation;
+    }
+
+    function teamMatchesFuzzy(term, team) {
+      if (!term) return false;
+      const f = teamFields(team);
+      return f.name.includes(term) || term.includes(f.name) ||
+             f.shortName.includes(term) || term.includes(f.shortName) ||
+             f.displayName.includes(term) || f.abbreviation === term;
+    }
+
+    // Finds the ESPN event matching any of searchTerms, preferring an event
+    // with an EXACT field match over one that only matches fuzzily.
+    function findMatchedEvent(searchTerms, espnEvents) {
+      const exact = espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesExact(term, c.team)))
+      );
+      if (exact) return exact;
+      return espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesFuzzy(term, c.team)))
+      );
+    }
+
+    // Determines whether searchTerms refer to the home or away side of a
+    // specific competition, again preferring exact matches over fuzzy ones so
+    // an ambiguous fuzzy hit on the home team can't override a correct exact
+    // match on the away team (or vice versa).
+    function pickIsHomeTeam(searchTerms, homeTeam, awayTeam) {
+      if (searchTerms.some(term => teamMatchesExact(term, homeTeam))) return true;
+      if (searchTerms.some(term => teamMatchesExact(term, awayTeam))) return false;
+      return searchTerms.some(term => teamMatchesFuzzy(term, homeTeam));
+    }
+
+    function calculatePickMargin(pick, competition) {
+      const selText = (pick.selection || '').trim().toLowerCase();
+      const searchTerms = getTeamSearchTerms(selText);
+      const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
+      const isTeamTotal = /\b(team total|tt)\b/.test(selText);
+
+      const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+      const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+      const homeScore = parseInt(homeTeam.score || '0', 10);
+      const awayScore = parseInt(awayTeam.score || '0', 10);
+
+      const isHomePick = pickIsHomeTeam(searchTerms, homeTeam.team, awayTeam.team);
+
+      let computedMargin = -999;
+      let computedResult = null;
+
+      if (isTotalOrTT) {
+        const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
+        if (lineMatch) {
+          const direction = lineMatch[1];
+          const line = parseFloat(lineMatch[2]);
+          const isOver = direction === 'o' || direction === 'over';
+
+          if (isTeamTotal) {
+            const pickedTeamScore = isHomePick ? homeScore : awayScore;
+            computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
+          } else {
+            const totalScore = homeScore + awayScore;
+            computedMargin = isOver ? (totalScore - line) : (line - totalScore);
+          }
+          computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+        }
+      } else {
+        const pickedTeamScore = isHomePick ? homeScore : awayScore;
+        const oppTeamScore = isHomePick ? awayScore : homeScore;
+        let spread = 0;
+        const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+        if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+        computedMargin = (pickedTeamScore + spread) - oppTeamScore;
+        computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+      }
+
+      return { computedMargin, computedResult };
     }
 
     function evaluatePicksWithScores(picks, espnEvents) {
@@ -518,66 +768,19 @@
 
         const selText = (pick.selection || '').trim().toLowerCase();
         const searchTerms = getTeamSearchTerms(selText);
-        const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
-        const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
-        const matchedEvent = espnEvents.find(ev => {
-          const comp = ev.competitions[0];
-          return comp.competitors.some(c => {
-            const name = (c.team.name || '').toLowerCase();
-            const shortName = (c.team.shortDisplayName || '').toLowerCase();
-            const displayName = (c.team.displayName || '').toLowerCase();
-            const abbreviation = (c.team.abbreviation || '').toLowerCase();
-            return searchTerms.some(term =>
-              term && (name.includes(term) || term.includes(name) || shortName.includes(term) || term.includes(shortName) || displayName.includes(term) || abbreviation === term)
-            );
-          });
-        });
+        const matchedEvent = findMatchedEvent(searchTerms, espnEvents);
 
         if (matchedEvent) {
           const competition = matchedEvent.competitions[0];
           const isFinal = competition.status.type.state === 'post';
+          const isInPlay = competition.status.type.state === 'in';
 
-          if (isFinal) {
-            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
-            const homeScore = parseInt(homeTeam.score || '0', 10);
-            const awayScore = parseInt(awayTeam.score || '0', 10);
-
-            const homeName = (homeTeam.team.name || '').toLowerCase();
-            const homeShort = (homeTeam.team.shortDisplayName || '').toLowerCase();
-            const homeAbbr = (homeTeam.team.abbreviation || '').toLowerCase();
-
-            const isHomePick = searchTerms.some(term =>
-              term && (homeName.includes(term) || homeShort.includes(term) || homeAbbr === term)
-            );
-
-            if (isTotalOrTT) {
-              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
-              if (lineMatch) {
-                const direction = lineMatch[1];
-                const line = parseFloat(lineMatch[2]);
-                const isOver = direction === 'o' || direction === 'over';
-
-                if (isTeamTotal) {
-                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
-                  computedMargin = isOver ? (pickedTeamScore - line) : (line - pickedTeamScore);
-                } else {
-                  const totalScore = homeScore + awayScore;
-                  computedMargin = isOver ? (totalScore - line) : (line - totalScore);
-                }
-                computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
-              }
-            } else {
-              const pickedTeamScore = isHomePick ? homeScore : awayScore;
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
-              let spread = 0;
-              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
-
-              computedMargin = (pickedTeamScore + spread) - oppTeamScore;
-              computedResult = computedMargin > 0 ? 'W' : (computedMargin < 0 ? 'L' : 'D');
+          if (isFinal || isInPlay) {
+            const res = calculatePickMargin(pick, competition);
+            computedMargin = res.computedMargin;
+            if (isFinal) {
+              computedResult = res.computedResult;
             }
           }
         }
@@ -589,13 +792,9 @@
       });
     }
 
-    // Writes freshly computed final results/margins back to Supabase so admin.html (and
-    // anything else reading the picks table) has real graded data without requiring a manual
-    // visit to the admin page. Only touches rows where the computed value actually differs
-    // from what's stored, so a normal 10s poll with nothing new to grade makes zero writes.
     async function syncFinalizedResultsToSupabase(evaluatedPicks) {
       const toSync = evaluatedPicks.filter(p => {
-        if (!p.computedResult) return false; // game not matched / not final yet
+        if (!p.computedResult) return false;
         const resultChanged = p.dbResult !== p.computedResult;
         const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
         return resultChanged || marginChanged;
@@ -627,6 +826,7 @@
       const otherPicksList = cachedData.allPicks.filter(p => !top5PlayerIds.has(p.player_id));
 
       if (otherPicksList.length > 0) {
+        text += `\n`;
         otherPicksList.forEach(p => {
           text += `${p.players?.initials || '??'}:\n`;
         });
@@ -642,41 +842,172 @@
       });
     }
 
-    async function loadActiveWeek(isInitialLoad = true) {
-      const container = document.getElementById('content-container');
-      const previewContainer = document.getElementById('upcoming-preview-container');
-
-      if (isInitialLoad) {
-        container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem 0;">Loading active week picks...</div>';
-      }
-
-      const { data: weeks, error: weeksError } = await _supabase
+    // Determines which week is "current" for the main page.
+    //   1. A week explicitly marked status = 'open' always wins, regardless of
+    //      date — this is the manual override / escape hatch from the admin panel.
+    //   2. Otherwise, the most recent week (by start_date) whose start_date has
+    //      already arrived wins, as long as it hasn't been force-closed.
+    // This lets weeks be created and populated with picks ahead of time (status
+    // left blank/"Scheduled") and have them activate automatically at midnight
+    // on their start_date, with no manual "open" click required.
+    async function getCurrentWeek() {
+      const { data: manualWeeks, error: manualError } = await _supabase
         .from('weeks')
         .select('*')
         .eq('status', 'open')
         .limit(1);
 
-      if (weeksError || !weeks || weeks.length === 0) {
+      if (manualError) console.error('Failed to check manually-open weeks:', manualError);
+      if (manualWeeks && manualWeeks.length > 0) return manualWeeks[0];
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: dateWeeks, error: dateError } = await _supabase
+        .from('weeks')
+        .select('*')
+        .lte('start_date', todayStr)
+        .neq('status', 'closed')
+        .order('start_date', { ascending: false })
+        .limit(1);
+
+      if (dateError) console.error('Failed to check date-activated weeks:', dateError);
+      if (dateWeeks && dateWeeks.length > 0) return dateWeeks[0];
+
+      return null;
+    }
+
+    // The promo video lives inside the same container that gets rebuilt on
+    // every poll. Capturing/restoring its play state around the innerHTML
+    // swap lets the scorecards (scores, margins, live status) actually update
+    // every 10 seconds without interrupting anyone mid-watch.
+    function captureVideoState(container) {
+      const video = container.querySelector('video');
+      if (!video) return null;
+      return { currentTime: video.currentTime, wasPlaying: !video.paused };
+    }
+
+    function restoreVideoState(container, state) {
+      if (!state) return;
+      const video = container.querySelector('video');
+      if (!video) return;
+      video.currentTime = state.currentTime;
+      if (state.wasPlaying) {
+        video.play();
+        const wrap = container.querySelector('.promo-video-wrap');
+        if (wrap) {
+          wrap.classList.add('playing');
+          const btn = wrap.querySelector('.custom-play-btn');
+          if (btn) btn.style.display = 'none';
+        }
+      }
+    }
+
+    // Counts each distinct game referenced by picks exactly once (same
+    // dedupe-by-event-id logic used when building the scorecards) and buckets
+    // it into final/live/pending, for the progress pill row and sticky bar.
+    function computeGameProgress(picks, espnEvents) {
+      const seen = new Set();
+      const counts = { final: 0, live: 0, pending: 0 };
+      picks.forEach(p => {
+        const searchTerms = getTeamSearchTerms(p.selection);
+        const matchedEvent = findMatchedEvent(searchTerms, espnEvents);
+        const key = matchedEvent ? matchedEvent.id : `unmatched_${p.id}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        if (!matchedEvent) { counts.pending++; return; }
+        const state = matchedEvent.competitions[0].status.type.state;
+        if (state === 'post') counts.final++;
+        else if (state === 'in') counts.live++;
+        else counts.pending++;
+      });
+      return counts;
+    }
+
+    // Every entry on a compact card is finalized (post) and agrees on
+    // result: tints the whole card green/red. Mixed or undecided results
+    // leave the card untinted rather than guessing which result "wins."
+    function computeCardResultClass(entriesArray) {
+      if (!entriesArray || entriesArray.length === 0) return '';
+      const results = entriesArray.map(e => e.pickObj.finalResultForScoring);
+      if (results.some(r => !r)) return '';
+      if (results.every(r => r === 'W')) return 'card-win';
+      if (results.every(r => r === 'L')) return 'card-loss';
+      return '';
+    }
+
+    function updateStickyBar(weekNumber, counts) {
+      const bar = document.getElementById('sticky-bar');
+      const title = document.getElementById('sticky-bar-title');
+      const pillsEl = document.getElementById('sticky-bar-pills');
+      if (!bar || !title || !pillsEl) return;
+
+      title.textContent = `Week ${weekNumber} Parlay`;
+
+      let pills = '';
+      if (counts.live > 0) pills += `<span class="progress-pill pill-live">${counts.live} Live</span>`;
+      if (counts.final > 0) pills += `<span class="progress-pill pill-final">${counts.final} Final</span>`;
+      if (counts.pending > 0) pills += `<span class="progress-pill pill-pending">${counts.pending} Upcoming</span>`;
+      pillsEl.innerHTML = pills;
+
+      bar.style.display = 'flex';
+    }
+
+    async function loadActiveWeek(isInitialLoad = true) {
+      const container = document.getElementById('content-container');
+      const previewContainer = document.getElementById('upcoming-preview-container');
+
+      if (isInitialLoad) {
+        container.innerHTML = `
+          <div class="current-week-card">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-block"></div>
+            <div class="skeleton-block"></div>
+            <div class="skeleton-block"></div>
+          </div>
+        `;
+      }
+
+      const currentWeek = await getCurrentWeek();
+
+      if (!currentWeek) {
         if (isInitialLoad) {
           container.innerHTML = '<div class="current-week-card"><div style="color: var(--text-muted);">No open weeks currently active.</div></div>';
           previewContainer.innerHTML = '';
         }
+        const bar = document.getElementById('sticky-bar');
+        if (bar) bar.style.display = 'none';
         return;
       }
 
-      const currentWeek = weeks[0];
-      cachedData.currentWeekId = currentWeek.id;
       cachedData.nextWeekNum = currentWeek.week_number + 1;
 
-      const [picksRes, espnRes] = await Promise.all([
+      // Let ESPN determine "current week" itself (no dates= param) instead of
+      // deriving a window from the weeks table's start_date — one less place
+      // for our own date math to drift out of sync with ESPN's schedule.
+      // Fetch BOTH FBS (groups=80) and FCS (groups=81) scoreboards and merge
+      // them, since groups=80 alone misses any game where both teams are FCS
+      // (e.g. Sacramento State vs. another FCS opponent).
+      const buildUrl = (groupId) =>
+        `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=${groupId}&limit=300`;
+
+      const [picksRes, fbsRes, fcsRes] = await Promise.all([
         _supabase.from('picks').select('*, players(initials)').eq('week_id', currentWeek.id).order('created_at', { ascending: true }),
-        fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300').catch(() => null)
+        fetch(buildUrl(80)).catch(() => null),
+        fetch(buildUrl(81)).catch(() => null)
       ]);
 
       let espnEvents = [];
-      if (espnRes && espnRes.ok) {
-        const espnData = await espnRes.json();
-        espnEvents = espnData.events || [];
+      const seenEventIds = new Set();
+      for (const res of [fbsRes, fcsRes]) {
+        if (res && res.ok) {
+          const data = await res.json();
+          (data.events || []).forEach(ev => {
+            if (!seenEventIds.has(ev.id)) {
+              seenEventIds.add(ev.id);
+              espnEvents.push(ev);
+            }
+          });
+        }
       }
 
       const picks = picksRes.data || [];
@@ -693,19 +1024,28 @@
             </div>
           `;
         }
+        const bar = document.getElementById('sticky-bar');
+        if (bar) bar.style.display = 'none';
         return;
       }
 
       const evaluatedPicks = evaluatePicksWithScores(picks, espnEvents);
-
-      // Persist any newly-final results/margins back to the DB before rendering.
       await syncFinalizedResultsToSupabase(evaluatedPicks);
+
+      const gameProgress = computeGameProgress(evaluatedPicks, espnEvents);
+      updateStickyBar(currentWeek.week_number, gameProgress);
 
       const parlayPicks = evaluatedPicks.filter(p => p.is_parlay === true);
       const otherPicks = evaluatedPicks.filter(p => !p.is_parlay);
 
       let html = `<div class="current-week-card"><div class="week-section">`;
       html += `<div class="week-title">Week ${currentWeek.week_number} Parlay:</div>`;
+
+      let progressPillsHtml = '';
+      if (gameProgress.live > 0) progressPillsHtml += `<span class="progress-pill pill-live">${gameProgress.live} Live</span>`;
+      if (gameProgress.final > 0) progressPillsHtml += `<span class="progress-pill pill-final">${gameProgress.final} Final</span>`;
+      if (gameProgress.pending > 0) progressPillsHtml += `<span class="progress-pill pill-pending">${gameProgress.pending} Upcoming</span>`;
+      if (progressPillsHtml) html += `<div class="week-progress">${progressPillsHtml}</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
@@ -738,7 +1078,6 @@
         html += `</div>`;
       }
 
-      // Video promo block correctly positioned below picks and buttons
       html += `
         <div class="promo-video-wrap" onclick="
           const wrap = this;
@@ -769,9 +1108,8 @@
         </div>
       `;
 
-      // Compact Scores Grid - includes both parlay picks and other picks mapped against ESPN
       const allDisplayPicks = evaluatedPicks;
-      if (allDisplayPicks.length > 0 && espnEvents.length > 0) {
+      if (allDisplayPicks.length > 0) {
         html += `<div class="compact-scores-grid">`;
         const gameEventMap = {};
 
@@ -780,17 +1118,7 @@
           const initials = p.players?.initials || '??';
           const trimmedSelection = p.selection.trim();
 
-          const matchedEvent = espnEvents.find(ev => {
-            const comp = ev.competitions[0];
-            return comp.competitors.some(c => {
-              const name = (c.team.name || '').toLowerCase();
-              const shortName = (c.team.shortDisplayName || '').toLowerCase();
-              const abbreviation = (c.team.abbreviation || '').toLowerCase();
-              return searchTerms.some(term =>
-                term && (name.includes(term) || shortName.includes(term) || abbreviation === term)
-              );
-            });
-          });
+          const matchedEvent = findMatchedEvent(searchTerms, espnEvents);
 
           if (matchedEvent) {
             const eventId = matchedEvent.id;
@@ -798,29 +1126,46 @@
               gameEventMap[eventId] = { event: matchedEvent, dateObj: new Date(matchedEvent.date), entriesMap: {} };
             }
             if (!gameEventMap[eventId].entriesMap[trimmedSelection]) {
-              gameEventMap[eventId].entriesMap[trimmedSelection] = [];
+              gameEventMap[eventId].entriesMap[trimmedSelection] = { initialsList: [], pickObj: p };
             }
-            if (!gameEventMap[eventId].entriesMap[trimmedSelection].includes(initials)) {
-              gameEventMap[eventId].entriesMap[trimmedSelection].push(initials);
+            if (!gameEventMap[eventId].entriesMap[trimmedSelection].initialsList.includes(initials)) {
+              gameEventMap[eventId].entriesMap[trimmedSelection].initialsList.push(initials);
             }
           } else {
             const fallbackKey = `unmatched_${p.id}`;
             gameEventMap[fallbackKey] = {
               event: null,
               dateObj: new Date('9999-12-31'),
-              entriesMap: { [trimmedSelection]: [initials] }
+              entriesMap: { [trimmedSelection]: { initialsList: [initials], pickObj: p } }
             };
           }
         });
 
-        const sortedGames = Object.values(gameEventMap).sort((a, b) => a.dateObj - b.dateObj);
+        const gameHasParlay = (item) =>
+          Object.values(item.entriesMap).some(e => e.pickObj.is_parlay === true);
+
+        const sortedGames = Object.values(gameEventMap).sort((a, b) => {
+          const aParlay = gameHasParlay(a);
+          const bParlay = gameHasParlay(b);
+          if (aParlay !== bParlay) return aParlay ? -1 : 1;
+          return a.dateObj - b.dateObj;
+        });
+
+        const anyParlayGames = sortedGames.some(gameHasParlay);
+        let dividerInserted = false;
 
         sortedGames.forEach(item => {
+          if (anyParlayGames && !dividerInserted && !gameHasParlay(item)) {
+            html += `<div class="category-title" style="margin-top: 0.5rem;">Others</div>`;
+            dividerInserted = true;
+          }
+
           let entriesArray = [];
           if (item.entriesMap) {
-            entriesArray = Object.entries(item.entriesMap).map(([sel, initialsList]) => ({
+            entriesArray = Object.entries(item.entriesMap).map(([sel, data]) => ({
               selection: sel,
-              initialsList: initialsList
+              initialsList: data.initialsList,
+              pickObj: data.pickObj
             }));
           }
 
@@ -856,11 +1201,28 @@
             });
             picksStackHtml += `</div>`;
 
+            let marginBadgesHtml = '';
+            if (statusType === 'in' || statusType === 'post') {
+              entriesArray.forEach(entry => {
+                const marginVal = entry.pickObj.margin;
+                if (marginVal !== undefined && marginVal !== -999) {
+                  let badgeText = marginVal > 0 ? `+${marginVal}` : `${marginVal}`;
+                  let badgeClass = marginVal > 0 ? 'margin-pos' : (marginVal < 0 ? 'margin-neg' : 'margin-even');
+                  marginBadgesHtml += `<span class="margin-badge ${badgeClass}" title="Current cover/total margin">${badgeText}</span>`;
+                }
+              });
+            }
+
+            const cardResultClass = computeCardResultClass(entriesArray);
+
             html += `
-              <div class="compact-card">
+              <div class="compact-card ${cardResultClass}">
                 <div class="compact-left">
                   ${picksStackHtml}
-                  <div class="compact-status ${statusClass}">${statusText}</div>
+                  <div class="compact-status-row">
+                    <div class="compact-status ${statusClass}">${statusText}</div>
+                    ${marginBadgesHtml}
+                  </div>
                 </div>
                 <div class="compact-teams">
                   <div class="compact-team-row">
@@ -898,11 +1260,10 @@
       }
       html += `</div></div>`;
 
-      if (isInitialLoad || !container.querySelector('video')) {
-        container.innerHTML = html;
-      }
+      const videoState = captureVideoState(container);
+      container.innerHTML = html;
+      restoreVideoState(container, videoState);
 
-      // Render Top 5 preview container
       let previewHtml = `
         <div class="upcoming-preview-card">
           <div class="upcoming-preview-header">
@@ -912,13 +1273,31 @@
       const allFinalized = evaluatedPicks.length > 0 && evaluatedPicks.every(p => ['W', 'L', 'D'].includes(p.finalResultForScoring));
 
       if (allFinalized) {
-        const winners = evaluatedPicks.filter(p => p.finalResultForScoring === 'W').sort((a, b) => b.sortMargin - a.sortMargin);
-        const pushes = evaluatedPicks.filter(p => p.finalResultForScoring === 'D').sort((a, b) => b.sortMargin - a.sortMargin);
-        const losses = evaluatedPicks.filter(p => p.finalResultForScoring === 'L').sort((a, b) => b.sortMargin - a.sortMargin);
+        // Parlay members only get priority treatment when they actually won
+        // or pushed — a parlay member who lost gets no boost and ranks
+        // normally alongside everyone else. Among the boosted group (parlay
+        // W/D), results still rank W > D, then margin breaks ties. Everyone
+        // else (non-parlay picks of any result, and parlay losses) ranks
+        // below the boosted group, sorted by the normal W > D > L > margin order.
+        const resultPriority = { W: 0, D: 1, L: 2 };
+        const isBoosted = (p) => p.is_parlay && (p.finalResultForScoring === 'W' || p.finalResultForScoring === 'D');
 
-        // Priority order: wins first, then draws, then losses — each ranked by margin of cover.
-        let top5 = winners.length >= 5 ? winners.slice(0, 5) : [...winners, ...pushes.slice(0, 5 - winners.length)];
-        if (top5.length < 5) top5 = [...top5, ...losses.slice(0, 5 - top5.length)];
+        const compareForRanking = (a, b) => {
+          const aBoost = isBoosted(a) ? 0 : 1;
+          const bBoost = isBoosted(b) ? 0 : 1;
+          if (aBoost !== bBoost) return aBoost - bBoost;
+
+          const pa = resultPriority[a.finalResultForScoring] ?? 3;
+          const pb = resultPriority[b.finalResultForScoring] ?? 3;
+          if (pa !== pb) return pa - pb;
+
+          return b.sortMargin - a.sortMargin;
+        };
+
+        const decidedPicks = evaluatedPicks.filter(p => ['W', 'D', 'L'].includes(p.finalResultForScoring));
+        const rankedPicks = [...decidedPicks].sort(compareForRanking);
+
+        let top5 = rankedPicks.slice(0, 5);
 
         cachedData.top5 = top5;
         previewHtml += `<button id="copy-btn-el" class="btn-copy-text" onclick="copyTop5ForText()">📋 Copy for Text</button>`;
@@ -952,7 +1331,6 @@
 
       previewHtml += `</div>`;
       previewContainer.innerHTML = previewHtml;
-      hasLoadedOnce = true;
     }
 
     loadActiveWeek(true);
