@@ -144,9 +144,10 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 0.7rem 0.85rem;
-      text-align: left;
+      text-align: center;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 0.3rem;
     }
     .stat-card .stat-label {
@@ -157,12 +158,14 @@
       letter-spacing: 0.5px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.3rem;
       white-space: nowrap;
     }
     .stat-card .stat-main-row {
       display: flex;
       align-items: baseline;
+      justify-content: center;
       flex-wrap: wrap;
       gap: 0.35rem;
     }
@@ -208,36 +211,6 @@
     }
     .overall-sub { font-family: var(--font-label); font-size: 0.9rem; color: var(--text-muted); margin-top: 0.3rem; }
 
-    /* Win% Trend Sparkline */
-    .trend-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.1rem 1.25rem 0.9rem 1.25rem;
-      margin-bottom: 2.5rem;
-      text-align: center;
-    }
-    .trend-card h3 {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 0.75rem;
-    }
-    .trend-svg-wrap { width: 100%; }
-    .trend-endpoint-label {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      font-weight: 700;
-    }
-    .trend-empty {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      font-style: italic;
-      padding: 0.5rem 0;
-    }
-
     /* Week Jump Nav */
     .week-jump-nav {
       display: flex;
@@ -268,12 +241,13 @@
     .week-history-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--border);
+      border-left: 3px solid rgba(255, 176, 32, 0.3);
       border-radius: 8px;
       padding: 1.25rem;
       margin-bottom: 1.25rem;
       text-align: center;
       scroll-margin-top: 1rem;
+      box-shadow: 0 4px 12px -4px rgba(0,0,0,0.4);
     }
     .week-history-card.week-card-win {
       border-left-color: var(--success);
@@ -292,6 +266,8 @@
       letter-spacing: 0.5px;
       text-transform: uppercase;
       margin-bottom: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
       color: var(--text);
       display: flex;
       justify-content: center;
@@ -326,31 +302,34 @@
       margin-bottom: 0.5rem;
       text-align: center;
     }
+    .history-category:not(:first-of-type) {
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--border);
+    }
 
-       /* Updated to match the inline pick style */
     .history-picks-list {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0.75rem 1.5rem;
+      gap: 0.5rem;
       margin-bottom: 1rem;
-      font-size: 1.05rem;
-    }
-    
-    .history-pick-item {
-      font-weight: 700;
-      background-color: transparent;
-      border: none;
-      padding: 0;
-      display: inline;
-      width: auto;
+      font-size: 0.9rem;
     }
 
-    /* Result Color Coding matching index style */
-    .history-pick-item.res-W { color: var(--success); }
-    .history-pick-item.res-L { color: var(--danger); }
-    .history-pick-item.res-D { color: var(--warning); }
-    .history-pick-item.res-pending { color: var(--text); }
+    /* Pick chips instead of plain colored text — matches the pill/badge
+       language used elsewhere on the site (margin badges, progress pills) */
+    .history-pick-item {
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.7rem;
+      border-radius: 14px;
+    }
+
+    .history-pick-item.res-W { color: var(--success); background: rgba(52, 214, 122, 0.1); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .history-pick-item.res-L { color: var(--danger); background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); }
+    .history-pick-item.res-D { color: var(--warning); background: rgba(79, 184, 255, 0.1); border: 1px solid rgba(79, 184, 255, 0.3); }
+    .history-pick-item.res-pending { color: var(--text); background: rgba(124, 138, 144, 0.08); border: 1px solid var(--border); }
 
     .btn-toggle-weeks {
       display: block;
@@ -407,8 +386,8 @@
 
     <div id="content-container">
       <div class="stats-grid">
-        <div class="stat-card"><div class="skeleton-line" style="width: 70%;"></div><div class="skeleton-line" style="width: 40%; height: 20px;"></div></div>
-        <div class="stat-card"><div class="skeleton-line" style="width: 70%;"></div><div class="skeleton-line" style="width: 40%; height: 20px;"></div></div>
+        <div class="stat-card"><div class="skeleton-line" style="width: 50%; height: 10px; margin-bottom: 0.4rem;"></div><div class="skeleton-line" style="width: 65%; height: 16px;"></div></div>
+        <div class="stat-card"><div class="skeleton-line" style="width: 50%; height: 10px; margin-bottom: 0.4rem;"></div><div class="skeleton-line" style="width: 65%; height: 16px;"></div></div>
       </div>
       <div class="skeleton-block" style="margin-bottom: 1.25rem;"></div>
       <div class="skeleton-block" style="margin-bottom: 1.25rem;"></div>
@@ -510,58 +489,6 @@
         if (week.start_date > todayStr) return 'UPCOMING';
       }
       return 'SCHEDULED';
-    }
-
-    // Builds a compact rolling win% sparkline across the season (chronological
-    // order), so you can see at a glance whether the group is trending up or
-    // down instead of only seeing each week's isolated result.
-    function buildTrendSparkline(weeksAscending, picks) {
-      let cumW = 0, cumL = 0;
-      const points = [];
-
-      weeksAscending.forEach(w => {
-        const weekPicks = picks.filter(p => p.week_id === w.id);
-        weekPicks.forEach(p => {
-          if (p.result === 'W') cumW++;
-          else if (p.result === 'L') cumL++;
-        });
-        const decided = cumW + cumL;
-        if (decided > 0) {
-          points.push({ weekNumber: w.week_number, pct: (cumW / decided) * 100 });
-        }
-      });
-
-      if (points.length < 2) {
-        return `<div class="trend-empty">Not enough decided picks yet to show a trend.</div>`;
-      }
-
-      const width = 300;
-      const height = 60;
-      const padX = 8;
-      const padY = 10;
-
-      const xStep = (width - padX * 2) / (points.length - 1);
-      const coords = points.map((pt, i) => {
-        const x = padX + i * xStep;
-        const y = padY + (1 - pt.pct / 100) * (height - padY * 2);
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      });
-
-      const first = points[0];
-      const last = points[points.length - 1];
-      const trendColor = last.pct >= first.pct ? 'var(--success)' : 'var(--danger)';
-
-      return `
-        <div class="trend-svg-wrap">
-          <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" preserveAspectRatio="none">
-            <polyline points="${coords.join(' ')}" fill="none" stroke="${trendColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <div style="display:flex; justify-content:space-between; margin-top:0.25rem;">
-            <span class="trend-endpoint-label" style="color: var(--text-muted);">Wk ${first.weekNumber}: ${first.pct.toFixed(0)}%</span>
-            <span class="trend-endpoint-label" style="color: ${trendColor};">Wk ${last.weekNumber}: ${last.pct.toFixed(0)}%</span>
-          </div>
-        </div>
-      `;
     }
 
     async function loadSeasonHistory() {
@@ -838,15 +765,8 @@
         </div>
       `;
 
-      // Win% Trend Sparkline (chronological order, independent of the
-      // descending display order used for the week cards below)
+      // weeksAscending (chronological order) is used below for the jump nav
       const weeksAscending = [...weeks].sort((a, b) => a.week_number - b.week_number);
-      html += `
-        <div class="trend-card">
-          <h3>Season Win% Trend</h3>
-          ${buildTrendSparkline(weeksAscending, picks || [])}
-        </div>
-      `;
 
       html += `<div class="section-title">Week-by-Week Breakdown</div>`;
 
@@ -885,7 +805,7 @@
         html += `
           <div class="week-history-card ${cardTintClass} ${isCollapsed ? 'collapsed-week' : ''}" id="week-card-${week.week_number}">
             <div class="history-week-header">
-              <span>Week ${week.week_number} (${weekStatus})</span>
+              <span>🏈 Week ${week.week_number}${weekStatus !== 'CLOSED' ? ` (${weekStatus})` : ''}</span>
               ${decidedWeekPicks.length > 0 ? `<span class="week-summary-badge ${badgeClass}">${weekW}W-${weekL}L-${weekD}D</span>` : ''}
             </div>
         `;
@@ -927,7 +847,7 @@
         toggleBtn.addEventListener('click', () => {
           expanded = !expanded;
           document.querySelectorAll('.collapsed-week').forEach(el => {
-            el.style.display = expanded ? '' : 'none';
+            el.style.display = expanded ? 'block' : 'none';
           });
           toggleBtn.textContent = expanded ? 'Show Recent Only' : `Show All ${weeks.length} Weeks`;
         });
