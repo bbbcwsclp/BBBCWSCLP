@@ -138,31 +138,40 @@
       text-align: center;
     }
 
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem; }
     .stat-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1.25rem 0.75rem;
+      padding: 0.7rem 0.85rem;
       text-align: center;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      min-height: 110px;
+      gap: 0.3rem;
     }
-    .stat-card h3 {
+    .stat-card .stat-label {
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
       white-space: nowrap;
+    }
+    .stat-card .stat-main-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.35rem;
     }
     .stat-card .stat-value {
       font-family: var(--font-label);
-      font-size: 1.15rem;
+      font-size: 0.98rem;
       font-weight: 700;
       color: var(--text);
       line-height: 1.2;
@@ -170,10 +179,10 @@
     }
     .stat-card .stat-sub {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-muted);
-      margin-top: 0.3rem;
+      opacity: 0.9;
     }
 
     /* Overall Performance Box */
@@ -183,7 +192,7 @@
       border-radius: 8px;
       padding: 1.25rem;
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 1.5rem;
     }
     .overall-card h3 {
       font-family: var(--font-mono);
@@ -202,27 +211,92 @@
     }
     .overall-sub { font-family: var(--font-label); font-size: 0.9rem; color: var(--text-muted); margin-top: 0.3rem; }
 
+    /* Week Jump Nav */
+    .week-jump-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+    .week-jump-pill {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.25rem 0.65rem;
+      transition: all 0.15s ease;
+    }
+    .week-jump-pill:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(255, 176, 32, 0.08);
+    }
+
     /* History Feed */
     .week-history-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
       border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
       text-align: center;
+      scroll-margin-top: 1rem;
+      box-shadow: 0 4px 12px -4px rgba(0,0,0,0.4);
+      overflow: hidden;
     }
-    .history-week-header {
+    .week-history-card.week-card-win { border-left-color: var(--success); }
+    .week-history-card.week-card-loss { border-left-color: var(--danger); }
+    .week-history-card.collapsed-week { display: none; }
+
+    /* Full-bleed header bar, matching the Overall Leaderboard card style */
+    .week-history-card-header {
       font-family: var(--font-display);
       font-weight: 400;
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      margin-bottom: 0.75rem;
+      padding: 0.7rem 1.1rem;
+      background: var(--card-inner);
+      border-bottom: 2px solid var(--accent);
       color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
+    .week-history-card.week-card-win .week-history-card-header { border-bottom-color: var(--success); }
+    .week-history-card.week-card-loss .week-history-card-header { border-bottom-color: var(--danger); }
+
+    .week-history-card-body {
+      padding: 0.9rem 1rem;
+    }
+    .week-history-card.week-card-win .week-history-card-body {
+      background: linear-gradient(135deg, rgba(52, 214, 122, 0.06), var(--card-bg) 55%);
+    }
+    .week-history-card.week-card-loss .week-history-card-body {
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.06), var(--card-bg) 55%);
+    }
+
+    .week-summary-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      background: rgba(124, 138, 144, 0.12);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      text-transform: none;
+    }
+    .week-summary-badge.badge-win { background: rgba(52, 214, 122, 0.12); color: var(--success); border-color: rgba(52, 214, 122, 0.3); }
+    .week-summary-badge.badge-loss { background: rgba(255, 107, 107, 0.12); color: var(--danger); border-color: rgba(255, 107, 107, 0.3); }
 
     .history-category {
       font-family: var(--font-mono);
@@ -231,36 +305,79 @@
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-top: 0.9rem;
-      margin-bottom: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.35rem;
       text-align: center;
     }
+    /* Divider only applies where explicitly marked (the "Others" section
+       when it follows a Parlay section) rather than via :first-of-type,
+       which matches the first <div> of ANY kind in the card — not the
+       first .history-category — and was drawing an extra line above
+       Parlay in addition to the header's own border. */
+    .history-category.history-category-divider {
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--border);
+    }
 
-       /* Updated to match the inline pick style */
     .history-picks-list {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0.75rem 1.5rem;
-      margin-bottom: 1rem;
-      font-size: 1.05rem;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
     }
-    
+
+    /* Pick chips instead of plain colored text — matches the pill/badge
+       language used elsewhere on the site (margin badges, progress pills) */
     .history-pick-item {
       font-weight: 700;
-      background-color: transparent;
-      border: none;
-      padding: 0;
-      display: inline;
-      width: auto;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.28rem 0.6rem;
+      font-size: 0.88rem;
+      border-radius: 14px;
     }
 
-    /* Result Color Coding matching index style */
-    .history-pick-item.res-W { color: var(--success); }
-    .history-pick-item.res-L { color: var(--danger); }
-    .history-pick-item.res-D { color: var(--warning); }
-    .history-pick-item.res-pending { color: var(--text); }
+    .history-pick-item.res-W { color: var(--success); background: rgba(52, 214, 122, 0.1); border: 1px solid rgba(52, 214, 122, 0.3); }
+    .history-pick-item.res-L { color: var(--danger); background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); }
+    .history-pick-item.res-D { color: var(--warning); background: rgba(79, 184, 255, 0.1); border: 1px solid rgba(79, 184, 255, 0.3); }
+    .history-pick-item.res-pending { color: var(--text); background: rgba(124, 138, 144, 0.08); border: 1px solid var(--border); }
 
+    .btn-toggle-weeks {
+      display: block;
+      margin: 0.5rem auto 2rem auto;
+      background-color: var(--card-inner);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.55rem 1.25rem;
+      border-radius: 20px;
+      font-family: var(--font-label);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-toggle-weeks:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Skeleton Loading State */
+    .skeleton-line, .skeleton-block {
+      background: linear-gradient(90deg, var(--card-inner) 25%, rgba(255,255,255,0.07) 50%, var(--card-inner) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+      border-radius: 4px;
+    }
+    .skeleton-line { height: 14px; margin: 0 auto 0.75rem auto; }
+    .skeleton-block { height: 90px; border-radius: 8px; }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
 </head>
 <body>
@@ -281,7 +398,12 @@
     </nav>
 
     <div id="content-container">
-      <div style="color: var(--text-muted);">Loading season history...</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="skeleton-line" style="width: 50%; height: 10px; margin-bottom: 0.4rem;"></div><div class="skeleton-line" style="width: 65%; height: 16px;"></div></div>
+        <div class="stat-card"><div class="skeleton-line" style="width: 50%; height: 10px; margin-bottom: 0.4rem;"></div><div class="skeleton-line" style="width: 65%; height: 16px;"></div></div>
+      </div>
+      <div class="skeleton-block" style="margin-bottom: 1.25rem;"></div>
+      <div class="skeleton-block" style="margin-bottom: 1.25rem;"></div>
     </div>
   </div>
 
@@ -291,6 +413,31 @@
 
     const { createClient } = window.supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Same alias map used on index.html so a pick typed as "Bama" and one
+    // typed as "Alabama" get grouped as the same team here instead of
+    // splitting the Best/Worst Bet Team tally across two separate entries.
+    const TEAM_ALIASES = {
+      'sac': 'sacramento state',
+      'jax state': 'jacksonville state',
+      'unc': 'north carolina',
+      'usc': 'southern cal',
+      'tex': 'texas',
+      'bama': 'alabama',
+      'miss st': 'mississippi state',
+      'ms st': 'mississippi state',
+      'mississippi st': 'mississippi state'
+    };
+
+    function titleCase(str) {
+      return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+    }
+
+    function canonicalizeTeamName(rawTeamName) {
+      const lower = rawTeamName.trim().toLowerCase();
+      const canonicalLower = TEAM_ALIASES[lower] || lower;
+      return titleCase(canonicalLower);
+    }
 
     // Helper function to extract team names properly from pick strings (handling spreads, totals, team totals, and matchups)
     function extractTeamNamesFromSelection(selectionText) {
@@ -303,10 +450,14 @@
       clean = clean.replace(/\b[ou]\s*[\d\.]+\b/gi, '');
       clean = clean.replace(/[+-]?\d+(\.\d+)?/g, '').trim();
 
+      let rawTeams;
       if (clean.includes('/')) {
-        return clean.split('/').map(t => t.trim()).filter(Boolean);
+        rawTeams = clean.split('/').map(t => t.trim()).filter(Boolean);
+      } else {
+        rawTeams = clean ? [clean] : [];
       }
-      return clean ? [clean] : [];
+
+      return rawTeams.map(canonicalizeTeamName);
     }
 
     // Mirrors the same "current week" logic used on index.html: a week
@@ -364,7 +515,6 @@
         .select('*, players(initials)');
 
       const container = document.getElementById('content-container');
-      container.innerHTML = '';
 
       if (weeksErr || picksErr) {
         console.error('Failed to load season history:', weeksErr || picksErr);
@@ -392,6 +542,9 @@
       const teamLossCounts = {};
       const teamLossDisplay = {};
 
+      let biggestWin = null;
+      let biggestLoss = null;
+
       if (picks) {
         picks.forEach(p => {
           const res = p.result;
@@ -411,6 +564,13 @@
               teamCorrectCounts[key] = (teamCorrectCounts[key] || 0) + 1;
               if (!teamCorrectDisplay[key]) teamCorrectDisplay[key] = teamName;
             });
+
+            // Biggest cover/blowout: largest positive margin on a winning pick.
+            if (typeof p.margin === 'number' && p.margin !== -999) {
+              if (!biggestWin || p.margin > biggestWin.margin) {
+                biggestWin = { margin: p.margin, initials: p.players?.initials || '??', selection };
+              }
+            }
           } else if (res === 'L') {
             totalL++;
             if (isOU) ouL++;
@@ -423,6 +583,13 @@
               teamLossCounts[key] = (teamLossCounts[key] || 0) + 1;
               if (!teamLossDisplay[key]) teamLossDisplay[key] = teamName;
             });
+
+            // Biggest bad beat: largest negative margin (furthest from covering) on a losing pick.
+            if (typeof p.margin === 'number' && p.margin !== -999) {
+              if (!biggestLoss || p.margin < biggestLoss.margin) {
+                biggestLoss = { margin: p.margin, initials: p.players?.initials || '??', selection };
+              }
+            }
           } else if (res === 'D') {
             totalD++;
             if (isOU) ouD++;
@@ -527,6 +694,12 @@
       const worstTeamName = worstTeam;
       const worstTeamSub = maxLossCount > 0 ? `(${maxLossCount}L)` : '';
 
+      const biggestWinValue = biggestWin ? `${biggestWin.initials}: ${biggestWin.selection}` : 'None';
+      const biggestWinSub = biggestWin ? `(+${biggestWin.margin})` : '';
+
+      const biggestLossValue = biggestLoss ? `${biggestLoss.initials}: ${biggestLoss.selection}` : 'None';
+      const biggestLossSub = biggestLoss ? `(${biggestLoss.margin})` : '';
+
       // --- RENDER SELECTION ---
       let html = `<div class="section-title">Team Metrics</div>`;
 
@@ -534,14 +707,18 @@
       html += `
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>🔥 Hot Streak</h3>
-            <div class="stat-value" style="color: var(--success);">${hotNames}</div>
-            ${hotSub ? `<div class="stat-sub" style="color: var(--success);">${hotSub}</div>` : ''}
+            <div class="stat-label">🔥 Hot Streak</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success);">${hotNames}</span>
+              ${hotSub ? `<span class="stat-sub" style="color: var(--success);">${hotSub}</span>` : ''}
+            </div>
           </div>
           <div class="stat-card">
-            <h3>❄️ Cold Streak</h3>
-            <div class="stat-value" style="color: var(--danger);">${coldNames}</div>
-            ${coldSub ? `<div class="stat-sub" style="color: var(--danger);">${coldSub}</div>` : ''}
+            <div class="stat-label">❄️ Cold Streak</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger);">${coldNames}</span>
+              ${coldSub ? `<span class="stat-sub" style="color: var(--danger);">${coldSub}</span>` : ''}
+            </div>
           </div>
         </div>
       `;
@@ -550,51 +727,101 @@
       html += `
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>Best Bet Team</h3>
-            <div class="stat-value" style="color: var(--success);">${topTeamName}</div>
-            ${topTeamSub ? `<div class="stat-sub" style="color: var(--success);">${topTeamSub}</div>` : ''}
+            <div class="stat-label">Best Bet Team</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success);">${topTeamName}</span>
+              ${topTeamSub ? `<span class="stat-sub" style="color: var(--success);">${topTeamSub}</span>` : ''}
+            </div>
           </div>
           <div class="stat-card">
-            <h3>Worst Bet Team</h3>
-            <div class="stat-value" style="color: var(--danger);">${worstTeamName}</div>
-            ${worstTeamSub ? `<div class="stat-sub" style="color: var(--danger);">${worstTeamSub}</div>` : ''}
+            <div class="stat-label">Worst Bet Team</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger);">${worstTeamName}</span>
+              ${worstTeamSub ? `<span class="stat-sub" style="color: var(--danger);">${worstTeamSub}</span>` : ''}
+            </div>
           </div>
         </div>
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>Spread W-L-D</h3>
-            <div class="stat-value">${spreadW}-${spreadL}-${spreadD}</div>
+            <div class="stat-label">Spread W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${spreadW}-${spreadL}-${spreadD}</span></div>
           </div>
           <div class="stat-card">
-            <h3>O/U W-L-D</h3>
-            <div class="stat-value">${ouW}-${ouL}-${ouD}</div>
+            <div class="stat-label">O/U W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${ouW}-${ouL}-${ouD}</span></div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">🏆 Biggest Cover</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--success); font-size: 0.88rem;">${biggestWinValue}</span>
+              ${biggestWinSub ? `<span class="stat-sub" style="color: var(--success);">${biggestWinSub}</span>` : ''}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">💀 Worst Beat</div>
+            <div class="stat-main-row">
+              <span class="stat-value" style="color: var(--danger); font-size: 0.88rem;">${biggestLossValue}</span>
+              ${biggestLossSub ? `<span class="stat-sub" style="color: var(--danger);">${biggestLossSub}</span>` : ''}
+            </div>
           </div>
         </div>
       `;
 
       // Overall Performance Box
       html += `
-        <div class="overall-card" style="margin-top: 0.5rem;">
+        <div class="overall-card">
           <h3>Overall Group Performance</h3>
           <div class="overall-value">${totalW} - ${totalL} - ${totalD}</div>
           <div class="overall-sub">Win Rate: ${groupWinPct}</div>
         </div>
       `;
 
-      html += `<div class="section-title" style="margin-top: 1.5rem;">Week-by-Week Breakdown</div>`;
+      // weeksAscending (chronological order) is used below for the jump nav
+      const weeksAscending = [...weeks].sort((a, b) => a.week_number - b.week_number);
 
-      // Render Past Weeks
-      weeks.forEach(week => {
+      html += `<div class="section-title">Week-by-Week Breakdown</div>`;
+
+      // Jump-to-week nav (chronological, left-to-right)
+      html += `<div class="week-jump-nav">`;
+      weeksAscending.forEach(w => {
+        html += `<a href="#week-card-${w.week_number}" class="week-jump-pill">W${w.week_number}</a>`;
+      });
+      html += `</div>`;
+
+      // Render Past Weeks — only the most recent few are shown expanded by
+      // default; older weeks collapse behind a "Show all weeks" toggle so
+      // the page doesn't turn into endless scrolling deep into a season.
+      const RECENT_WEEKS_SHOWN = 3;
+
+      weeks.forEach((week, idx) => {
         const weekPicks = picks ? picks.filter(p => p.week_id === week.id) : [];
         const parlayPicks = weekPicks.filter(p => p.is_parlay === true);
         const otherPicks = weekPicks.filter(p => p.is_parlay !== true);
         const weekStatus = computeWeekDisplayStatus(week, currentWeekId);
 
+        const decidedWeekPicks = weekPicks.filter(p => ['W', 'L', 'D'].includes(p.result));
+        const weekW = decidedWeekPicks.filter(p => p.result === 'W').length;
+        const weekL = decidedWeekPicks.filter(p => p.result === 'L').length;
+        const weekD = decidedWeekPicks.filter(p => p.result === 'D').length;
+
+        let cardTintClass = '';
+        let badgeClass = '';
+        if (decidedWeekPicks.length > 0) {
+          if (weekL === 0 && weekW > 0) { cardTintClass = 'week-card-win'; badgeClass = 'badge-win'; }
+          else if (weekW === 0 && weekL > 0) { cardTintClass = 'week-card-loss'; badgeClass = 'badge-loss'; }
+        }
+
+        const isCollapsed = idx >= RECENT_WEEKS_SHOWN;
+
         html += `
-          <div class="week-history-card">
-            <div class="history-week-header">
-              <span>Week ${week.week_number} (${weekStatus})</span>
+          <div class="week-history-card ${cardTintClass} ${isCollapsed ? 'collapsed-week' : ''}" id="week-card-${week.week_number}">
+            <div class="week-history-card-header">
+              <span>🏈 Week ${week.week_number}${weekStatus !== 'CLOSED' ? ` (${weekStatus})` : ''}</span>
+              ${decidedWeekPicks.length > 0 ? `<span class="week-summary-badge ${badgeClass}">${weekW}W-${weekL}L-${weekD}D</span>` : ''}
             </div>
+            <div class="week-history-card-body">
         `;
 
         if (weekPicks.length === 0) {
@@ -610,7 +837,8 @@
           }
 
           if (otherPicks.length > 0) {
-            html += `<div class="history-category">Others</div><div class="history-picks-list">`;
+            const dividerClass = parlayPicks.length > 0 ? 'history-category-divider' : '';
+            html += `<div class="history-category ${dividerClass}">Others</div><div class="history-picks-list">`;
             otherPicks.forEach(p => {
               const resClass = p.result ? `res-${p.result}` : 'res-pending';
               html += `<div class="history-pick-item ${resClass}"><strong>${p.players?.initials || '??'}:</strong>&nbsp;${p.selection}</div>`;
@@ -619,10 +847,26 @@
           }
         }
 
-        html += `</div>`;
+        html += `</div></div>`;
       });
 
+      if (weeks.length > RECENT_WEEKS_SHOWN) {
+        html += `<button id="toggle-weeks-btn" class="btn-toggle-weeks">Show All ${weeks.length} Weeks</button>`;
+      }
+
       container.innerHTML = html;
+
+      const toggleBtn = document.getElementById('toggle-weeks-btn');
+      if (toggleBtn) {
+        let expanded = false;
+        toggleBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          document.querySelectorAll('.collapsed-week').forEach(el => {
+            el.style.display = expanded ? 'block' : 'none';
+          });
+          toggleBtn.textContent = expanded ? 'Show Recent Only' : `Show All ${weeks.length} Weeks`;
+        });
+      }
     }
 
     loadSeasonHistory();
