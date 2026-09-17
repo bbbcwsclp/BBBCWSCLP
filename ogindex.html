@@ -536,13 +536,6 @@
     }
 
     /* Week Progress Pills */
-    .week-progress {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin: -0.5rem 0 0.6rem 0;
-    }
     .progress-pill {
       font-family: var(--font-mono);
       font-size: 0.68rem;
@@ -1070,12 +1063,6 @@
       let html = `<div class="current-week-card">`;
       html += `<div class="current-week-card-header"><span>Week ${currentWeek.week_number} Parlay</span></div>`;
       html += `<div class="current-week-card-body">`;
-
-      let progressPillsHtml = '';
-      if (gameProgress.live > 0) progressPillsHtml += `<span class="progress-pill pill-live">${gameProgress.live} Live</span>`;
-      if (gameProgress.final > 0) progressPillsHtml += `<span class="progress-pill pill-final">${gameProgress.final} Final</span>`;
-      if (gameProgress.pending > 0) progressPillsHtml += `<span class="progress-pill pill-pending">${gameProgress.pending} Upcoming</span>`;
-      if (progressPillsHtml) html += `<div class="week-progress">${progressPillsHtml}</div>`;
 
       if (parlayPicks.length > 0) {
         html += `<div class="picks-group">`;
