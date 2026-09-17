@@ -889,15 +889,18 @@
           else added++;
         } else {
           const desiredIsParlay = isDesignated || existing.is_parlay;
-          const sameSelection = existing.selection.trim().toLowerCase() === selection.toLowerCase();
+          const sameSelection = pickSelectionsAreEquivalent(existing.selection, selection);
           const sameParlayFlag = existing.is_parlay === desiredIsParlay;
 
           if (sameSelection && sameParlayFlag) {
             skipped++;
           } else {
+            const updatePayload = { is_parlay: desiredIsParlay };
+            if (!sameSelection) updatePayload.selection = selection;
+
             const { error } = await _supabase
               .from('picks')
-              .update({ selection: selection, is_parlay: desiredIsParlay })
+              .update(updatePayload)
               .eq('id', existing.id);
             if (error) problems.push(`Failed to update ${initials}: ${error.message}`);
             else updated++;
@@ -1148,6 +1151,37 @@
 
       const terms = clean.includes('/') ? clean.split('/').map(t => t.trim()) : [clean];
       return terms.map(t => TEAM_ALIASES[t] || t);
+    }
+
+    // Compares two pick selections on team + number rather than raw text, so
+    // re-pasting the same group chat text (which may still say "bama") after
+    // a spelling fix ("Alabama") doesn't look like a change and overwrite it.
+    // Only a genuinely different line — the number moved, or the team
+    // changed entirely — counts as an update.
+    function pickSignature(selection) {
+      if (!selection) return { teamKey: '', numberKey: '' };
+      const raw = selection.trim().toLowerCase();
+
+      const teamKey = getTeamSearchTerms(selection).join('/');
+
+      const totalMatch = raw.match(/\b([ou])\s*(\d+(\.\d+)?)\b/) || raw.match(/\b(over|under)\s*(\d+(\.\d+)?)\b/);
+      const spreadMatch = raw.match(/([+-]?\d+(\.\d+)?)$/);
+
+      let numberKey = '';
+      if (totalMatch) {
+        const direction = totalMatch[1].startsWith('o') ? 'o' : 'u';
+        numberKey = `${direction}${parseFloat(totalMatch[2])}`;
+      } else if (spreadMatch) {
+        numberKey = parseFloat(spreadMatch[1]).toString();
+      }
+
+      return { teamKey, numberKey };
+    }
+
+    function pickSelectionsAreEquivalent(a, b) {
+      const sigA = pickSignature(a);
+      const sigB = pickSignature(b);
+      return sigA.teamKey === sigB.teamKey && sigA.numberKey === sigB.numberKey;
     }
 
     async function autoGradePicksSilently(sectionType) {
