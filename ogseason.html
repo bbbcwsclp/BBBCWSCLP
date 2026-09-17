@@ -816,10 +816,11 @@
 
         html += `
           <div class="week-history-card ${cardTintClass} ${isCollapsed ? 'collapsed-week' : ''}" id="week-card-${week.week_number}">
-            <div class="history-week-header">
+            <div class="week-history-card-header">
               <span>🏈 Week ${week.week_number}${weekStatus !== 'CLOSED' ? ` (${weekStatus})` : ''}</span>
               ${decidedWeekPicks.length > 0 ? `<span class="week-summary-badge ${badgeClass}">${weekW}W-${weekL}L-${weekD}D</span>` : ''}
             </div>
+            <div class="week-history-card-body">
         `;
 
         if (weekPicks.length === 0) {
@@ -835,7 +836,8 @@
           }
 
           if (otherPicks.length > 0) {
-            html += `<div class="history-category">Others</div><div class="history-picks-list">`;
+            const dividerClass = parlayPicks.length > 0 ? 'history-category-divider' : '';
+            html += `<div class="history-category ${dividerClass}">Others</div><div class="history-picks-list">`;
             otherPicks.forEach(p => {
               const resClass = p.result ? `res-${p.result}` : 'res-pending';
               html += `<div class="history-pick-item ${resClass}"><strong>${p.players?.initials || '??'}:</strong>&nbsp;${p.selection}</div>`;
@@ -844,7 +846,7 @@
           }
         }
 
-        html += `</div>`;
+        html += `</div></div>`;
       });
 
       if (weeks.length > RECENT_WEEKS_SHOWN) {
