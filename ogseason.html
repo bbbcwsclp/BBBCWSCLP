@@ -243,37 +243,44 @@
       border: 1px solid var(--border);
       border-left: 3px solid rgba(255, 176, 32, 0.3);
       border-radius: 8px;
-      padding: 1.25rem;
       margin-bottom: 1.25rem;
       text-align: center;
       scroll-margin-top: 1rem;
       box-shadow: 0 4px 12px -4px rgba(0,0,0,0.4);
+      overflow: hidden;
     }
-    .week-history-card.week-card-win {
-      border-left-color: var(--success);
-      background: linear-gradient(135deg, rgba(52, 214, 122, 0.06), var(--card-bg) 55%);
-    }
-    .week-history-card.week-card-loss {
-      border-left-color: var(--danger);
-      background: linear-gradient(135deg, rgba(255, 107, 107, 0.06), var(--card-bg) 55%);
-    }
+    .week-history-card.week-card-win { border-left-color: var(--success); }
+    .week-history-card.week-card-loss { border-left-color: var(--danger); }
     .week-history-card.collapsed-week { display: none; }
 
-    .history-week-header {
+    /* Full-bleed header bar, matching the Overall Leaderboard card style */
+    .week-history-card-header {
       font-family: var(--font-display);
       font-weight: 400;
       font-size: 1.3rem;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      background: var(--card-inner);
+      border-bottom: 2px solid var(--accent);
       color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 0.6rem;
       flex-wrap: wrap;
+    }
+    .week-history-card.week-card-win .week-history-card-header { border-bottom-color: var(--success); }
+    .week-history-card.week-card-loss .week-history-card-header { border-bottom-color: var(--danger); }
+
+    .week-history-card-body {
+      padding: 1.25rem;
+    }
+    .week-history-card.week-card-win .week-history-card-body {
+      background: linear-gradient(135deg, rgba(52, 214, 122, 0.06), var(--card-bg) 55%);
+    }
+    .week-history-card.week-card-loss .week-history-card-body {
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.06), var(--card-bg) 55%);
     }
 
     .week-summary-badge {
@@ -302,7 +309,12 @@
       margin-bottom: 0.5rem;
       text-align: center;
     }
-    .history-category:not(:first-of-type) {
+    /* Divider only applies where explicitly marked (the "Others" section
+       when it follows a Parlay section) rather than via :first-of-type,
+       which matches the first <div> of ANY kind in the card — not the
+       first .history-category — and was drawing an extra line above
+       Parlay in addition to the header's own border. */
+    .history-category.history-category-divider {
       padding-top: 0.75rem;
       border-top: 1px dashed var(--border);
     }
