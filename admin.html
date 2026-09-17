@@ -543,6 +543,7 @@
       await loadAdminPicks();
       await autoGradePicksSilently('active');
       await autoGradePicksSilently('finalized');
+      await maybeAutoAdvanceWeek();
     }
 
     function hasAnyUnsavedChanges() {
@@ -687,6 +688,13 @@
       }
     });
 
+    function addDaysToDateStr(dateStr, days) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+
     // Replaces the old autoOpenNextWeek(). With week activation now driven by
     // start_date on the main page, we no longer force the next week's status
     // to 'open' — we just make sure a row exists for it so you can start
@@ -748,6 +756,8 @@
 
       if (!existing) {
         const { playerIds: parlayPickerIds, initials: parlayInitials } = await computeParlayPickersFromWeek(closedWeekNum);
+        const closedWeekObj = allWeeksCache.find(w => w.week_number === closedWeekNum);
+        const nextStartDate = addDaysToDateStr(closedWeekObj?.start_date, 7);
 
         const { error } = await _supabase
           .from('weeks')
@@ -755,18 +765,73 @@
             season: 2026,
             week_number: nextWeekNum,
             status: 'scheduled',
+            start_date: nextStartDate,
             parlay_pickers: parlayPickerIds.length > 0 ? parlayPickerIds : null
           }]);
         if (error) {
           console.error('Error creating next week:', error.message);
           return `(Could not create Week ${nextWeekNum}: ${error.message})`;
         }
+        const dateNote = nextStartDate ? ` (defaulted to ${nextStartDate}, one week after Week ${closedWeekNum} — adjust if needed)` : '';
         return parlayPickerIds.length > 0
-          ? `Week ${nextWeekNum} created with parlay pickers set from Week ${closedWeekNum} (${parlayInitials.join(', ')}) — set its start date to activate it.`
-          : `Week ${nextWeekNum} created — set its start date to activate it.`;
+          ? `Week ${nextWeekNum} created with parlay pickers set from Week ${closedWeekNum} (${parlayInitials.join(', ')})${dateNote}.`
+          : `Week ${nextWeekNum} created${dateNote}.`;
       }
 
       return '';
+    }
+
+    // Mirrors getCurrentWeek() in ogindex.html: a week explicitly marked
+    // status='open' always wins; otherwise the most recent week (by
+    // start_date) whose date has arrived and isn't force-closed. Kept in
+    // sync so "the current week" means the same thing here as on the
+    // public page.
+    function getCurrentWeekFromCache() {
+      const manualOpen = allWeeksCache.find(w => w.status === 'open');
+      if (manualOpen) return manualOpen;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const dateActivated = allWeeksCache
+        .filter(w => w.start_date && w.start_date <= todayStr && w.status !== 'closed')
+        .sort((a, b) => (b.start_date || '').localeCompare(a.start_date || ''));
+
+      return dateActivated[0] || null;
+    }
+
+    // Once every pick in the current week has a saved (graded) result, sets up
+    // the next week automatically — same as manually force-closing the current
+    // week, minus actually flipping its status. Leaving status alone means
+    // getCurrentWeek() on the public page keeps showing this week as ACTIVE
+    // until the next week's own start_date arrives (Wednesday), rather than
+    // yanking it out of view the moment the last game finishes.
+    async function maybeAutoAdvanceWeek() {
+      const currentWeekObj = getCurrentWeekFromCache();
+      if (!currentWeekObj) return;
+
+      const nextWeekNum = currentWeekObj.week_number + 1;
+      if (nextWeekNum > 12) return;
+      if (allWeeksCache.find(w => w.week_number === nextWeekNum)) return;
+
+      const { data: picks, error } = await _supabase
+        .from('picks')
+        .select('id, result')
+        .eq('week_id', currentWeekObj.id);
+
+      if (error || !picks || picks.length === 0) return;
+      const allGraded = picks.every(p => p.result !== null && p.result !== '');
+      if (!allGraded) return;
+
+      const resultText = await ensureNextWeekExists(currentWeekObj.week_number);
+      if (resultText) {
+        const isError = resultText.startsWith('(Could not');
+        const msg = document.getElementById('week-msg');
+        if (msg) {
+          msg.style.background = isError ? 'rgba(255, 77, 77, 0.15)' : 'rgba(52, 214, 122, 0.15)';
+          msg.style.color = isError ? 'var(--danger)' : 'var(--success)';
+          msg.innerText = `Week ${currentWeekObj.week_number} fully graded — ${resultText}`;
+        }
+        if (!isError) await loadDropdowns();
+      }
     }
 
     async function setParlayPickersFromPreviousWeek() {
@@ -857,8 +922,19 @@
 
       const designatedPickers = currentWeekObj?.parlay_pickers || currentWeekObj?.pickers || [];
 
+      // Best-effort: flag picks that don't resolve to any ESPN matchup so a typo'd
+      // or unusual team name gets caught now instead of silently failing to
+      // auto-grade later. Never blocks the add itself if ESPN is unreachable.
+      let espnEvents = null;
+      try {
+        espnEvents = await fetchEspnEvents();
+      } catch (err) {
+        console.error('Bulk-add ESPN validation skipped:', err);
+      }
+
       let added = 0, updated = 0, skipped = 0;
       const problems = [];
+      const warnings = [];
 
       for (const line of lines) {
         const match = line.match(/^([A-Za-z]{1,6})\s*[:\-–]\s*(.+)$/);
@@ -873,6 +949,10 @@
         if (!player) {
           problems.push(`Unknown player initials "${initials}" in: "${line}"`);
           continue;
+        }
+
+        if (espnEvents && !findEspnEventForSearchTerms(getTeamSearchTerms(selection), espnEvents)) {
+          warnings.push(`No ESPN matchup found for "${selection}" (${initials}) — added anyway, but check spelling if it doesn't auto-grade.`);
         }
 
         const isDesignated = designatedPickers.includes(player.id) || designatedPickers.includes(player.id.toString()) || designatedPickers.includes(player.initials);
@@ -908,10 +988,12 @@
         }
       }
 
-      resultDiv.style.background = problems.length ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
-      resultDiv.style.color = problems.length ? 'var(--accent)' : 'var(--success)';
+      const hasIssues = problems.length > 0 || warnings.length > 0;
+      resultDiv.style.background = hasIssues ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
+      resultDiv.style.color = hasIssues ? 'var(--accent)' : 'var(--success)';
       let summary = `Added ${added}, updated ${updated}, skipped ${skipped} (already up to date).`;
       if (problems.length) summary += ` Issues: ${problems.join(' | ')}`;
+      if (warnings.length) summary += ` Warnings: ${warnings.join(' | ')}`;
       resultDiv.innerText = summary;
 
       textarea.value = '';
@@ -1184,6 +1266,71 @@
       return sigA.teamKey === sigB.teamKey && sigA.numberKey === sigB.numberKey;
     }
 
+    async function fetchEspnEvents() {
+      const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
+      const data = await response.json();
+      return data.events || null;
+    }
+
+    const ESPN_SEASON_START_CUTOFF = new Date('2026-09-01T00:00:00Z');
+
+    // Shared by autoGradePicks (grading) and bulkAddPicks (paste-time validation)
+    // so a pick that fails to match here fails to match there too, instead of
+    // silently drifting apart. Skips games before the season cutoff.
+    function findEspnEventForSearchTerms(searchTerms, events) {
+      for (const event of events) {
+        const eventDate = new Date(event.date);
+        if (eventDate < ESPN_SEASON_START_CUTOFF) continue;
+
+        const comp = event.competitions[0];
+        const home = comp.competitors.find(c => c.homeAway === 'home');
+        const away = comp.competitors.find(c => c.homeAway === 'away');
+
+        const homeName = (home.team.name || '').toLowerCase();
+        const homeShort = (home.team.shortDisplayName || '').toLowerCase();
+        const homeAbbr = (home.team.abbreviation || '').toLowerCase();
+
+        const awayName = (away.team.name || '').toLowerCase();
+        const awayShort = (away.team.shortDisplayName || '').toLowerCase();
+        const awayAbbr = (away.team.abbreviation || '').toLowerCase();
+
+        // FIXED "TEX" & TEXAS ABBREVIATION MATCHING LOGIC
+        const isHomePick = searchTerms.some(term => {
+          if (!term) return false;
+          if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+            return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
+                   homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
+          }
+          if (term === 'tex') {
+            return homeAbbr === 'tex' || (homeShort.toLowerCase() === 'texas' && !homeName.includes('north'));
+          }
+          return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
+        });
+
+        const isAwayPick = searchTerms.some(term => {
+          if (!term) return false;
+          if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
+            return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
+                   awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
+          }
+          if (term === 'tex') {
+            return awayAbbr === 'tex' || (awayShort.toLowerCase() === 'texas' && !awayName.includes('north'));
+          }
+          return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
+        });
+
+        if (isHomePick || isAwayPick) {
+          return {
+            event, comp, home, away,
+            homeScore: parseInt(home.score || '0', 10),
+            awayScore: parseInt(away.score || '0', 10),
+            isHomePick, isAwayPick
+          };
+        }
+      }
+      return null;
+    }
+
     async function autoGradePicksSilently(sectionType) {
       await autoGradePicks(sectionType, true);
     }
@@ -1206,10 +1353,9 @@
       }
 
       try {
-        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
-        const data = await response.json();
+        const events = await fetchEspnEvents();
 
-        if (!data.events) {
+        if (!events) {
           if (!silent) {
             msgDiv.style.background = 'rgba(255, 77, 77, 0.15)';
             msgDiv.style.color = 'var(--danger)';
@@ -1230,100 +1376,53 @@
           const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
           const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
-          for (const event of data.events) {
-            // Skip games that occurred before September 1st, 2026
-            const eventDate = new Date(event.date);
-            if (eventDate < new Date('2026-09-01T00:00:00Z')) {
-              continue;
-            }
+          const matched = findEspnEventForSearchTerms(searchTerms, events);
+          if (!matched) continue;
 
-            const comp = event.competitions[0];
-            const home = comp.competitors.find(c => c.homeAway === 'home');
-            const away = comp.competitors.find(c => c.homeAway === 'away');
-            
-            const homeName = (home.team.name || '').toLowerCase();
-            const homeShort = (home.team.shortDisplayName || '').toLowerCase();
-            const homeAbbr = (home.team.abbreviation || '').toLowerCase();
+          const { comp, home, away, homeScore, awayScore, isHomePick } = matched;
 
-            const awayName = (away.team.name || '').toLowerCase();
-            const awayShort = (away.team.shortDisplayName || '').toLowerCase();
-            const awayAbbr = (away.team.abbreviation || '').toLowerCase();
+          if (comp.status.type.state === 'post') {
+            scoreTag.style.display = 'block';
+            scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
 
-            const homeScore = parseInt(home.score || '0', 10);
-            const awayScore = parseInt(away.score || '0', 10);
+            if (isTotalOrTT) {
+              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
+              if (lineMatch) {
+                const direction = lineMatch[1];
+                const line = parseFloat(lineMatch[2]);
+                const isOver = direction === 'o' || direction === 'over';
 
-            // FIXED "TEX" & TEXAS ABBREVIATION MATCHING LOGIC
-            const isHomePick = searchTerms.some(term => {
-              if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-                return (homeName.includes('texas') && !homeName.includes('north texas') && !homeName.includes('ut sa') && !homeName.includes('el paso')) ||
-                       homeShort.includes('texas') || homeAbbr === 'tex' || homeAbbr === 'ut';
+                const compareScore = isTeamTotal ? (isHomePick ? homeScore : awayScore) : (homeScore + awayScore);
+                const rawDiff = compareScore - line;
+                const marginValue = isOver ? rawDiff : -rawDiff;
+
+                if (marginValue > 0) { resultSelect.value = 'W'; }
+                else if (marginValue < 0) { resultSelect.value = 'L'; }
+                else { resultSelect.value = 'D'; }
+
+                row.dataset.margin = marginValue.toString();
+                gradedCount++;
+                updateResultSelectColor(resultSelect);
+                row.style.background = 'rgba(255, 176, 32, 0.06)';
               }
-              // Ensure short abbreviations like "tex" don't falsely match "north texas" team names/abbreviations
-              if (term === 'tex') {
-                return homeAbbr === 'tex' || (homeShort.toLowerCase() === 'texas' && !homeName.includes('north'));
-              }
-              return homeName.includes(term) || term.includes(homeName) || homeShort.includes(term) || term.includes(homeShort) || homeAbbr === term;
-            });
+            } else {
+              const pickedTeamScore = isHomePick ? homeScore : awayScore;
+              const oppTeamScore = isHomePick ? awayScore : homeScore;
+              let spread = 0;
+              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
 
-            const isAwayPick = searchTerms.some(term => {
-              if (!term) return false;
-              if (term === 'texas' || term === 'ut' || term === 'tex' || term === 'texas longhorns') {
-                return (awayName.includes('texas') && !awayName.includes('north texas') && !awayName.includes('ut sa') && !awayName.includes('el paso')) ||
-                       awayShort.includes('texas') || awayAbbr === 'tex' || awayAbbr === 'ut';
-              }
-              if (term === 'tex') {
-                return awayAbbr === 'tex' || (awayShort.toLowerCase() === 'texas' && !awayName.includes('north'));
-              }
-              return awayName.includes(term) || term.includes(awayName) || awayShort.includes(term) || term.includes(awayShort) || awayAbbr === term;
-            });
+              const adjustedScore = pickedTeamScore + spread;
+              const marginValue = adjustedScore - oppTeamScore;
 
-            if (isHomePick || isAwayPick) {
-              if (comp.status.type.state === 'post') {
-                scoreTag.style.display = 'block';
-                scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
+              if (marginValue > 0) { resultSelect.value = 'W'; }
+              else if (marginValue < 0) { resultSelect.value = 'L'; }
+              else { resultSelect.value = 'D'; }
 
-                if (isTotalOrTT) {
-                  const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
-                  if (lineMatch) {
-                    const direction = lineMatch[1];
-                    const line = parseFloat(lineMatch[2]);
-                    const isOver = direction === 'o' || direction === 'over';
-
-                    const compareScore = isTeamTotal ? (isHomePick ? homeScore : awayScore) : (homeScore + awayScore);
-                    const rawDiff = compareScore - line;
-                    const marginValue = isOver ? rawDiff : -rawDiff;
-
-                    if (marginValue > 0) { resultSelect.value = 'W'; }
-                    else if (marginValue < 0) { resultSelect.value = 'L'; }
-                    else { resultSelect.value = 'D'; }
-
-                    row.dataset.margin = marginValue.toString();
-                    gradedCount++;
-                    updateResultSelectColor(resultSelect);
-                    row.style.background = 'rgba(255, 176, 32, 0.06)';
-                  }
-                } else {
-                  const pickedTeamScore = isHomePick ? homeScore : awayScore;
-                  const oppTeamScore = isHomePick ? awayScore : homeScore;
-                  let spread = 0;
-                  const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-                  if (spreadMatch) spread = parseFloat(spreadMatch[1]);
-
-                  const adjustedScore = pickedTeamScore + spread;
-                  const marginValue = adjustedScore - oppTeamScore;
-
-                  if (marginValue > 0) { resultSelect.value = 'W'; }
-                  else if (marginValue < 0) { resultSelect.value = 'L'; }
-                  else { resultSelect.value = 'D'; }
-
-                  row.dataset.margin = marginValue.toString();
-                  gradedCount++;
-                  updateResultSelectColor(resultSelect);
-                  row.style.background = 'rgba(255, 176, 32, 0.06)';
-                }
-              }
-              break;
+              row.dataset.margin = marginValue.toString();
+              gradedCount++;
+              updateResultSelectColor(resultSelect);
+              row.style.background = 'rgba(255, 176, 32, 0.06)';
             }
           }
         }
