@@ -466,16 +466,10 @@
     <div class="card">
       <h2>2. Paste Group Chat</h2>
       <div class="form-group">
-        <label for="pick-week">Select Week</label>
-        <select id="pick-week" required>
-          <option value="">Loading weeks...</option>
-        </select>
-      </div>
-      <div style="border-top: 1px solid var(--border); margin-top: 1.5rem; padding-top: 1.25rem;">
-        <label for="bulk-picks-input">Bulk Add Picks (one per line, for the week selected above)</label>
+        <label for="bulk-picks-input">Bulk Add Picks (one per line, added to Week <span id="bulk-week-label">–</span> from Step 1)</label>
         <textarea id="bulk-picks-input" rows="5" placeholder="WS: Alabama -7.5&#10;AH: Florida State TT o47.5&#10;DS: Michigan -90" style="width: 100%; padding: 0.7rem 0.85rem; background: var(--card-inner); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;"></textarea>
         <p style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">
-          Format: "INITIALS: selection" per line. A player with no pick yet this week gets added; a player who already has a pick with the same text is skipped; a player who already has a pick with different text gets updated to the new selection.
+          Format: "INITIALS: selection" per line. Stray "Week N" header lines are ignored automatically. A player with no pick yet this week gets added; a player who already has a pick with the same text is skipped; a player who already has a pick with different text gets updated to the new selection.
         </p>
         <button type="button" id="bulk-add-btn" class="btn-batch" style="margin-top: 0.75rem;" onclick="bulkAddPicks()">📋 Bulk Add Picks</button>
         <div id="bulk-picks-result" class="msg"></div>
@@ -581,26 +575,6 @@
       if (weeksError) console.error('Failed to load weeks:', weeksError);
       allWeeksCache = weeks || [];
 
-      const pickWeekSelect = document.getElementById('pick-week');
-      if (pickWeekSelect) {
-        pickWeekSelect.innerHTML = '<option value="">-- Choose Week --</option>';
-
-        let openWeekNum = null;
-        let openWeekId = '';
-
-        if (weeks) {
-          weeks.forEach(w => {
-            if (w.status === 'open' && openWeekNum === null) {
-              openWeekNum = w.week_number;
-              openWeekId = w.id;
-            }
-            pickWeekSelect.innerHTML += `<option value="${w.id}">Week ${w.week_number} (${w.status || 'scheduled'})</option>`;
-          });
-        }
-
-        if (openWeekId) pickWeekSelect.value = openWeekId;
-      }
-
       if (!hasInitializedWeekSelect) {
         hasInitializedWeekSelect = true;
         if (weeks && weeks.length > 0 && weekSelect) {
@@ -620,6 +594,9 @@
     }
 
     async function loadWeekDetails(weekNum) {
+      const bulkWeekLabel = document.getElementById('bulk-week-label');
+      if (bulkWeekLabel) bulkWeekLabel.textContent = Number.isNaN(weekNum) ? '–' : weekNum;
+
       const found = allWeeksCache.find(w => w.week_number === weekNum);
       if (found) {
         statusSelect.value = found.status || 'scheduled';
@@ -715,77 +692,32 @@
     // to 'open' — we just make sure a row exists for it so you can start
     // adding picks and set its start_date whenever you're ready. It stays
     // dormant (Scheduled) until that date arrives, unless you override it.
-    async function ensureNextWeekExists(closedWeekNum) {
-      const nextWeekNum = closedWeekNum + 1;
-      if (nextWeekNum > 12) return '';
+    // Same ranking rule as the index.html preview: a player who was in the
+    // base week's parlay only gets priority if they won or pushed — a
+    // parlay member who lost gets no boost and ranks normally alongside
+    // everyone else. Within the boosted group (parlay W/D), results still
+    // rank W > D, then margin breaks ties. Everyone else (non-parlay picks
+    // of any result, and parlay losses) ranks below, sorted by the normal
+    // W > D > L > margin order.
+    async function computeParlayPickersFromWeek(baseWeekNum) {
+      if (baseWeekNum < 0) return { playerIds: [], initials: [], error: `No previous week exists for Week ${baseWeekNum + 1}.` };
 
-      const existing = allWeeksCache.find(w => w.week_number === nextWeekNum);
+      const baseWeekObj = allWeeksCache.find(w => w.week_number === baseWeekNum);
+      if (!baseWeekObj) return { playerIds: [], initials: [], error: `Week ${baseWeekNum} not found — can't compute parlay pickers.` };
 
-      if (!existing) {
-        const { error } = await _supabase
-          .from('weeks')
-          .insert([{ season: 2026, week_number: nextWeekNum, status: 'scheduled' }]);
-        if (error) {
-          console.error('Error creating next week:', error.message);
-          return `(Could not create Week ${nextWeekNum}: ${error.message})`;
-        }
-        return `Week ${nextWeekNum} created — set its start date to activate it.`;
-      }
-
-      return '';
-    }
-
-    async function setParlayPickersFromPreviousWeek() {
-      const msg = document.getElementById('active-msg');
-      const currentWeekNum = parseInt(weekSelect.value, 10);
-      const prevWeekNum = currentWeekNum - 1;
-
-      if (prevWeekNum < 0) {
-        msg.style.background = 'rgba(255, 77, 77, 0.15)';
-        msg.style.color = 'var(--danger)';
-        msg.innerText = 'No previous week exists for Week 0.';
-        return;
-      }
-
-      const prevWeekObj = allWeeksCache.find(w => w.week_number === prevWeekNum);
-      if (!prevWeekObj) {
-        msg.style.background = 'rgba(255, 77, 77, 0.15)';
-        msg.style.color = 'var(--danger)';
-        msg.innerText = `Week ${prevWeekNum} not found — can't compute parlay pickers.`;
-        return;
-      }
-
-      const { data: prevPicks, error } = await _supabase
+      const { data: basePicks, error } = await _supabase
         .from('picks')
         .select('player_id, result, margin, is_parlay, players(initials)')
-        .eq('week_id', prevWeekObj.id)
+        .eq('week_id', baseWeekObj.id)
         .not('result', 'is', null);
 
-      if (error) {
-        msg.style.background = 'rgba(255, 77, 77, 0.15)';
-        msg.style.color = 'var(--danger)';
-        msg.innerText = `Error loading Week ${prevWeekNum} picks: ${error.message}`;
-        return;
-      }
+      if (error) return { playerIds: [], initials: [], error: `Error loading Week ${baseWeekNum} picks: ${error.message}` };
+      if (!basePicks || basePicks.length === 0) return { playerIds: [], initials: [], error: `No graded picks found for Week ${baseWeekNum}.` };
 
-      if (!prevPicks || prevPicks.length === 0) {
-        msg.style.background = 'rgba(255, 77, 77, 0.15)';
-        msg.style.color = 'var(--danger)';
-        msg.innerText = `No graded picks found for Week ${prevWeekNum}.`;
-        return;
-      }
-
-      // Same ranking rule as the index.html preview: a player who was in the
-      // previous week's parlay only gets priority if they won or pushed —
-      // a parlay member who lost gets no boost and ranks normally alongside
-      // everyone else. Within the boosted group (parlay W/D), results still
-      // rank W > D, then margin breaks ties. Everyone else (non-parlay picks
-      // of any result, and parlay losses) ranks below, sorted by the normal
-      // W > D > L > margin order.
       const priority = { W: 0, D: 1, L: 2 };
       const isBoosted = (p) => p.is_parlay && (p.result === 'W' || p.result === 'D');
 
-      const ranked = prevPicks
+      const ranked = basePicks
         .filter(p => priority[p.result] !== undefined)
         .sort((a, b) => {
           const aBoost = isBoosted(a) ? 0 : 1;
@@ -801,8 +733,55 @@
         });
 
       const top5 = ranked.slice(0, 5);
-      const top5PlayerIds = top5.map(p => p.player_id);
-      const top5Initials = top5.map(p => p.players?.initials || '?');
+      return {
+        playerIds: top5.map(p => p.player_id),
+        initials: top5.map(p => p.players?.initials || '?'),
+        error: null
+      };
+    }
+
+    async function ensureNextWeekExists(closedWeekNum) {
+      const nextWeekNum = closedWeekNum + 1;
+      if (nextWeekNum > 12) return '';
+
+      const existing = allWeeksCache.find(w => w.week_number === nextWeekNum);
+
+      if (!existing) {
+        const { playerIds: parlayPickerIds, initials: parlayInitials } = await computeParlayPickersFromWeek(closedWeekNum);
+
+        const { error } = await _supabase
+          .from('weeks')
+          .insert([{
+            season: 2026,
+            week_number: nextWeekNum,
+            status: 'scheduled',
+            parlay_pickers: parlayPickerIds.length > 0 ? parlayPickerIds : null
+          }]);
+        if (error) {
+          console.error('Error creating next week:', error.message);
+          return `(Could not create Week ${nextWeekNum}: ${error.message})`;
+        }
+        return parlayPickerIds.length > 0
+          ? `Week ${nextWeekNum} created with parlay pickers set from Week ${closedWeekNum} (${parlayInitials.join(', ')}) — set its start date to activate it.`
+          : `Week ${nextWeekNum} created — set its start date to activate it.`;
+      }
+
+      return '';
+    }
+
+    async function setParlayPickersFromPreviousWeek() {
+      const msg = document.getElementById('active-msg');
+      const currentWeekNum = parseInt(weekSelect.value, 10);
+      const prevWeekNum = currentWeekNum - 1;
+
+      const { playerIds: top5PlayerIds, initials: top5Initials, error: computeError } = await computeParlayPickersFromWeek(prevWeekNum);
+
+      if (computeError) {
+        msg.style.background = 'rgba(255, 77, 77, 0.15)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = computeError;
+        return;
+      }
 
       const { error: weekUpdateError } = await _supabase
         .from('weeks')
@@ -827,7 +806,7 @@
 
       msg.style.background = 'rgba(52, 214, 122, 0.15)';
       msg.style.color = 'var(--success)';
-      msg.innerText = `Parlay pickers for Week ${currentWeekNum} set from Week ${prevWeekNum}: ${top5Initials.join(', ')} (${top5.length}/5 found).`;
+      msg.innerText = `Parlay pickers for Week ${currentWeekNum} set from Week ${prevWeekNum}: ${top5Initials.join(', ')} (${top5PlayerIds.length}/5 found).`;
 
       await loadDropdowns();
       if (confirmDiscardIfDirty('Setting parlay pickers will refresh the picks tables. You have unsaved edits there — continue and lose them?')) {
@@ -836,19 +815,24 @@
     }
 
     async function bulkAddPicks() {
-      const weekId = document.getElementById('pick-week').value;
+      const weekNum = parseInt(weekSelect.value, 10);
+      const currentWeekObj = allWeeksCache.find(w => w.week_number === weekNum);
       const textarea = document.getElementById('bulk-picks-input');
       const resultDiv = document.getElementById('bulk-picks-result');
       const raw = textarea.value;
 
-      if (!weekId) {
+      if (!currentWeekObj) {
         resultDiv.style.background = 'rgba(255, 77, 77, 0.15)';
         resultDiv.style.color = 'var(--danger)';
-        resultDiv.innerText = 'Select a week first.';
+        resultDiv.innerText = `Week ${weekNum} hasn't been saved yet — click "Save Week Details" in Step 1 first.`;
         return;
       }
+      const weekId = currentWeekObj.id;
 
-      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = raw.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .filter(l => !/^week\s*\d+\s*[:.\-–]?\s*$/i.test(l));
       if (lines.length === 0) {
         resultDiv.style.background = 'rgba(255, 77, 77, 0.15)';
         resultDiv.style.color = 'var(--danger)';
@@ -871,7 +855,6 @@
       const existingByPlayer = {};
       (existingPicks || []).forEach(p => { existingByPlayer[p.player_id] = p; });
 
-      const currentWeekObj = allWeeksCache.find(w => w.id === weekId);
       const designatedPickers = currentWeekObj?.parlay_pickers || currentWeekObj?.pickers || [];
 
       let added = 0, updated = 0, skipped = 0;
@@ -1142,17 +1125,29 @@
       });
     }
 
+    // Kept in sync with the TEAM_ALIASES/getTeamSearchTerms pair in ogindex.html
+    // so a pick like "bama" grades here the same way it matches on the index page.
+    const TEAM_ALIASES = {
+      'sac': 'sacramento state',
+      'jax state': 'jacksonville state',
+      'unc': 'north carolina',
+      'usc': 'southern cal',
+      'tex': 'texas',
+      'bama': 'alabama',
+      'miss st': 'mississippi state',
+      'ms st': 'mississippi state',
+      'mississippi st': 'mississippi state'
+    };
+
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
-      let clean = selection.trim();
+      let clean = selection.trim().toLowerCase();
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
       clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
 
-      if (clean.includes('/')) {
-        return clean.split('/').map(t => t.trim().toLowerCase());
-      }
-      return [clean.toLowerCase()];
+      const terms = clean.includes('/') ? clean.split('/').map(t => t.trim()) : [clean];
+      return terms.map(t => TEAM_ALIASES[t] || t);
     }
 
     async function autoGradePicksSilently(sectionType) {
