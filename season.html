@@ -743,16 +743,6 @@
         </div>
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-label">Spread W-L-D</div>
-            <div class="stat-main-row"><span class="stat-value">${spreadW}-${spreadL}-${spreadD}</span></div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">O/U W-L-D</div>
-            <div class="stat-main-row"><span class="stat-value">${ouW}-${ouL}-${ouD}</span></div>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card">
             <div class="stat-label">🏆 Biggest Cover</div>
             <div class="stat-main-row">
               <span class="stat-value" style="color: var(--success); font-size: 0.88rem;">${biggestWinValue}</span>
@@ -765,6 +755,16 @@
               <span class="stat-value" style="color: var(--danger); font-size: 0.88rem;">${biggestLossValue}</span>
               ${biggestLossSub ? `<span class="stat-sub" style="color: var(--danger);">${biggestLossSub}</span>` : ''}
             </div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Spread W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${spreadW}-${spreadL}-${spreadD}</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">O/U W-L-D</div>
+            <div class="stat-main-row"><span class="stat-value">${ouW}-${ouL}-${ouD}</span></div>
           </div>
         </div>
       `;
