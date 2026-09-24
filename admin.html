@@ -1322,8 +1322,8 @@
     // Fetches BOTH FBS (groups=80) and FCS (groups=81) scoreboards and merges
     // them, same as index.html — groups=80 alone misses games where both teams
     // are FCS (e.g. Sacramento State), so those picks never got a margin.
-    // Pass dates ("YYYYMMDD" or "YYYYMMDD-YYYYMMDD") to look up a past week;
-    // without it ESPN returns its own current week.
+    // Pass dates ("YYYYMMDD") to look up a specific day; without it ESPN
+    // returns its own current week.
     async function fetchEspnEvents(dates) {
       const buildUrl = (groupId) =>
         `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=${groupId}&limit=300${dates ? `&dates=${dates}` : ''}`;
@@ -1345,12 +1345,26 @@
       return events.length > 0 ? events : null;
     }
 
-    // ESPN date range covering a week (start_date through the following 6 days),
-    // or null if the week has no start_date.
-    function espnDateRangeForWeek(weekObj) {
+    // All games from a week's start_date through the following 7 days, fetched
+    // one day at a time (single-day lookups are the reliable ESPN format) and
+    // merged. Returns null if the week has no start_date or nothing loaded.
+    async function fetchEspnEventsForWeek(weekObj) {
       if (!weekObj?.start_date) return null;
-      const end = addDaysToDateStr(weekObj.start_date, 6);
-      return `${weekObj.start_date.replace(/-/g, '')}-${end.replace(/-/g, '')}`;
+
+      const days = [];
+      for (let i = 0; i <= 7; i++) days.push(addDaysToDateStr(weekObj.start_date, i).replace(/-/g, ''));
+
+      const perDay = await Promise.all(days.map(d => fetchEspnEvents(d).catch(() => null)));
+
+      const events = [];
+      const seenEventIds = new Set();
+      perDay.forEach(dayEvents => (dayEvents || []).forEach(ev => {
+        if (!seenEventIds.has(ev.id)) {
+          seenEventIds.add(ev.id);
+          events.push(ev);
+        }
+      }));
+      return events.length > 0 ? events : null;
     }
 
     // Cover/total margin for a pick against a matched ESPN game, or null if the
@@ -1405,19 +1419,37 @@
         (rowsByWeek[key] = rowsByWeek[key] || []).push(row);
       });
 
-      let filled = 0, unmatched = 0;
+      let filled = 0;
+      const problems = [];
+
       for (const [weekId, weekRows] of Object.entries(rowsByWeek)) {
         const weekObj = allWeeksCache.find(w => String(w.id) === weekId);
-        const events = await fetchEspnEvents(espnDateRangeForWeek(weekObj));
-        if (!events) { unmatched += weekRows.length; continue; }
+        const weekLabel = weekObj ? `Wk ${weekObj.week_number}` : 'Unknown week';
+        const describe = (row) => {
+          const initials = row.querySelector('td strong')?.innerText || '??';
+          const selection = row.querySelector('.row-selection').value;
+          return `${weekLabel} · ${initials} · "${selection}"`;
+        };
+
+        if (!weekObj?.start_date) {
+          weekRows.forEach(row => problems.push(`${describe(row)}: week has no start date, so its games can't be looked up`));
+          continue;
+        }
+
+        const events = await fetchEspnEventsForWeek(weekObj);
+        if (!events) {
+          weekRows.forEach(row => problems.push(`${describe(row)}: couldn't load ESPN scores for ${weekObj.start_date} onward`));
+          continue;
+        }
 
         for (const row of weekRows) {
           const selText = row.querySelector('.row-selection').value.trim().toLowerCase();
-          const matched = findEspnEventForSearchTerms(getTeamSearchTerms(selText), events);
-          if (!matched || matched.comp.status.type.state !== 'post') { unmatched++; continue; }
+          const matched = findEspnEventForSearchTerms(getTeamSearchTerms(selText), events, true);
+          if (!matched) { problems.push(`${describe(row)}: no game found for that team`); continue; }
+          if (matched.comp.status.type.state !== 'post') { problems.push(`${describe(row)}: matched game isn't final`); continue; }
 
           const marginValue = computeMarginForMatch(selText, matched);
-          if (marginValue === null) { unmatched++; continue; }
+          if (marginValue === null) { problems.push(`${describe(row)}: couldn't read the line`); continue; }
 
           const { error } = await _supabase
             .from('picks')
@@ -1426,7 +1458,7 @@
 
           if (error) {
             console.error(`Error saving margin for pick ${row.dataset.pickId}:`, error.message);
-            unmatched++;
+            problems.push(`${describe(row)}: save failed (${error.message})`);
           } else {
             row.dataset.margin = marginValue.toString();
             filled++;
@@ -1434,11 +1466,13 @@
         }
       }
 
+      if (problems.length) console.warn('Margin backfill problems:\n' + problems.join('\n'));
+
       if (!silent) {
-        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
-        msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = `Saved margins for ${filled} graded pick${filled === 1 ? '' : 's'}` +
-          (unmatched ? `; ${unmatched} couldn't be matched to a final ESPN game.` : '.');
+        msgDiv.style.background = problems.length ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
+        msgDiv.style.color = problems.length ? 'var(--text)' : 'var(--success)';
+        msgDiv.innerText = `Saved margins for ${filled} graded pick${filled === 1 ? '' : 's'}.` +
+          (problems.length ? `\n${problems.length} couldn't be filled:\n` + problems.join('\n') : '');
       }
     }
 
@@ -1446,11 +1480,14 @@
 
     // Shared by autoGradePicks (grading) and bulkAddPicks (paste-time validation)
     // so a pick that fails to match here fails to match there too, instead of
-    // silently drifting apart. Skips games before the season cutoff.
-    function findEspnEventForSearchTerms(searchTerms, events) {
+    // silently drifting apart. Skips games before the season cutoff, unless
+    // ignoreCutoff is set — the margin backfill fetches a known week's exact
+    // dates, so it has no stale last-season games to guard against, and Week 0
+    // games fall before the cutoff.
+    function findEspnEventForSearchTerms(searchTerms, events, ignoreCutoff = false) {
       for (const event of events) {
         const eventDate = new Date(event.date);
-        if (eventDate < ESPN_SEASON_START_CUTOFF) continue;
+        if (!ignoreCutoff && eventDate < ESPN_SEASON_START_CUTOFF) continue;
 
         const comp = event.competitions[0];
         const home = comp.competitors.find(c => c.homeAway === 'home');
