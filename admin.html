@@ -1420,6 +1420,7 @@
       });
 
       let filled = 0;
+      let blockedCount = 0;
       const problems = [];
 
       for (const [weekId, weekRows] of Object.entries(rowsByWeek)) {
@@ -1451,14 +1452,22 @@
           const marginValue = computeMarginForMatch(selText, matched);
           if (marginValue === null) { problems.push(`${describe(row)}: couldn't read the line`); continue; }
 
-          const { error } = await _supabase
+          // .select() returns the rows actually changed. Supabase row-level
+          // security silently skips rows a policy doesn't allow updating —
+          // no error, just 0 rows — so check the count rather than trusting
+          // a missing error.
+          const { data: updatedRows, error } = await _supabase
             .from('picks')
             .update({ margin: marginValue })
-            .eq('id', row.dataset.pickId);
+            .eq('id', row.dataset.pickId)
+            .select('id');
 
           if (error) {
             console.error(`Error saving margin for pick ${row.dataset.pickId}:`, error.message);
             problems.push(`${describe(row)}: save failed (${error.message})`);
+          } else if (!updatedRows || updatedRows.length === 0) {
+            blockedCount++;
+            problems.push(`${describe(row)}: Supabase blocked the save (0 rows changed)`);
           } else {
             row.dataset.margin = marginValue.toString();
             filled++;
@@ -1468,10 +1477,14 @@
 
       if (problems.length) console.warn('Margin backfill problems:\n' + problems.join('\n'));
 
-      if (!silent) {
+      // Blocked saves mean a database permission problem, not a data one, so
+      // say so even during the silent page-load run.
+      if (!silent || blockedCount > 0) {
         msgDiv.style.background = problems.length ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
         msgDiv.style.color = problems.length ? 'var(--text)' : 'var(--success)';
         msgDiv.innerText = `Saved margins for ${filled} graded pick${filled === 1 ? '' : 's'}.` +
+          (blockedCount ? `\n${blockedCount} save${blockedCount === 1 ? ' was' : 's were'} blocked by Supabase — ` +
+            `a row-level security policy on the picks table isn't allowing updates to graded picks.` : '') +
           (problems.length ? `\n${problems.length} couldn't be filled:\n` + problems.join('\n') : '');
       }
     }
