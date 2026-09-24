@@ -864,6 +864,57 @@
       });
     }
 
+    // Season W-L-D per player through the current week, used to break
+    // next-week picker ties on margin. Earlier weeks come from the graded
+    // results in Supabase; the current week uses the live-evaluated results
+    // so it counts even before those are synced.
+    async function loadSeasonRecordsThroughWeek(currentWeek, evaluatedPicks) {
+      const records = {};
+      const tally = (playerId, result) => {
+        const r = records[playerId] || (records[playerId] = { wins: 0, losses: 0, draws: 0 });
+        if (result === 'W') r.wins += 1;
+        else if (result === 'L') r.losses += 1;
+        else if (result === 'D') r.draws += 1;
+      };
+
+      evaluatedPicks.forEach(p => tally(p.player_id, p.finalResultForScoring));
+
+      const { data: priorWeeks, error: weeksError } = await _supabase
+        .from('weeks')
+        .select('id')
+        .eq('season', currentWeek.season)
+        .lt('week_number', currentWeek.week_number);
+
+      if (weeksError) console.error('Failed to load prior weeks for records:', weeksError);
+      const priorWeekIds = (priorWeeks || []).map(w => w.id);
+      if (priorWeekIds.length === 0) return records;
+
+      const { data: priorPicks, error: picksError } = await _supabase
+        .from('picks')
+        .select('player_id, result')
+        .in('week_id', priorWeekIds)
+        .not('result', 'is', null);
+
+      if (picksError) console.error('Failed to load prior picks for records:', picksError);
+      (priorPicks || []).forEach(p => tally(p.player_id, p.result));
+      return records;
+    }
+
+    // Better record sorts first. Matches the standings.html leaderboard order:
+    // total points (W = 1, D = 0.5), then wins, then win %.
+    function compareOverallRecords(ra, rb) {
+      const stats = (r) => {
+        const { wins = 0, losses = 0, draws = 0 } = r || {};
+        const totalPoints = wins + draws * 0.5;
+        const decided = wins + losses + draws;
+        return { totalPoints, wins, winPct: decided > 0 ? totalPoints / decided : 0 };
+      };
+      const a = stats(ra), b = stats(rb);
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.winPct - a.winPct;
+    }
+
     // Determines which week is "current" for the main page.
     //   1. A week explicitly marked status = 'open' always wins, regardless of
     //      date — this is the manual override / escape hatch from the admin panel.
@@ -1301,6 +1352,11 @@
         // W/D), results still rank W > D, then margin breaks ties. Everyone
         // else (non-parlay picks of any result, and parlay losses) ranks
         // below the boosted group, sorted by the normal W > D > L > margin order.
+        // If two players are still tied after margin (e.g. only one spot
+        // left), the better overall season record through this week wins
+        // it — same order as standings.html: total points (W = 1, D = 0.5),
+        // then wins, then win %.
+        const records = await loadSeasonRecordsThroughWeek(currentWeek, evaluatedPicks);
         const resultPriority = { W: 0, D: 1, L: 2 };
         const isBoosted = (p) => p.is_parlay && (p.finalResultForScoring === 'W' || p.finalResultForScoring === 'D');
 
@@ -1313,7 +1369,9 @@
           const pb = resultPriority[b.finalResultForScoring] ?? 3;
           if (pa !== pb) return pa - pb;
 
-          return b.sortMargin - a.sortMargin;
+          if (a.sortMargin !== b.sortMargin) return b.sortMargin - a.sortMargin;
+
+          return compareOverallRecords(records[a.player_id], records[b.player_id]);
         };
 
         const decidedPicks = evaluatedPicks.filter(p => ['W', 'D', 'L'].includes(p.finalResultForScoring));
