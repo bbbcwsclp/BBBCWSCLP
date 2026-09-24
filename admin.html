@@ -695,6 +695,33 @@
       return d.toISOString().slice(0, 10);
     }
 
+    // Season W-L-D per player, used to break parlay-picker ties on margin.
+    function buildOverallRecords(picks) {
+      const records = {};
+      picks.forEach(p => {
+        const r = records[p.player_id] || (records[p.player_id] = { wins: 0, losses: 0, draws: 0 });
+        if (p.result === 'W') r.wins += 1;
+        else if (p.result === 'L') r.losses += 1;
+        else if (p.result === 'D') r.draws += 1;
+      });
+      return records;
+    }
+
+    // Better record sorts first. Matches the standings.html leaderboard order:
+    // total points (W = 1, D = 0.5), then wins, then win %.
+    function compareOverallRecords(ra, rb) {
+      const stats = (r) => {
+        const { wins = 0, losses = 0, draws = 0 } = r || {};
+        const totalPoints = wins + draws * 0.5;
+        const decided = wins + losses + draws;
+        return { totalPoints, wins, winPct: decided > 0 ? totalPoints / decided : 0 };
+      };
+      const a = stats(ra), b = stats(rb);
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.winPct - a.winPct;
+    }
+
     // Replaces the old autoOpenNextWeek(). With week activation now driven by
     // start_date on the main page, we no longer force the next week's status
     // to 'open' — we just make sure a row exists for it so you can start
@@ -706,7 +733,10 @@
     // everyone else. Within the boosted group (parlay W/D), results still
     // rank W > D, then margin breaks ties. Everyone else (non-parlay picks
     // of any result, and parlay losses) ranks below, sorted by the normal
-    // W > D > L > margin order.
+    // W > D > L > margin order. If two players are still tied after margin
+    // (e.g. only one spot left), the better overall season record through
+    // the base week wins it — same order as standings.html: total points
+    // (W = 1, D = 0.5), then wins, then win %.
     async function computeParlayPickersFromWeek(baseWeekNum) {
       if (baseWeekNum < 0) return { playerIds: [], initials: [], error: `No previous week exists for Week ${baseWeekNum + 1}.` };
 
@@ -721,6 +751,20 @@
 
       if (error) return { playerIds: [], initials: [], error: `Error loading Week ${baseWeekNum} picks: ${error.message}` };
       if (!basePicks || basePicks.length === 0) return { playerIds: [], initials: [], error: `No graded picks found for Week ${baseWeekNum}.` };
+
+      const seasonWeekIds = allWeeksCache
+        .filter(w => w.season === baseWeekObj.season && w.week_number <= baseWeekNum)
+        .map(w => w.id);
+
+      const { data: seasonPicks, error: recordError } = await _supabase
+        .from('picks')
+        .select('player_id, result')
+        .in('week_id', seasonWeekIds)
+        .not('result', 'is', null);
+
+      if (recordError) return { playerIds: [], initials: [], error: `Error loading season records: ${recordError.message}` };
+
+      const records = buildOverallRecords(seasonPicks || []);
 
       const priority = { W: 0, D: 1, L: 2 };
       const isBoosted = (p) => p.is_parlay && (p.result === 'W' || p.result === 'D');
@@ -737,7 +781,9 @@
 
           const ma = (a.margin === null || a.margin === undefined) ? -Infinity : a.margin;
           const mb = (b.margin === null || b.margin === undefined) ? -Infinity : b.margin;
-          return mb - ma;
+          if (ma !== mb) return mb - ma;
+
+          return compareOverallRecords(records[a.player_id], records[b.player_id]);
         });
 
       const top5 = ranked.slice(0, 5);
