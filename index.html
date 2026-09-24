@@ -815,8 +815,12 @@
     }
 
     async function syncFinalizedResultsToSupabase(evaluatedPicks) {
+      // Only sync picks graded against a final ESPN game. A pick that already
+      // had a result in Supabase but couldn't be matched to a game here still
+      // carries that result in computedResult, with the -999 "no margin"
+      // placeholder — syncing it would write -999 into the margin column.
       const toSync = evaluatedPicks.filter(p => {
-        if (!p.computedResult) return false;
+        if (!p.computedResult || p.margin === -999) return false;
         const resultChanged = p.dbResult !== p.computedResult;
         const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
         return resultChanged || marginChanged;
