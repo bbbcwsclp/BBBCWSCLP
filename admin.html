@@ -1143,6 +1143,7 @@
           const tr = document.createElement('tr');
           tr.dataset.pickId = p.id;
           tr.dataset.playerId = p.player_id;
+          tr.dataset.weekId = p.week_id;
           tr.dataset.searchKey = `${p.players?.initials || ''} ${p.selection || ''}`.toLowerCase();
           if (p.margin !== null && p.margin !== undefined) tr.dataset.margin = p.margin;
           const resultClass = p.result ? `res-select-${p.result}` : '';
@@ -1187,13 +1188,16 @@
     async function handleResultChange(pickId, selectElem) {
       updateResultSelectColor(selectElem);
       const isGraded = selectElem.value !== '';
-      
+
+      // Carry along any margin auto-grade worked out for this row — this
+      // save reloads the table, which would otherwise throw it away.
+      const updatePayload = { result: selectElem.value || null, is_finalized: isGraded };
+      const row = selectElem.closest('tr');
+      if (row?.dataset.margin !== undefined) updatePayload.margin = parseFloat(row.dataset.margin);
+
       const { error } = await _supabase
         .from('picks')
-        .update({
-          result: selectElem.value || null,
-          is_finalized: isGraded
-        })
+        .update(updatePayload)
         .eq('id', pickId);
 
       if (!error) {
@@ -1315,10 +1319,127 @@
       return sigA.teamKey === sigB.teamKey && sigA.numberKey === sigB.numberKey;
     }
 
-    async function fetchEspnEvents() {
-      const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=300');
-      const data = await response.json();
-      return data.events || null;
+    // Fetches BOTH FBS (groups=80) and FCS (groups=81) scoreboards and merges
+    // them, same as index.html — groups=80 alone misses games where both teams
+    // are FCS (e.g. Sacramento State), so those picks never got a margin.
+    // Pass dates ("YYYYMMDD" or "YYYYMMDD-YYYYMMDD") to look up a past week;
+    // without it ESPN returns its own current week.
+    async function fetchEspnEvents(dates) {
+      const buildUrl = (groupId) =>
+        `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=${groupId}&limit=300${dates ? `&dates=${dates}` : ''}`;
+
+      const responses = await Promise.all([80, 81].map(g => fetch(buildUrl(g)).catch(() => null)));
+
+      const events = [];
+      const seenEventIds = new Set();
+      for (const res of responses) {
+        if (!res || !res.ok) continue;
+        const data = await res.json();
+        (data.events || []).forEach(ev => {
+          if (!seenEventIds.has(ev.id)) {
+            seenEventIds.add(ev.id);
+            events.push(ev);
+          }
+        });
+      }
+      return events.length > 0 ? events : null;
+    }
+
+    // ESPN date range covering a week (start_date through the following 6 days),
+    // or null if the week has no start_date.
+    function espnDateRangeForWeek(weekObj) {
+      if (!weekObj?.start_date) return null;
+      const end = addDaysToDateStr(weekObj.start_date, 6);
+      return `${weekObj.start_date.replace(/-/g, '')}-${end.replace(/-/g, '')}`;
+    }
+
+    // Cover/total margin for a pick against a matched ESPN game, or null if the
+    // selection has an over/under marker but no readable line.
+    function computeMarginForMatch(selText, matched) {
+      const { homeScore, awayScore, isHomePick } = matched;
+      const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
+      const isTeamTotal = /\b(team total|tt)\b/.test(selText);
+
+      if (isTotalOrTT) {
+        const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
+        if (!lineMatch) return null;
+        const direction = lineMatch[1];
+        const line = parseFloat(lineMatch[2]);
+        const isOver = direction === 'o' || direction === 'over';
+
+        const compareScore = isTeamTotal ? (isHomePick ? homeScore : awayScore) : (homeScore + awayScore);
+        const rawDiff = compareScore - line;
+        return isOver ? rawDiff : -rawDiff;
+      }
+
+      const pickedTeamScore = isHomePick ? homeScore : awayScore;
+      const oppTeamScore = isHomePick ? awayScore : homeScore;
+      let spread = 0;
+      const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
+      if (spreadMatch) spread = parseFloat(spreadMatch[1]);
+
+      return (pickedTeamScore + spread) - oppTeamScore;
+    }
+
+    // Already-graded picks used to be skipped entirely by auto-grade, so any
+    // pick graded by hand (or whose auto-graded margin was never saved) sat
+    // with an empty margin forever. This fills in just the margin for those
+    // rows — the result you set is left alone — and saves it straight away.
+    async function backfillMissingMargins(silent) {
+      const msgDiv = document.getElementById('finalized-msg');
+      const rows = [...document.querySelectorAll('#finalized-container tr[data-pick-id]')]
+        .filter(row => row.dataset.margin === undefined || parseFloat(row.dataset.margin) === -999);
+
+      if (rows.length === 0) {
+        if (!silent) {
+          msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
+          msgDiv.style.color = 'var(--success)';
+          msgDiv.innerText = 'All graded picks already have a margin.';
+        }
+        return;
+      }
+
+      const rowsByWeek = {};
+      rows.forEach(row => {
+        const key = row.dataset.weekId || '';
+        (rowsByWeek[key] = rowsByWeek[key] || []).push(row);
+      });
+
+      let filled = 0, unmatched = 0;
+      for (const [weekId, weekRows] of Object.entries(rowsByWeek)) {
+        const weekObj = allWeeksCache.find(w => String(w.id) === weekId);
+        const events = await fetchEspnEvents(espnDateRangeForWeek(weekObj));
+        if (!events) { unmatched += weekRows.length; continue; }
+
+        for (const row of weekRows) {
+          const selText = row.querySelector('.row-selection').value.trim().toLowerCase();
+          const matched = findEspnEventForSearchTerms(getTeamSearchTerms(selText), events);
+          if (!matched || matched.comp.status.type.state !== 'post') { unmatched++; continue; }
+
+          const marginValue = computeMarginForMatch(selText, matched);
+          if (marginValue === null) { unmatched++; continue; }
+
+          const { error } = await _supabase
+            .from('picks')
+            .update({ margin: marginValue })
+            .eq('id', row.dataset.pickId);
+
+          if (error) {
+            console.error(`Error saving margin for pick ${row.dataset.pickId}:`, error.message);
+            unmatched++;
+          } else {
+            row.dataset.margin = marginValue.toString();
+            filled++;
+          }
+        }
+      }
+
+      if (!silent) {
+        msgDiv.style.background = 'rgba(52, 214, 122, 0.15)';
+        msgDiv.style.color = 'var(--success)';
+        msgDiv.innerText = `Saved margins for ${filled} graded pick${filled === 1 ? '' : 's'}` +
+          (unmatched ? `; ${unmatched} couldn't be matched to a final ESPN game.` : '.');
+      }
     }
 
     const ESPN_SEASON_START_CUTOFF = new Date('2026-09-01T00:00:00Z');
@@ -1385,7 +1506,10 @@
     }
 
     async function autoGradePicks(sectionType, silent = false) {
-      if (sectionType === 'finalized') return;
+      if (sectionType === 'finalized') {
+        await backfillMissingMargins(silent);
+        return;
+      }
 
       const containerId = 'active-container';
       const msgId = 'active-msg';
@@ -1422,57 +1546,26 @@
           const selText = selectionInput.value.trim().toLowerCase();
 
           const searchTerms = getTeamSearchTerms(selText);
-          const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
-          const isTeamTotal = /\b(team total|tt)\b/.test(selText);
-
           const matched = findEspnEventForSearchTerms(searchTerms, events);
           if (!matched) continue;
 
-          const { comp, home, away, homeScore, awayScore, isHomePick } = matched;
+          const { comp, home, away, homeScore, awayScore } = matched;
 
           if (comp.status.type.state === 'post') {
             scoreTag.style.display = 'block';
             scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
 
-            if (isTotalOrTT) {
-              const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
-              if (lineMatch) {
-                const direction = lineMatch[1];
-                const line = parseFloat(lineMatch[2]);
-                const isOver = direction === 'o' || direction === 'over';
+            const marginValue = computeMarginForMatch(selText, matched);
+            if (marginValue === null) continue;
 
-                const compareScore = isTeamTotal ? (isHomePick ? homeScore : awayScore) : (homeScore + awayScore);
-                const rawDiff = compareScore - line;
-                const marginValue = isOver ? rawDiff : -rawDiff;
+            if (marginValue > 0) { resultSelect.value = 'W'; }
+            else if (marginValue < 0) { resultSelect.value = 'L'; }
+            else { resultSelect.value = 'D'; }
 
-                if (marginValue > 0) { resultSelect.value = 'W'; }
-                else if (marginValue < 0) { resultSelect.value = 'L'; }
-                else { resultSelect.value = 'D'; }
-
-                row.dataset.margin = marginValue.toString();
-                gradedCount++;
-                updateResultSelectColor(resultSelect);
-                row.style.background = 'rgba(255, 176, 32, 0.06)';
-              }
-            } else {
-              const pickedTeamScore = isHomePick ? homeScore : awayScore;
-              const oppTeamScore = isHomePick ? awayScore : homeScore;
-              let spread = 0;
-              const spreadMatch = selText.match(/([+-]?\d+(\.\d+)?)$/);
-              if (spreadMatch) spread = parseFloat(spreadMatch[1]);
-
-              const adjustedScore = pickedTeamScore + spread;
-              const marginValue = adjustedScore - oppTeamScore;
-
-              if (marginValue > 0) { resultSelect.value = 'W'; }
-              else if (marginValue < 0) { resultSelect.value = 'L'; }
-              else { resultSelect.value = 'D'; }
-
-              row.dataset.margin = marginValue.toString();
-              gradedCount++;
-              updateResultSelectColor(resultSelect);
-              row.style.background = 'rgba(255, 176, 32, 0.06)';
-            }
+            row.dataset.margin = marginValue.toString();
+            gradedCount++;
+            updateResultSelectColor(resultSelect);
+            row.style.background = 'rgba(255, 176, 32, 0.06)';
           }
         }
 
