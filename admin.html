@@ -1399,6 +1399,89 @@
     // pick graded by hand (or whose auto-graded margin was never saved) sat
     // with an empty margin forever. This fills in just the margin for those
     // rows — the result you set is left alone — and saves it straight away.
+    // Re-grades every pick in the Finalized section against its week's final
+    // ESPN scores, setting the result and margin on each row. Like the Active
+    // section's auto-grade, nothing is saved until Save Finalized is clicked;
+    // only rows whose result or margin actually changed are highlighted.
+    async function regradeFinalizedPicks() {
+      const msgDiv = document.getElementById('finalized-msg');
+      const rows = [...document.querySelectorAll('#finalized-container tr[data-pick-id]')];
+      if (rows.length === 0) return;
+
+      msgDiv.style.background = 'rgba(124, 138, 144, 0.1)';
+      msgDiv.style.color = 'var(--text-muted)';
+      msgDiv.innerText = 'Fetching final scores from ESPN to re-grade finalized picks...';
+
+      const rowsByWeek = {};
+      rows.forEach(row => {
+        const key = row.dataset.weekId || '';
+        (rowsByWeek[key] = rowsByWeek[key] || []).push(row);
+      });
+
+      let checked = 0, changed = 0;
+      const problems = [];
+
+      for (const [weekId, weekRows] of Object.entries(rowsByWeek)) {
+        const weekObj = allWeeksCache.find(w => String(w.id) === weekId);
+        const weekLabel = weekObj ? `Wk ${weekObj.week_number}` : 'Unknown week';
+        const describe = (row) => {
+          const initials = row.querySelector('td strong')?.innerText || '??';
+          const selection = row.querySelector('.row-selection').value;
+          return `${weekLabel} · ${initials} · "${selection}"`;
+        };
+
+        if (!weekObj?.start_date) {
+          weekRows.forEach(row => problems.push(`${describe(row)}: week has no start date, so its games can't be looked up`));
+          continue;
+        }
+
+        const events = await fetchEspnEventsForWeek(weekObj);
+        if (!events) {
+          weekRows.forEach(row => problems.push(`${describe(row)}: couldn't load ESPN scores for ${weekObj.start_date} onward`));
+          continue;
+        }
+
+        for (const row of weekRows) {
+          const selText = row.querySelector('.row-selection').value.trim().toLowerCase();
+          const matched = findEspnEventForSearchTerms(getTeamSearchTerms(selText), events, true);
+          if (!matched) { problems.push(`${describe(row)}: no game found for that team`); continue; }
+          if (matched.comp.status.type.state !== 'post') { problems.push(`${describe(row)}: matched game isn't final`); continue; }
+
+          const marginValue = computeMarginForMatch(selText, matched);
+          if (marginValue === null) { problems.push(`${describe(row)}: couldn't read the line`); continue; }
+
+          const { home, away, homeScore, awayScore } = matched;
+          const scoreTag = row.querySelector('.live-score-tag');
+          scoreTag.style.display = 'block';
+          scoreTag.innerText = `${away.team.abbreviation} ${awayScore} - ${home.team.abbreviation} ${homeScore} (Final)`;
+
+          const resultSelect = row.querySelector('.row-result');
+          const newResult = marginValue > 0 ? 'W' : (marginValue < 0 ? 'L' : 'D');
+          const oldMargin = row.dataset.margin === undefined ? null : parseFloat(row.dataset.margin);
+          const resultChanged = resultSelect.value !== newResult;
+          const marginChanged = oldMargin === null || Math.abs(oldMargin - marginValue) > 0.001;
+          checked++;
+
+          if (resultChanged || marginChanged) {
+            resultSelect.value = newResult;
+            updateResultSelectColor(resultSelect);
+            row.dataset.margin = marginValue.toString();
+            row.style.background = 'rgba(255, 176, 32, 0.06)';
+            changed++;
+          }
+        }
+      }
+
+      if (changed > 0) markSectionDirty('finalized', true);
+      if (problems.length) console.warn('Finalized re-grade problems:\n' + problems.join('\n'));
+
+      msgDiv.style.background = problems.length ? 'rgba(255, 176, 32, 0.12)' : 'rgba(52, 214, 122, 0.15)';
+      msgDiv.style.color = problems.length ? 'var(--text)' : 'var(--success)';
+      msgDiv.innerText = `Re-graded ${checked} finalized pick${checked === 1 ? '' : 's'}; ` +
+        (changed ? `${changed} changed — review the highlighted rows and click Save Finalized.` : 'all already match the final scores.') +
+        (problems.length ? `\n${problems.length} couldn't be graded:\n` + problems.join('\n') : '');
+    }
+
     async function backfillMissingMargins(silent) {
       const msgDiv = document.getElementById('finalized-msg');
       const rows = [...document.querySelectorAll('#finalized-container tr[data-pick-id]')]
@@ -1557,7 +1640,11 @@
 
     async function autoGradePicks(sectionType, silent = false) {
       if (sectionType === 'finalized') {
-        await backfillMissingMargins(silent);
+        // Page load only quietly fills in missing margins. Clicking the button
+        // re-grades every finalized pick against the final score, so a result
+        // changed by hand gets put back — review, then Save Finalized.
+        if (silent) await backfillMissingMargins(true);
+        else await regradeFinalizedPicks();
         return;
       }
 
