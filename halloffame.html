@@ -186,13 +186,21 @@
 
     .hit-banner-picks {
       display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .hit-picks-row {
+      display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 0.5rem;
     }
 
     .hit-pick {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.4rem;
       background: rgba(52, 214, 122, 0.1);
       border: 1px solid rgba(52, 214, 122, 0.35);
@@ -201,12 +209,6 @@
       font-family: var(--font-label);
       font-size: 0.82rem;
       color: var(--text);
-    }
-
-    .hit-pick .check {
-      color: var(--success);
-      font-weight: 700;
-      font-size: 0.85rem;
     }
 
     .hit-pick .who {
@@ -395,33 +397,37 @@
         <div class="hit-banner-odds">+2000</div>
       </div>
       <div class="hit-banner-picks">
-        <div class="hit-pick">
-          <span class="check">✓</span> <span class="who">CK</span>
-          <span class="hit-pick-logos">
-            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" class="hit-pick-logo" alt="Miami" onerror="this.style.display='none'">
-            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2117.png" class="hit-pick-logo" alt="Central Michigan" onerror="this.style.display='none'">
-          </span>
-          Miami/C&nbsp;Mich o53.5
+        <div class="hit-picks-row">
+          <div class="hit-pick">
+            <span class="who">CK</span>
+            <span class="hit-pick-logos">
+              <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" class="hit-pick-logo" alt="Miami" onerror="this.style.display='none'">
+              <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2117.png" class="hit-pick-logo" alt="Central Michigan" onerror="this.style.display='none'">
+            </span>
+            Miami/C&nbsp;Mich o53.5
+          </div>
+          <div class="hit-pick">
+            <span class="who">P</span>
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/228.png" class="hit-pick-logo" alt="Clemson" onerror="this.style.display='none'">
+            Clemson +1.5
+          </div>
+          <div class="hit-pick">
+            <span class="who">AH</span>
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/344.png" class="hit-pick-logo" alt="Mississippi State" onerror="this.style.display='none'">
+            Miss State -6.5
+          </div>
         </div>
-        <div class="hit-pick">
-          <span class="check">✓</span> <span class="who">P</span>
-          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/228.png" class="hit-pick-logo" alt="Clemson" onerror="this.style.display='none'">
-          Clemson +1.5
-        </div>
-        <div class="hit-pick">
-          <span class="check">✓</span> <span class="who">AH</span>
-          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/344.png" class="hit-pick-logo" alt="Mississippi State" onerror="this.style.display='none'">
-          Miss State -6.5
-        </div>
-        <div class="hit-pick">
-          <span class="check">✓</span> <span class="who">TD</span>
-          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2649.png" class="hit-pick-logo" alt="Toledo" onerror="this.style.display='none'">
-          Toledo -3
-        </div>
-        <div class="hit-pick">
-          <span class="check">✓</span> <span class="who">WS</span>
-          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/96.png" class="hit-pick-logo" alt="Kentucky" onerror="this.style.display='none'">
-          UK -20.5
+        <div class="hit-picks-row">
+          <div class="hit-pick">
+            <span class="who">TD</span>
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2649.png" class="hit-pick-logo" alt="Toledo" onerror="this.style.display='none'">
+            Toledo -3
+          </div>
+          <div class="hit-pick">
+            <span class="who">WS</span>
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/96.png" class="hit-pick-logo" alt="Kentucky" onerror="this.style.display='none'">
+            UK -20.5
+          </div>
         </div>
       </div>
     </div>
