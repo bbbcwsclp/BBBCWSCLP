@@ -126,6 +126,118 @@
       outline-offset: 2px;
     }
 
+    /* Parlay Hit Banner */
+    .hit-banner {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 500px 200px at 50% 0%, rgba(52, 214, 122, 0.14), transparent 65%),
+        linear-gradient(135deg, #14191d 0%, #0a0e10 100%);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--success);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      text-align: left;
+    }
+
+    .hit-banner-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.9rem;
+    }
+
+    .hit-banner-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+
+    .hit-banner-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .hit-banner-odds {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--success);
+      background: rgba(52, 214, 122, 0.12);
+      border: 1px solid rgba(52, 214, 122, 0.4);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .hit-banner-picks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .hit-pick {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(52, 214, 122, 0.1);
+      border: 1px solid rgba(52, 214, 122, 0.35);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-family: var(--font-label);
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
+    .hit-pick .check {
+      color: var(--success);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .hit-pick .who {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--success);
+      font-size: 0.72rem;
+    }
+
+    .hit-pick-logos {
+      display: flex;
+      align-items: center;
+    }
+
+    .hit-pick-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .hit-pick-logos .hit-pick-logo + .hit-pick-logo {
+      margin-left: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .hit-banner-title { font-size: 1.25rem; }
+      .hit-pick { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+      .hit-pick-logo { width: 17px; height: 17px; }
+    }
+
     /* Section & Card Styling */
     .section-title {
       font-family: var(--font-display);
@@ -273,6 +385,46 @@
       <a href="halloffame.html" class="active">HOF</a>
       <a href="scores.html">Scores</a>
     </nav>
+
+    <div class="hit-banner">
+      <div class="hit-banner-top">
+        <div>
+          <div class="hit-banner-eyebrow">🏆 Legendary Slip</div>
+          <div class="hit-banner-title">Week 4 Parlay — Hit</div>
+        </div>
+        <div class="hit-banner-odds">+2000</div>
+      </div>
+      <div class="hit-banner-picks">
+        <div class="hit-pick">
+          <span class="check">✓</span> <span class="who">CK</span>
+          <span class="hit-pick-logos">
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" class="hit-pick-logo" alt="Miami" onerror="this.style.display='none'">
+            <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2117.png" class="hit-pick-logo" alt="Central Michigan" onerror="this.style.display='none'">
+          </span>
+          Miami/C&nbsp;Mich o53.5
+        </div>
+        <div class="hit-pick">
+          <span class="check">✓</span> <span class="who">P</span>
+          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/228.png" class="hit-pick-logo" alt="Clemson" onerror="this.style.display='none'">
+          Clemson +1.5
+        </div>
+        <div class="hit-pick">
+          <span class="check">✓</span> <span class="who">AH</span>
+          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/344.png" class="hit-pick-logo" alt="Mississippi State" onerror="this.style.display='none'">
+          Miss State -6.5
+        </div>
+        <div class="hit-pick">
+          <span class="check">✓</span> <span class="who">TD</span>
+          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/2649.png" class="hit-pick-logo" alt="Toledo" onerror="this.style.display='none'">
+          Toledo -3
+        </div>
+        <div class="hit-pick">
+          <span class="check">✓</span> <span class="who">WS</span>
+          <img src="https://a.espncdn.com/i/teamlogos/ncaa/500/96.png" class="hit-pick-logo" alt="Kentucky" onerror="this.style.display='none'">
+          UK -20.5
+        </div>
+      </div>
+    </div>
 
     <div id="content-container">
       <div style="color: var(--text-muted);">Loading Hall of Fame...</div>
