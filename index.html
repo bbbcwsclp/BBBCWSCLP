@@ -648,9 +648,16 @@
       'ms st': 'mississippi state',
       'mississippi st': 'mississippi state',
       'uga': 'georgia',
-      'ga state': 'georgia state',
-      'ga st': 'georgia state',
-      'ga southern': 'georgia southern',
+      // ESPN abbreviates these as "Georgia St" / "Ga Southern" (not the full
+      // "Georgia State"/"Georgia Southern"), so aliasing to the full name
+      // missed the exact-match pass and fell through to fuzzy matching,
+      // where "georgia state"/"georgia southern" both contain "georgia" as a
+      // substring and incorrectly matched the Georgia Bulldogs' own game.
+      // Aliasing straight to ESPN's stable abbreviation code sidesteps that
+      // fuzzy fallback entirely.
+      'ga state': 'gast',
+      'ga st': 'gast',
+      'ga southern': 'gaso',
       'ut': 'tennessee'
     };
 
