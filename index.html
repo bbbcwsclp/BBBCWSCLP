@@ -752,22 +752,65 @@
       return searchTerms.some(term => teamMatchesFuzzy(term, homeTeam));
     }
 
+    // "1H" / "2H" / "1Q"-"4Q" picks are graded on that part of the game only,
+    // using ESPN's per-quarter linescores — the full-game score (and, since the
+    // pick no longer ends in its number, a spread of 0) used to grade them.
+    // 2H and 4Q include overtime. Identical copies live in admin.html and
+    // index.html; change them together.
+    const PICK_PERIOD_RE = /\b([12]h|[1-4]q|1st half|2nd half|1st quarter|2nd quarter|3rd quarter|4th quarter)\b/i;
+
+    // { from, to } quarter range for a period pick, or null for a full-game pick.
+    function getPickPeriodRange(selText) {
+      const m = (selText || '').toLowerCase().match(PICK_PERIOD_RE);
+      if (!m) return null;
+      const q = m[1];
+      if (q === '1h' || q === '1st half') return { from: 1, to: 2 };
+      if (q === '2h' || q === '2nd half') return { from: 3, to: Infinity };
+      const n = parseInt(q, 10);
+      return n === 4 ? { from: 4, to: Infinity } : { from: n, to: n };
+    }
+
+    // A competitor's points within a quarter range, or null if ESPN didn't
+    // send linescores that cover it.
+    function scoreForPeriodRange(competitor, range) {
+      const lines = competitor?.linescores;
+      if (!Array.isArray(lines) || lines.length < range.from) return null;
+      let total = 0;
+      lines.forEach((ls, i) => {
+        const period = ls.period || i + 1;
+        if (period >= range.from && period <= range.to) {
+          total += Number(ls.value ?? ls.displayValue ?? 0) || 0;
+        }
+      });
+      return total;
+    }
+
     function calculatePickMargin(pick, competition) {
-      const selText = (pick.selection || '').trim().toLowerCase();
-      const searchTerms = getTeamSearchTerms(selText);
+      const rawSelText = (pick.selection || '').trim().toLowerCase();
+      const searchTerms = getTeamSearchTerms(rawSelText);
+      const periodRange = getPickPeriodRange(rawSelText);
+      const selText = rawSelText.replace(PICK_PERIOD_RE, '').replace(/\s+/g, ' ').trim();
       const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
       const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
       const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
       const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-      const homeScore = parseInt(homeTeam.score || '0', 10);
-      const awayScore = parseInt(awayTeam.score || '0', 10);
+      let homeScore = parseInt(homeTeam.score || '0', 10);
+      let awayScore = parseInt(awayTeam.score || '0', 10);
 
       const isHomePick = pickIsHomeTeam(searchTerms, homeTeam.team, awayTeam.team);
 
       let computedMargin = -999;
       let computedResult = null;
+
+      if (periodRange) {
+        homeScore = scoreForPeriodRange(homeTeam, periodRange);
+        awayScore = scoreForPeriodRange(awayTeam, periodRange);
+        // No linescores for that part of the game: leave the pick ungraded
+        // rather than grade it off the full-game score.
+        if (homeScore === null || awayScore === null) return { computedMargin, computedResult };
+      }
 
       if (isTotalOrTT) {
         const lineMatch = selText.match(/([ou])\s*(\d+(\.\d+)?)/) || selText.match(/(over|under)\s*(\d+(\.\d+)?)/);
@@ -831,8 +874,12 @@
     }
 
     async function syncFinalizedResultsToSupabase(evaluatedPicks) {
+      // Only sync picks graded against a final ESPN game. A pick that already
+      // had a result in Supabase but couldn't be matched to a game here still
+      // carries that result in computedResult, with the -999 "no margin"
+      // placeholder — syncing it would write -999 into the margin column.
       const toSync = evaluatedPicks.filter(p => {
-        if (!p.computedResult) return false;
+        if (!p.computedResult || p.margin === -999) return false;
         const resultChanged = p.dbResult !== p.computedResult;
         const marginChanged = p.dbMargin === null || p.dbMargin === undefined || Math.abs(p.dbMargin - p.margin) > 0.001;
         return resultChanged || marginChanged;
@@ -878,6 +925,57 @@
           setTimeout(() => { btn.innerText = originalText; }, 2000);
         }
       });
+    }
+
+    // Season W-L-D per player through the current week, used to break
+    // next-week picker ties on margin. Earlier weeks come from the graded
+    // results in Supabase; the current week uses the live-evaluated results
+    // so it counts even before those are synced.
+    async function loadSeasonRecordsThroughWeek(currentWeek, evaluatedPicks) {
+      const records = {};
+      const tally = (playerId, result) => {
+        const r = records[playerId] || (records[playerId] = { wins: 0, losses: 0, draws: 0 });
+        if (result === 'W') r.wins += 1;
+        else if (result === 'L') r.losses += 1;
+        else if (result === 'D') r.draws += 1;
+      };
+
+      evaluatedPicks.forEach(p => tally(p.player_id, p.finalResultForScoring));
+
+      const { data: priorWeeks, error: weeksError } = await _supabase
+        .from('weeks')
+        .select('id')
+        .eq('season', currentWeek.season)
+        .lt('week_number', currentWeek.week_number);
+
+      if (weeksError) console.error('Failed to load prior weeks for records:', weeksError);
+      const priorWeekIds = (priorWeeks || []).map(w => w.id);
+      if (priorWeekIds.length === 0) return records;
+
+      const { data: priorPicks, error: picksError } = await _supabase
+        .from('picks')
+        .select('player_id, result')
+        .in('week_id', priorWeekIds)
+        .not('result', 'is', null);
+
+      if (picksError) console.error('Failed to load prior picks for records:', picksError);
+      (priorPicks || []).forEach(p => tally(p.player_id, p.result));
+      return records;
+    }
+
+    // Better record sorts first. Matches the standings.html leaderboard order:
+    // total points (W = 1, D = 0.5), then wins, then win %.
+    function compareOverallRecords(ra, rb) {
+      const stats = (r) => {
+        const { wins = 0, losses = 0, draws = 0 } = r || {};
+        const totalPoints = wins + draws * 0.5;
+        const decided = wins + losses + draws;
+        return { totalPoints, wins, winPct: decided > 0 ? totalPoints / decided : 0 };
+      };
+      const a = stats(ra), b = stats(rb);
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.winPct - a.winPct;
     }
 
     // Determines which week is "current" for the main page.
@@ -1317,6 +1415,11 @@
         // W/D), results still rank W > D, then margin breaks ties. Everyone
         // else (non-parlay picks of any result, and parlay losses) ranks
         // below the boosted group, sorted by the normal W > D > L > margin order.
+        // If two players are still tied after margin (e.g. only one spot
+        // left), the better overall season record through this week wins
+        // it — same order as standings.html: total points (W = 1, D = 0.5),
+        // then wins, then win %.
+        const records = await loadSeasonRecordsThroughWeek(currentWeek, evaluatedPicks);
         const resultPriority = { W: 0, D: 1, L: 2 };
         const isBoosted = (p) => p.is_parlay && (p.finalResultForScoring === 'W' || p.finalResultForScoring === 'D');
 
@@ -1329,7 +1432,9 @@
           const pb = resultPriority[b.finalResultForScoring] ?? 3;
           if (pa !== pb) return pa - pb;
 
-          return b.sortMargin - a.sortMargin;
+          if (a.sortMargin !== b.sortMargin) return b.sortMargin - a.sortMargin;
+
+          return compareOverallRecords(records[a.player_id], records[b.player_id]);
         };
 
         const decidedPicks = evaluatedPicks.filter(p => ['W', 'D', 'L'].includes(p.finalResultForScoring));
