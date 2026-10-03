@@ -783,7 +783,11 @@
     function evaluatePicksWithScores(picks, espnEvents) {
       return picks.map(pick => {
         let computedResult = pick.result || null;
-        let computedMargin = -999;
+        // Falls back to the pick's existing margin, not the -999 "unknown"
+        // sentinel, so a game aging out of ESPN's default (today-only)
+        // scoreboard response doesn't get treated as a real margin change
+        // and overwrite an already-correct value with -999.
+        let computedMargin = (typeof pick.margin === 'number') ? pick.margin : -999;
 
         const selText = (pick.selection || '').trim().toLowerCase();
         const searchTerms = getTeamSearchTerms(selText);
