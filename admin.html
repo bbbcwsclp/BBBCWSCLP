@@ -1260,35 +1260,63 @@
       });
     }
 
-    // Kept in sync with the TEAM_ALIASES/getTeamSearchTerms pair in ogindex.html
-    // so a pick like "bama" grades here the same way it matches on the index page.
+    // Copied verbatim from index.html (TEAM_ALIASES, getTeamSearchTerms and the
+    // team-matching functions below) so the admin page finds the same games the
+    // home page does. Change them in both files together.
     const TEAM_ALIASES = {
       'sac': 'sacramento state',
       'jax state': 'jacksonville state',
       'unc': 'north carolina',
       'usc': 'southern cal',
-      'uga': 'georgia',
       'tex': 'texas',
-      'ut': 'texas',
-      'bc': 'boston college',
       'bama': 'alabama',
       'miss st': 'mississippi state',
       'ms st': 'mississippi state',
-      'vandy': 'vanderbilt',
-      'miss state': 'mississippi state',
-      'msst': 'mississippi state',
-      'mississippi st': 'mississippi state'
+      'mississippi st': 'mississippi state',
+      'uga': 'georgia',
+      // ESPN abbreviates these as "Georgia St" / "Ga Southern" (not the full
+      // "Georgia State"/"Georgia Southern"), so aliasing to the full name
+      // missed the exact-match pass and fell through to fuzzy matching,
+      // where "georgia state"/"georgia southern" both contain "georgia" as a
+      // substring and incorrectly matched the Georgia Bulldogs' own game.
+      // Aliasing straight to ESPN's stable abbreviation code sidesteps that
+      // fuzzy fallback entirely.
+      'ga state': 'gast',
+      'ga st': 'gast',
+      'usc': 'usc trojans',
+      'ga southern': 'gaso',
+      'ut': 'tennessee'
     };
 
     function getTeamSearchTerms(selection) {
       if (!selection) return [];
       let clean = selection.trim().toLowerCase();
       clean = clean.replace(/\b(team total|tt)\b/gi, '');
+      // Strip half/quarter qualifiers (e.g. "1H", "2H", "1Q"-"4Q") BEFORE the
+      // trailing-number strip below — otherwise a line like "UGA -13.5 1H"
+      // doesn't end in a number and the spread never gets stripped off.
+      clean = clean.replace(/\b([12]h|[1-4]q|1st half|2nd half|1st quarter|2nd quarter|3rd quarter|4th quarter)\b/gi, '').trim();
       clean = clean.replace(/\b[ou]\s*\d+(\.\d+)?\b/gi, '').trim();
       clean = clean.replace(/([+-]?\d+(\.\d+)?)$/, '').trim();
+      clean = clean.replace(/\s+/g, ' ').trim();
 
-      const terms = clean.includes('/') ? clean.split('/').map(t => t.trim()) : [clean];
-      return terms.map(t => TEAM_ALIASES[t] || t);
+      let terms = [];
+      if (clean.includes('/')) {
+        terms = clean.split('/').map(t => t.trim());
+      } else {
+        terms = [clean];
+      }
+
+      let expanded = [];
+      terms.forEach(t => {
+        // Exact match check for shorthand codes like 'tex' to prevent substring collisions (e.g., North Texas)
+        if (TEAM_ALIASES[t]) {
+          expanded.push(TEAM_ALIASES[t]);
+        } else {
+          expanded.push(t);
+        }
+      });
+      return expanded;
     }
 
     // Compares two pick selections on team + number rather than raw text, so
@@ -1378,8 +1406,51 @@
 
     // Cover/total margin for a pick against a matched ESPN game, or null if the
     // selection has an over/under marker but no readable line.
-    function computeMarginForMatch(selText, matched) {
-      const { homeScore, awayScore, isHomePick } = matched;
+    // "1H" / "2H" / "1Q"-"4Q" picks are graded on that part of the game only,
+    // using ESPN's per-quarter linescores — the full-game score (and, since the
+    // pick no longer ends in its number, a spread of 0) used to grade them.
+    // 2H and 4Q include overtime. Identical copies live in admin.html and
+    // index.html; change them together.
+    const PICK_PERIOD_RE = /\b([12]h|[1-4]q|1st half|2nd half|1st quarter|2nd quarter|3rd quarter|4th quarter)\b/i;
+
+    // { from, to } quarter range for a period pick, or null for a full-game pick.
+    function getPickPeriodRange(selText) {
+      const m = (selText || '').toLowerCase().match(PICK_PERIOD_RE);
+      if (!m) return null;
+      const q = m[1];
+      if (q === '1h' || q === '1st half') return { from: 1, to: 2 };
+      if (q === '2h' || q === '2nd half') return { from: 3, to: Infinity };
+      const n = parseInt(q, 10);
+      return n === 4 ? { from: 4, to: Infinity } : { from: n, to: n };
+    }
+
+    // A competitor's points within a quarter range, or null if ESPN didn't
+    // send linescores that cover it.
+    function scoreForPeriodRange(competitor, range) {
+      const lines = competitor?.linescores;
+      if (!Array.isArray(lines) || lines.length < range.from) return null;
+      let total = 0;
+      lines.forEach((ls, i) => {
+        const period = ls.period || i + 1;
+        if (period >= range.from && period <= range.to) {
+          total += Number(ls.value ?? ls.displayValue ?? 0) || 0;
+        }
+      });
+      return total;
+    }
+
+    function computeMarginForMatch(rawSelText, matched) {
+      const { isHomePick } = matched;
+      let { homeScore, awayScore } = matched;
+
+      const periodRange = getPickPeriodRange(rawSelText);
+      if (periodRange) {
+        homeScore = scoreForPeriodRange(matched.home, periodRange);
+        awayScore = scoreForPeriodRange(matched.away, periodRange);
+        if (homeScore === null || awayScore === null) return null;
+      }
+      const selText = rawSelText.replace(PICK_PERIOD_RE, '').replace(/\s+/g, ' ').trim();
+
       const isTotalOrTT = /\b([ou])\s*(\d+(\.\d+)?)\b/.test(selText) || /\b(over|under)\b/.test(selText);
       const isTeamTotal = /\b(team total|tt)\b/.test(selText);
 
@@ -1583,86 +1654,63 @@
 
     const ESPN_SEASON_START_CUTOFF = new Date('2026-09-01T00:00:00Z');
 
-    // Team matching — identical copies live in admin.html and index.html; keep
-    // them in sync. Every team in the feed is scored against the pick and the
-    // best score wins, instead of taking the first game that loosely matched:
-    // plain substring matching graded "Texas A&M" off the Texas game,
-    // "Oklahoma" off Oklahoma State, "BC" off Texas State (the Bo-bc-ats) and
-    // "southern cal" off Southern.
-    //   3 = exact school name, short name, full name or abbreviation
-    //   2 = exact mascot ("longhorns")
-    //   1 = the pick contains a school name as whole words ("alabama ml");
-    //       longer names win, so "texas a&m ml" is Texas A&M, not Texas
-    // A tie between different teams in different games counts as no match —
-    // better to report it than grade off a guess.
-    function normalizeTeamText(s) {
-      return (s || '').toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .replace(/['‘’ʻ.]/g, '')
-        .replace(/[()]/g, ' ')
-        .replace(/\bst\b/g, 'state')
-        .replace(/\s+/g, ' ')
-        .trim();
+    // Team-matching is done in two passes rather than one hardcoded list of
+    // "known ambiguous pairs." Any short team name can be a substring of a
+    // longer one (Alabama/North Alabama, Georgia/Georgia Tech, Texas/North
+    // Texas/Texas State, Miami/Miami OH, ...) so a single fuzzy .includes()
+    // pass is inherently unsafe. Instead:
+    //   1) EXACT pass: term must equal (not just be contained in) one of the
+    //      team's fields. This is unambiguous and resolves the vast majority
+    //      of picks, including all the substring collisions above.
+    //   2) FUZZY pass (fallback only): substring matching, for odd cases where
+    //      a pick's text doesn't exactly match any ESPN field (e.g. partial
+    //      nicknames not covered by TEAM_ALIASES).
+    // The exact pass is tried across ALL candidates before ever falling back
+    // to fuzzy, so a fuzzy match on the wrong team never wins over an exact
+    // match on the right one.
+    function teamFields(team) {
+      return {
+        name: (team.name || '').toLowerCase(),
+        shortName: (team.shortDisplayName || '').toLowerCase(),
+        displayName: (team.displayName || '').toLowerCase(),
+        abbreviation: (team.abbreviation || '').toLowerCase()
+      };
     }
 
-    // The term plus any TEAM_ALIASES nickname that maps to it, since the
-    // alias target isn't always what ESPN calls the team (ESPN says "USC",
-    // not "southern cal").
-    function expandTeamTerm(term) {
-      const variants = new Set([normalizeTeamText(term)]);
-      Object.entries(TEAM_ALIASES).forEach(([nick, full]) => {
-        if (full === term) variants.add(normalizeTeamText(nick));
-      });
-      variants.delete('');
-      return [...variants];
+    function teamMatchesExact(term, team) {
+      if (!term) return false;
+      const f = teamFields(team);
+      return term === f.name || term === f.shortName || term === f.displayName || term === f.abbreviation;
     }
 
-    function scoreTeamMatch(term, team) {
-      const exactNames = [team.location, team.shortDisplayName, team.displayName, team.abbreviation]
-        .map(normalizeTeamText).filter(Boolean);
-      const mascot = normalizeTeamText(team.name);
-      const schoolNames = [team.location, team.shortDisplayName].map(normalizeTeamText).filter(Boolean);
-
-      let best = 0;
-      expandTeamTerm(term).forEach(v => {
-        if (exactNames.includes(v)) { best = Math.max(best, 3); return; }
-        if (mascot && v === mascot) { best = Math.max(best, 2); return; }
-        schoolNames.forEach(name => {
-          if (` ${v} `.includes(` ${name} `)) best = Math.max(best, 1 + name.length / 1000);
-        });
-      });
-      return best;
+    function teamMatchesFuzzy(term, team) {
+      if (!term) return false;
+      const f = teamFields(team);
+      return f.name.includes(term) || term.includes(f.name) ||
+             f.shortName.includes(term) || term.includes(f.shortName) ||
+             f.displayName.includes(term) || f.abbreviation === term;
     }
 
-    // Best game for a pick's search terms: { event, isHome }, or null. If the
-    // same team turns up in more than one game (a lookup spanning two weeks),
-    // the first game on/after preferOnOrAfter wins.
-    function matchPickToEvent(searchTerms, events, preferOnOrAfter = null) {
-      const terms = (searchTerms || []).filter(Boolean);
-      const candidates = [];
-      events.forEach(event => {
-        event.competitions[0].competitors.forEach(c => {
-          const score = Math.max(0, ...terms.map(t => scoreTeamMatch(t, c.team)));
-          if (score > 0) {
-            candidates.push({ event, isHome: c.homeAway === 'home', teamKey: c.team.id || c.team.displayName, score });
-          }
-        });
-      });
-      if (candidates.length === 0) return null;
+    // Finds the ESPN event matching any of searchTerms, preferring an event
+    // with an EXACT field match over one that only matches fuzzily.
+    function findMatchedEvent(searchTerms, espnEvents) {
+      const exact = espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesExact(term, c.team)))
+      );
+      if (exact) return exact;
+      return espnEvents.find(ev =>
+        ev.competitions[0].competitors.some(c => searchTerms.some(term => teamMatchesFuzzy(term, c.team)))
+      );
+    }
 
-      const top = Math.max(...candidates.map(c => c.score));
-      const best = candidates.filter(c => c.score === top);
-      const eventCount = new Set(best.map(c => c.event.id)).size;
-      const teamCount = new Set(best.map(c => c.teamKey)).size;
-      if (eventCount > 1 && teamCount > 1) return null;
-
-      const time = (c) => new Date(c.event.date).getTime();
-      if (eventCount > 1 && preferOnOrAfter) {
-        const onOrAfter = best.filter(c => time(c) >= preferOnOrAfter.getTime()).sort((a, b) => time(a) - time(b));
-        if (onOrAfter.length) return onOrAfter[0];
-        return best.sort((a, b) => time(b) - time(a))[0];
-      }
-      return best[0];
+    // Determines whether searchTerms refer to the home or away side of a
+    // specific competition, again preferring exact matches over fuzzy ones so
+    // an ambiguous fuzzy hit on the home team can't override a correct exact
+    // match on the away team (or vice versa).
+    function pickIsHomeTeam(searchTerms, homeTeam, awayTeam) {
+      if (searchTerms.some(term => teamMatchesExact(term, homeTeam))) return true;
+      if (searchTerms.some(term => teamMatchesExact(term, awayTeam))) return false;
+      return searchTerms.some(term => teamMatchesFuzzy(term, homeTeam));
     }
 
     // Shared by autoGradePicks (grading) and bulkAddPicks (paste-time validation)
@@ -1672,18 +1720,33 @@
     // so they have no stale last-season games to guard against, and Week 0
     // games fall before the cutoff.
     function findEspnEventForSearchTerms(searchTerms, events, ignoreCutoff = false, preferOnOrAfter = null) {
-      const inSeason = ignoreCutoff ? events : events.filter(ev => new Date(ev.date) >= ESPN_SEASON_START_CUTOFF);
-      const match = matchPickToEvent(searchTerms, inSeason, preferOnOrAfter);
-      if (!match) return null;
+      let candidates = ignoreCutoff ? events : events.filter(ev => new Date(ev.date) >= ESPN_SEASON_START_CUTOFF);
 
-      const comp = match.event.competitions[0];
+      // When a lookup spans more than one week, a team can appear twice; list
+      // games on/after the week's start first (earliest first) so the
+      // first-match search below lands on that week's game.
+      if (preferOnOrAfter) {
+        const start = preferOnOrAfter.getTime();
+        const time = (ev) => new Date(ev.date).getTime();
+        candidates = [...candidates].sort((a, b) => {
+          const aIn = time(a) >= start, bIn = time(b) >= start;
+          if (aIn !== bIn) return aIn ? -1 : 1;
+          return aIn ? time(a) - time(b) : time(b) - time(a);
+        });
+      }
+
+      const event = findMatchedEvent(searchTerms, candidates);
+      if (!event) return null;
+
+      const comp = event.competitions[0];
       const home = comp.competitors.find(c => c.homeAway === 'home');
       const away = comp.competitors.find(c => c.homeAway === 'away');
+      const isHomePick = pickIsHomeTeam(searchTerms, home.team, away.team);
       return {
-        event: match.event, comp, home, away,
+        event, comp, home, away,
         homeScore: parseInt(home.score || '0', 10),
         awayScore: parseInt(away.score || '0', 10),
-        isHomePick: match.isHome, isAwayPick: !match.isHome
+        isHomePick, isAwayPick: !isHomePick
       };
     }
 
