@@ -1683,12 +1683,27 @@
       return term === f.name || term === f.shortName || term === f.displayName || term === f.abbreviation;
     }
 
+    // Plain substring matching let "kentucky" match "W Kentucky" / "Western
+    // Kentucky Hilltoppers" (and "georgia" match "Georgia Tech", etc.), so on
+    // a week the picked team wasn't in ESPN's feed, its pick got graded
+    // against a different team's game. Names now only fuzzy-match when one
+    // starts with the other and what's left over is nothing, punctuation
+    // (e.g. a stray non-ASCII minus sign), or the team's mascot.
+    function namesLooselyMatch(term, field, mascot) {
+      if (!term || !field) return false;
+      const [shorter, longer] = term.length <= field.length ? [term, field] : [field, term];
+      if (!longer.startsWith(shorter)) return false;
+      const rest = longer.slice(shorter.length).trim();
+      return rest === '' || !/[a-z]/.test(rest) || rest === mascot;
+    }
+
     function teamMatchesFuzzy(term, team) {
       if (!term) return false;
       const f = teamFields(team);
       return f.name.includes(term) || term.includes(f.name) ||
-             f.shortName.includes(term) || term.includes(f.shortName) ||
-             f.displayName.includes(term) || f.abbreviation === term;
+             namesLooselyMatch(term, f.shortName, f.name) ||
+             namesLooselyMatch(term, f.displayName, f.name) ||
+             f.abbreviation === term;
     }
 
     // Finds the ESPN event matching any of searchTerms, preferring an event
