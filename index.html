@@ -997,6 +997,19 @@
       return b.winPct - a.winPct;
     }
 
+    // Whether an ESPN event falls within a week's dates: from 2 days before
+    // its start_date (same allowance as the admin page's week lookups) up to
+    // the next week's start_date 7 days later. Weeks without a start_date
+    // accept every event.
+    function eventIsInWeek(ev, weekObj) {
+      if (!weekObj?.start_date) return true;
+      const start = new Date(`${weekObj.start_date}T00:00:00`);
+      const from = new Date(start); from.setDate(from.getDate() - 2);
+      const to = new Date(start); to.setDate(to.getDate() + 7);
+      const t = new Date(ev.date);
+      return t >= from && t < to;
+    }
+
     // Determines which week is "current" for the main page.
     //   1. A week explicitly marked status = 'open' always wins, regardless of
     //      date — this is the manual override / escape hatch from the admin panel.
@@ -1166,6 +1179,11 @@
           });
         }
       }
+
+      // ESPN's "current week" can roll past ours (e.g. the site's week hasn't
+      // been advanced yet), and then a team's NEXT game would get graded as
+      // this week's pick. Only games within this week's dates count.
+      espnEvents = espnEvents.filter(ev => eventIsInWeek(ev, currentWeek));
 
       const picks = picksRes.data || [];
       cachedData.allPicks = picks;
